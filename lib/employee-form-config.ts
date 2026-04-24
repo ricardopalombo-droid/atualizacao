@@ -133,10 +133,7 @@ const estadoCivilOptions: FieldOption[] = [
 
 const grauInstrucaoOptions: FieldOption[] = [
   { label: "Selecione", value: "" },
-  {
-    label: "01 - Analfabeto, inclusive o que, embora tenha recebido instrução, não se alfabetizou",
-    value: "01",
-  },
+  { label: "01 - Analfabeto, inclusive o que, embora tenha recebido instrução, não se alfabetizou", value: "01" },
   { label: "02 - Até o 5º ano incompleto do ensino fundamental", value: "02" },
   { label: "03 - 5º ano completo do ensino fundamental", value: "03" },
   { label: "04 - Do 6º ao 9º ano do ensino fundamental incompleto", value: "04" },
@@ -169,17 +166,6 @@ const possuiDeficienciaOptions: FieldOption[] = [
   { label: "Selecione", value: "" },
   { label: "Não", value: "nao" },
   { label: "Sim", value: "sim" },
-]
-
-const deficienciaTipoOptions: FieldOption[] = [
-  { label: "Selecione", value: "" },
-  { label: "Física", value: "fisica" },
-  { label: "Auditiva", value: "auditiva" },
-  { label: "Visual", value: "visual" },
-  { label: "Intelectual", value: "intelectual" },
-  { label: "Mental/Psicossocial", value: "mental" },
-  { label: "Múltipla", value: "multipla" },
-  { label: "Reabilitado", value: "reabilitado" },
 ]
 
 export const workflowStatusOrder: WorkflowStatus[] = [
@@ -243,13 +229,6 @@ export const formSections: FormSection[] = [
         type: "select",
         audience: "employee",
         options: possuiDeficienciaOptions,
-      },
-      {
-        key: "deficiencia_tipo",
-        label: "Tipo principal de deficiência",
-        type: "select",
-        audience: "employee",
-        options: deficienciaTipoOptions,
       },
       { key: "deficiencia_fisica", label: "Deficiência física", type: "checkbox", audience: "employee" },
       { key: "deficiencia_auditiva", label: "Deficiência auditiva", type: "checkbox", audience: "employee" },
