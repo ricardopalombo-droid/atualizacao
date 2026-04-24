@@ -1,6 +1,16 @@
 import type { CadastroPayload, WorkflowStatus } from "@/lib/cadastro-types"
 import { getSupabaseServerClient } from "@/lib/supabase-server"
 
+export type EmployeeRecordListItem = {
+  id: string
+  employee_name: string | null
+  employee_email: string | null
+  invite_email: string | null
+  workflow_status: string
+  created_at: string
+  updated_at: string
+}
+
 function statusTimestamps(status: WorkflowStatus) {
   const now = new Date().toISOString()
 
@@ -44,4 +54,20 @@ export async function upsertEmployeeRecord(payload: CadastroPayload) {
   }
 
   return saved
+}
+
+export async function listEmployeeRecords(limit = 20): Promise<EmployeeRecordListItem[]> {
+  const supabase = getSupabaseServerClient()
+
+  const { data, error } = await supabase
+    .from("employees")
+    .select("id, employee_name, employee_email, invite_email, workflow_status, created_at, updated_at")
+    .order("updated_at", { ascending: false })
+    .limit(limit)
+
+  if (error) {
+    throw error
+  }
+
+  return data ?? []
 }
