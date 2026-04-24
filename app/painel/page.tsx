@@ -2,6 +2,8 @@ import Link from "next/link"
 import { cookies } from "next/headers"
 import { redirect } from "next/navigation"
 import { CheckCircle2, ClipboardList, FileSpreadsheet } from "lucide-react"
+import { listEmployeeRecords } from "@/lib/cadastro-repository"
+import { workflowStatusLabels, type WorkflowStatus } from "@/lib/employee-form-config"
 import { LogoutButton } from "@/components/logout-button"
 
 const funcoes = [
@@ -35,6 +37,8 @@ export default async function PainelPage() {
   if (!session || session.value !== "authenticated") {
     redirect("/acesso")
   }
+
+  const records = await listEmployeeRecords()
 
   return (
     <main className="min-h-screen bg-slate-50">
@@ -88,7 +92,9 @@ export default async function PainelPage() {
             )
           })}
         </div>
-      </section>
-    </main>
-  )
-}
+
+        <section className="mt-8 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+          <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
+            <div>
+              <h2 className="text-2xl font-bold text-slate-900">Cadastros salvos</h2>
+              <p className="mt-2 text-slate-600">
