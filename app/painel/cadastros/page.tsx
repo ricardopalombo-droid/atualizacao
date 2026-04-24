@@ -4,8 +4,13 @@ import { EmployeeOnboardingForm } from "@/components/employee-onboarding-form"
 import { EmployeeRecordsList } from "@/components/employee-records-list"
 import { getCurrentSession } from "@/lib/auth-session"
 
-export default async function CadastrosPage() {
+export default async function CadastrosPage({
+  searchParams,
+}: {
+  searchParams?: Promise<{ id?: string }>
+}) {
   const session = await getCurrentSession()
+  const resolvedSearchParams = searchParams ? await searchParams : undefined
 
   if (!session) {
     redirect("/acesso")
@@ -42,7 +47,7 @@ export default async function CadastrosPage() {
           <EmployeeRecordsList />
         </div>
 
-        <EmployeeOnboardingForm />
+        <EmployeeOnboardingForm initialRecordId={resolvedSearchParams?.id ?? null} />
       </div>
     </main>
   )

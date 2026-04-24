@@ -26,6 +26,7 @@ type FormState = Record<string, string | boolean>
 
 type EmployeeOnboardingFormProps = {
   variant?: "client" | "employee"
+  initialRecordId?: string | null
 }
 
 const viewerLabels: Record<FieldAudience, string> = {
@@ -33,8 +34,11 @@ const viewerLabels: Record<FieldAudience, string> = {
   client: "Cliente",
 }
 
-export function EmployeeOnboardingForm({ variant = "client" }: EmployeeOnboardingFormProps) {
-  const [editRecordId, setEditRecordId] = useState<string | null>(null)
+export function EmployeeOnboardingForm({
+  variant = "client",
+  initialRecordId = null,
+}: EmployeeOnboardingFormProps) {
+  const [editRecordId] = useState<string | null>(initialRecordId)
   const [viewer, setViewer] = useState<FieldAudience>(variant === "employee" ? "employee" : "client")
   const [activeSection, setActiveSection] = useState(getSectionsForAudience(viewer)[0]?.id ?? "")
   const [formData, setFormData] = useState<FormState>(defaultFormValues)
@@ -50,15 +54,6 @@ export function EmployeeOnboardingForm({ variant = "client" }: EmployeeOnboardin
   const currentSections = useMemo(() => getSectionsForAudience(viewer), [viewer])
   const currentSection = currentSections.find((section) => section.id === activeSection) ?? currentSections[0]
   const canSwitchViewer = variant === "client"
-
-  useEffect(() => {
-    if (typeof window === "undefined") {
-      return
-    }
-
-    const params = new URLSearchParams(window.location.search)
-    setEditRecordId(params.get("id"))
-  }, [])
 
   useEffect(() => {
     if (!editRecordId) {
