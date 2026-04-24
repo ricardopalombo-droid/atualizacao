@@ -1,14 +1,17 @@
 import Link from "next/link"
-import { cookies } from "next/headers"
 import { redirect } from "next/navigation"
 import { EmployeeOnboardingForm } from "@/components/employee-onboarding-form"
+import { getCurrentSession } from "@/lib/auth-session"
 
 export default async function CadastrosPage() {
-  const cookieStore = await cookies()
-  const session = cookieStore.get("palsys_session")
+  const session = await getCurrentSession()
 
-  if (!session || session.value !== "authenticated") {
+  if (!session) {
     redirect("/acesso")
+  }
+
+  if (session.role !== "client_user") {
+    redirect("/painel")
   }
 
   return (
@@ -21,8 +24,8 @@ export default async function CadastrosPage() {
             </span>
             <h1 className="mt-4 text-4xl font-bold text-slate-900">Cadastro de funcionários</h1>
             <p className="mt-3 max-w-3xl text-slate-600">
-              Preencha os dados em etapas, aprove o cadastro e conclua o fluxo internamente dentro
-              da própria área da PalSys.
+              Dispare o link para o funcionário, acompanhe o retorno do cadastro básico e finalize
+              a parte interna do cliente antes de exportar a planilha.
             </p>
           </div>
 

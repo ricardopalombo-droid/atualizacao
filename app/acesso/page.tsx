@@ -13,8 +13,8 @@ export default function AcessoPage() {
             Faça login para acessar as funções do sistema
           </h1>
           <p className="mt-4 max-w-xl text-lg leading-8 text-slate-300">
-            Depois de entrar, o usuário visualiza o painel com as funcionalidades liberadas,
-            incluindo o módulo de cadastro de funcionários.
+            O assinante administra os próprios clientes. Cada cliente tem login separado e só pode
+            cadastrar funcionários vinculados à sua própria empresa.
           </p>
           <div className="mt-8">
             <Link

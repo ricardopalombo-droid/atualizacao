@@ -7,6 +7,7 @@ export type EmployeeRecordListItem = {
   employee_email: string | null
   invite_email: string | null
   workflow_status: string
+  client_id: string | null
   created_at: string
   updated_at: string
 }
@@ -56,14 +57,25 @@ export async function upsertEmployeeRecord(payload: CadastroPayload) {
   return saved
 }
 
-export async function listEmployeeRecords(limit = 20): Promise<EmployeeRecordListItem[]> {
+export async function listEmployeeRecords(
+  limit = 20,
+  scope?: { subscriberId?: string | null; clientId?: string | null }
+): Promise<EmployeeRecordListItem[]> {
   const supabase = getSupabaseServerClient()
 
-  const { data, error } = await supabase
+  let query = supabase
     .from("employees")
-    .select("id, employee_name, employee_email, invite_email, workflow_status, created_at, updated_at")
+    .select("id, employee_name, employee_email, invite_email, workflow_status, client_id, created_at, updated_at")
     .order("updated_at", { ascending: false })
     .limit(limit)
+
+  if (scope?.clientId) {
+    query = query.eq("client_id", scope.clientId)
+  } else if (scope?.subscriberId) {
+    query = query.eq("subscriber_id", scope.subscriberId)
+  }
+
+  const { data, error } = await query
 
   if (error) {
     throw error

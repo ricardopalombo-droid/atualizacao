@@ -17,6 +17,9 @@ type FormState = {
   email: string
   cnpj: string
   maxEmployees: string
+  contactName: string
+  accessEmail: string
+  temporaryPassword: string
 }
 
 const initialForm: FormState = {
@@ -24,6 +27,9 @@ const initialForm: FormState = {
   email: "",
   cnpj: "",
   maxEmployees: "",
+  contactName: "",
+  accessEmail: "",
+  temporaryPassword: "",
 }
 
 export function ClientManagement() {
@@ -82,12 +88,15 @@ export function ClientManagement() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          name: form.name,
-          email: form.email,
-          cnpj: form.cnpj,
-          maxEmployees: form.maxEmployees ? Number(form.maxEmployees) : undefined,
-        }),
+          body: JSON.stringify({
+            name: form.name,
+            email: form.email,
+            cnpj: form.cnpj,
+            maxEmployees: form.maxEmployees ? Number(form.maxEmployees) : undefined,
+            contactName: form.contactName,
+            accessEmail: form.accessEmail,
+            temporaryPassword: form.temporaryPassword,
+          }),
       })
 
       const result = (await response.json()) as {
@@ -147,6 +156,26 @@ export function ClientManagement() {
               value={form.cnpj}
               onChange={(value) => updateField("cnpj", value)}
               placeholder="00.000.000/0001-00"
+            />
+            <Field
+              label="Responsável pelo cliente"
+              value={form.contactName}
+              onChange={(value) => updateField("contactName", value)}
+              placeholder="Ex.: Maria Oliveira"
+            />
+            <Field
+              label="E-mail de acesso do cliente"
+              type="email"
+              value={form.accessEmail}
+              onChange={(value) => updateField("accessEmail", value)}
+              placeholder="login@cliente.com.br"
+            />
+            <Field
+              label="Senha provisória"
+              type="password"
+              value={form.temporaryPassword}
+              onChange={(value) => updateField("temporaryPassword", value)}
+              placeholder="Defina uma senha inicial"
             />
             <Field
               label="Limite de funcionários"
@@ -235,7 +264,7 @@ function Field({
   value: string
   onChange: (value: string) => void
   placeholder?: string
-  type?: "text" | "email" | "number"
+  type?: "text" | "email" | "number" | "password"
 }) {
   return (
     <div>

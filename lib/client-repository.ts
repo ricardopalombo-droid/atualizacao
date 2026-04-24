@@ -1,4 +1,5 @@
 import { z } from "zod"
+import { hashPassword } from "@/lib/auth-crypto"
 import { getSupabaseServerClient } from "@/lib/supabase-server"
 
 export const clientPayloadSchema = z.object({
@@ -6,6 +7,9 @@ export const clientPayloadSchema = z.object({
   email: z.string().trim().email("Informe um e-mail válido.").optional().or(z.literal("")),
   cnpj: z.string().trim().optional().or(z.literal("")),
   maxEmployees: z.coerce.number().int().positive().max(100000).optional(),
+  contactName: z.string().trim().min(2, "Informe o nome do responsável."),
+  accessEmail: z.string().trim().email("Informe um e-mail de acesso válido."),
+  temporaryPassword: z.string().min(6, "A senha provisória deve ter pelo menos 6 caracteres."),
 })
 
 export type ClientPayload = z.infer<typeof clientPayloadSchema>
@@ -74,6 +78,20 @@ export async function createClientRecord(payload: ClientPayload) {
     throw new Error(`Limite de clientes atingido para este assinante (${subscriber.max_clients}).`)
   }
 
+  const { data: existingUser, error: existingUserError } = await supabase
+    .from("app_users")
+    .select("id")
+    .eq("email", payload.accessEmail)
+    .maybeSingle()
+
+  if (existingUserError) {
+    throw existingUserError
+  }
+
+  if (existingUser) {
+    throw new Error("Já existe um usuário com esse e-mail de acesso.")
+  }
+
   const { data, error } = await supabase
     .from("clients")
     .insert({
@@ -88,6 +106,24 @@ export async function createClientRecord(payload: ClientPayload) {
 
   if (error) {
     throw error
+  }
+
+  const password = hashPassword(payload.temporaryPassword)
+  const { error: userError } = await supabase
+    .from("app_users")
+    .insert({
+      email: payload.accessEmail,
+      full_name: payload.contactName,
+      role: "client_user",
+      subscriber_id: subscriber.id,
+      client_id: data.id,
+      can_view_personal_data: true,
+      password_hash: password.hash,
+      password_salt: password.salt,
+    })
+
+  if (userError) {
+    throw userError
   }
 
   return data

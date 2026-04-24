@@ -1,4 +1,8 @@
 import { NextResponse } from "next/server"
+import { verifyPassword } from "@/lib/auth-crypto"
+import { encodeSession, getSessionCookieName } from "@/lib/auth-session"
+import { ensureDefaultSubscriber } from "@/lib/client-repository"
+import { getSupabaseServerClient } from "@/lib/supabase-server"
 
 export async function POST(request: Request) {
   const body = (await request.json()) as { email?: string; password?: string }
@@ -8,25 +12,71 @@ export async function POST(request: Request) {
   const expectedEmail = process.env.APP_LOGIN_EMAIL
   const expectedPassword = process.env.APP_LOGIN_PASSWORD
 
-  if (!expectedEmail || !expectedPassword) {
-    return NextResponse.json(
-      { error: "Credenciais do aplicativo não configuradas no ambiente." },
-      { status: 500 }
+  if (expectedEmail && expectedPassword && email === expectedEmail && password === expectedPassword) {
+    const subscriber = await ensureDefaultSubscriber()
+    const response = NextResponse.json({ ok: true })
+
+    response.cookies.set(
+      getSessionCookieName(),
+      encodeSession({
+        userId: "default-subscriber-admin",
+        email,
+        role: "subscriber_admin",
+        subscriberId: subscriber.id,
+        clientId: null,
+        displayName: "Assinante principal",
+      }),
+      {
+        httpOnly: true,
+        sameSite: "lax",
+        secure: process.env.NODE_ENV === "production",
+        path: "/",
+        maxAge: 60 * 60 * 8,
+      }
     )
+
+    return response
   }
 
-  if (email !== expectedEmail || password !== expectedPassword) {
+  const supabase = getSupabaseServerClient()
+  const { data: user, error } = await supabase
+    .from("app_users")
+    .select("id, email, full_name, role, subscriber_id, client_id, is_active, password_hash, password_salt")
+    .eq("email", email)
+    .maybeSingle()
+
+  if (error) {
+    return NextResponse.json({ error: "Não foi possível validar o login." }, { status: 500 })
+  }
+
+  if (!user || !user.is_active) {
+    return NextResponse.json({ error: "Login ou senha inválidos." }, { status: 401 })
+  }
+
+  if (!user.password_hash || !user.password_salt || !verifyPassword(password, user.password_hash, user.password_salt)) {
     return NextResponse.json({ error: "Login ou senha inválidos." }, { status: 401 })
   }
 
   const response = NextResponse.json({ ok: true })
-  response.cookies.set("palsys_session", "authenticated", {
-    httpOnly: true,
-    sameSite: "lax",
-    secure: process.env.NODE_ENV === "production",
-    path: "/",
-    maxAge: 60 * 60 * 8,
-  })
+
+  response.cookies.set(
+    getSessionCookieName(),
+    encodeSession({
+      userId: user.id,
+      email: user.email,
+      role: user.role,
+      subscriberId: user.subscriber_id,
+      clientId: user.client_id,
+      displayName: user.full_name,
+    }),
+    {
+      httpOnly: true,
+      sameSite: "lax",
+      secure: process.env.NODE_ENV === "production",
+      path: "/",
+      maxAge: 60 * 60 * 8,
+    }
+  )
 
   return response
 }

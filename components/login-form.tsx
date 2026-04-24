@@ -46,7 +46,9 @@ export function LoginForm() {
   return (
     <form onSubmit={handleSubmit} className="rounded-3xl border border-slate-200 bg-white p-8 shadow-sm">
       <h2 className="text-2xl font-bold text-slate-900">Entrar</h2>
-      <p className="mt-2 text-slate-600">Use seu login e senha para acessar a área interna.</p>
+      <p className="mt-2 text-slate-600">
+        Use o login do assinante ou o login do cliente para acessar a área interna.
+      </p>
 
       <div className="mt-8 grid gap-5">
         <div className="grid gap-2">

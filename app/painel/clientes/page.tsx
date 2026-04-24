@@ -1,14 +1,17 @@
 import Link from "next/link"
-import { cookies } from "next/headers"
 import { redirect } from "next/navigation"
 import { ClientManagement } from "@/components/client-management"
+import { getCurrentSession } from "@/lib/auth-session"
 
 export default async function ClientesPage() {
-  const cookieStore = await cookies()
-  const session = cookieStore.get("palsys_session")
+  const session = await getCurrentSession()
 
-  if (!session || session.value !== "authenticated") {
+  if (!session) {
     redirect("/acesso")
+  }
+
+  if (session.role !== "subscriber_admin") {
+    redirect("/painel")
   }
 
   return (

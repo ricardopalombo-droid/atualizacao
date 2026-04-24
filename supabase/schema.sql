@@ -28,6 +28,8 @@ create table if not exists public.app_users (
   role text not null check (role in ('palsys_admin', 'subscriber_admin', 'client_user')),
   subscriber_id uuid references public.subscribers(id) on delete cascade,
   client_id uuid references public.clients(id) on delete cascade,
+  password_hash text not null default '',
+  password_salt text not null default '',
   can_view_personal_data boolean not null default false,
   is_active boolean not null default true,
   created_at timestamptz not null default now(),

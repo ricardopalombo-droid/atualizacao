@@ -1,51 +1,57 @@
 import Link from "next/link"
-import { cookies } from "next/headers"
 import { redirect } from "next/navigation"
 import { Building2, CheckCircle2, ClipboardList, FileSpreadsheet } from "lucide-react"
 import { listEmployeeRecords } from "@/lib/cadastro-repository"
 import { workflowStatusLabels, type WorkflowStatus } from "@/lib/employee-form-config"
 import { LogoutButton } from "@/components/logout-button"
-
-const funcoes = [
-  {
-    titulo: "Cadastro de funcionários",
-    descricao: "Preencha os dados cadastrais em abas e organize o envio para integração.",
-    href: "/painel/cadastros",
-    icone: ClipboardList,
-    acao: "Abrir módulo",
-  },
-  {
-    titulo: "Exportação de planilha",
-    descricao: "Gere um arquivo com os dados preenchidos para revisão ou importação.",
-    href: "/painel/cadastros",
-    icone: FileSpreadsheet,
-    acao: "Ir para exportação",
-  },
-  {
-    titulo: "Conferência interna",
-    descricao: "Finalize o fluxo do cadastro dentro da própria área interna da PalSys.",
-    href: "/painel/cadastros",
-    icone: CheckCircle2,
-    acao: "Concluir no painel",
-  },
-  {
-    titulo: "Clientes do assinante",
-    descricao: "Cadastre as empresas que usarão o sistema abaixo do assinante atual.",
-    href: "/painel/clientes",
-    icone: Building2,
-    acao: "Gerenciar clientes",
-  },
-]
+import { getCurrentSession } from "@/lib/auth-session"
 
 export default async function PainelPage() {
-  const cookieStore = await cookies()
-  const session = cookieStore.get("palsys_session")
+  const session = await getCurrentSession()
 
-  if (!session || session.value !== "authenticated") {
+  if (!session) {
     redirect("/acesso")
   }
 
-  const records = await listEmployeeRecords()
+  const records = await listEmployeeRecords(20, {
+    subscriberId: session.subscriberId,
+    clientId: session.clientId,
+  })
+
+  const funcoes =
+    session.role === "subscriber_admin"
+      ? [
+          {
+            titulo: "Clientes do assinante",
+            descricao: "Cadastre as empresas que usarão o sistema abaixo do assinante atual.",
+            href: "/painel/clientes",
+            icone: Building2,
+            acao: "Gerenciar clientes",
+          },
+        ]
+      : [
+          {
+            titulo: "Cadastro de funcionários",
+            descricao: "Preencha os dados cadastrais em abas e organize o envio para integração.",
+            href: "/painel/cadastros",
+            icone: ClipboardList,
+            acao: "Abrir módulo",
+          },
+          {
+            titulo: "Exportação de planilha",
+            descricao: "Gere um arquivo com os dados preenchidos para revisão ou importação.",
+            href: "/painel/cadastros",
+            icone: FileSpreadsheet,
+            acao: "Ir para exportação",
+          },
+          {
+            titulo: "Conferência interna",
+            descricao: "Finalize o fluxo do cadastro dentro da própria área interna do cliente.",
+            href: "/painel/cadastros",
+            icone: CheckCircle2,
+            acao: "Concluir no painel",
+          },
+        ]
 
   return (
     <main className="min-h-screen bg-slate-50">
@@ -57,8 +63,12 @@ export default async function PainelPage() {
             </span>
             <h1 className="mt-4 text-4xl font-bold text-slate-900">Funções liberadas após o login</h1>
             <p className="mt-3 max-w-3xl text-slate-600">
-              O usuário autenticado pode acessar os módulos disponíveis da PalSys em um ambiente
-              interno do próprio site.
+              {session.role === "subscriber_admin"
+                ? "Este acesso administra a carteira de clientes do assinante e prepara os logins de cada empresa."
+                : "Este acesso pertence a um cliente e permite cadastrar apenas os funcionários da própria empresa."}
+            </p>
+            <p className="mt-2 text-sm font-semibold text-slate-500">
+              Usuário logado: {session.displayName} ({session.email})
             </p>
           </div>
 
@@ -75,7 +85,7 @@ export default async function PainelPage() {
       </header>
 
       <section className="mx-auto max-w-6xl px-6 py-10">
-        <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
+        <div className={`grid gap-6 ${funcoes.length === 1 ? "md:grid-cols-1 xl:grid-cols-1" : "md:grid-cols-2 xl:grid-cols-3"}`}>
           {funcoes.map((funcao) => {
             const Icone = funcao.icone
 
@@ -103,22 +113,28 @@ export default async function PainelPage() {
         <section className="mt-8 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
           <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
             <div>
-              <h2 className="text-2xl font-bold text-slate-900">Cadastros salvos</h2>
+              <h2 className="text-2xl font-bold text-slate-900">
+                {session.role === "subscriber_admin" ? "Funcionários da carteira" : "Funcionários do cliente"}
+              </h2>
               <p className="mt-2 text-slate-600">
-                Aqui você acompanha os registros já gravados no banco e o estágio de cada fluxo.
+                {session.role === "subscriber_admin"
+                  ? "Visão agregada dos registros vinculados ao assinante."
+                  : "Aqui você acompanha apenas os registros gravados para o seu cliente."}
               </p>
             </div>
-            <Link
-              href="/painel/cadastros"
-              className="inline-flex items-center justify-center rounded-xl border border-slate-300 px-5 py-3 font-semibold text-slate-700 hover:bg-slate-100"
-            >
-              Novo cadastro
-            </Link>
+            {session.role === "client_user" ? (
+              <Link
+                href="/painel/cadastros"
+                className="inline-flex items-center justify-center rounded-xl border border-slate-300 px-5 py-3 font-semibold text-slate-700 hover:bg-slate-100"
+              >
+                Novo cadastro
+              </Link>
+            ) : null}
           </div>
 
           {records.length === 0 ? (
             <div className="mt-6 rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-6 text-slate-600">
-              Ainda não há cadastros salvos no banco.
+              Ainda não há cadastros salvos neste escopo.
             </div>
           ) : (
             <div className="mt-6 overflow-hidden rounded-2xl border border-slate-200">
