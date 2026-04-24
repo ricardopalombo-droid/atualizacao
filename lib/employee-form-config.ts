@@ -33,6 +33,135 @@ export type FormSection = {
   fields: FormField[]
 }
 
+const countries = [
+  "Brasil",
+  "Argentina",
+  "Bolívia",
+  "Chile",
+  "Colômbia",
+  "Paraguai",
+  "Peru",
+  "Portugal",
+  "Uruguai",
+  "Venezuela",
+  "Estados Unidos",
+  "Espanha",
+  "Itália",
+  "Alemanha",
+  "Japão",
+  "China",
+]
+
+const countryOptions: FieldOption[] = [
+  { label: "Selecione", value: "" },
+  ...countries.map((country) => ({ label: country, value: country })),
+]
+
+const brazilStates = [
+  "AC",
+  "AL",
+  "AP",
+  "AM",
+  "BA",
+  "CE",
+  "DF",
+  "ES",
+  "GO",
+  "MA",
+  "MT",
+  "MS",
+  "MG",
+  "PA",
+  "PB",
+  "PR",
+  "PE",
+  "PI",
+  "RJ",
+  "RN",
+  "RS",
+  "RO",
+  "RR",
+  "SC",
+  "SP",
+  "SE",
+  "TO",
+]
+
+const stateOptions: FieldOption[] = [
+  { label: "Selecione", value: "" },
+  ...brazilStates.map((state) => ({ label: state, value: state })),
+]
+
+const naturalityOptions: FieldOption[] = [
+  { label: "Selecione", value: "" },
+  { label: "São José dos Campos - SP", value: "São José dos Campos - SP" },
+  { label: "Campinas - SP", value: "Campinas - SP" },
+  { label: "São Paulo - SP", value: "São Paulo - SP" },
+  { label: "Taubaté - SP", value: "Taubaté - SP" },
+  { label: "Jacareí - SP", value: "Jacareí - SP" },
+  { label: "Rio de Janeiro - RJ", value: "Rio de Janeiro - RJ" },
+  { label: "Belo Horizonte - MG", value: "Belo Horizonte - MG" },
+  { label: "Salvador - BA", value: "Salvador - BA" },
+  { label: "Curitiba - PR", value: "Curitiba - PR" },
+  { label: "Porto Alegre - RS", value: "Porto Alegre - RS" },
+]
+
+const sexoOptions: FieldOption[] = [
+  { label: "Selecione", value: "" },
+  { label: "1 - Masculino", value: "1 - Masculino" },
+  { label: "2 - Feminino", value: "2 - Feminino" },
+]
+
+const racaCorOptions: FieldOption[] = [
+  { label: "Selecione", value: "" },
+  { label: "1 - Branca", value: "1 - Branca" },
+  { label: "2 - Preta", value: "2 - Preta" },
+  { label: "3 - Parda", value: "3 - Parda" },
+  { label: "4 - Amarela", value: "4 - Amarela" },
+  { label: "5 - Indígena", value: "5 - Indígena" },
+  { label: "6 - Não informado", value: "6 - Não informado" },
+]
+
+const estadoCivilOptions: FieldOption[] = [
+  { label: "Selecione", value: "" },
+  { label: "1 - Solteiro", value: "1 - Solteiro" },
+  { label: "2 - Casado", value: "2 - Casado" },
+  { label: "3 - Divorciado", value: "3 - Divorciado" },
+  { label: "4 - Separado", value: "4 - Separado" },
+  { label: "5 - Viúvo", value: "5 - Viúvo" },
+]
+
+const grauInstrucaoOptions: FieldOption[] = [
+  { label: "Selecione", value: "" },
+  { label: "01 - Analfabeto, inclusive o que, embora tenha recebido instrução, não se alfabetizou", value: "01" },
+  { label: "02 - Até o 5º ano incompleto do ensino fundamental", value: "02" },
+  { label: "03 - 5º ano completo do ensino fundamental", value: "03" },
+  { label: "04 - Do 6º ao 9º ano do ensino fundamental incompleto", value: "04" },
+  { label: "05 - Ensino fundamental completo", value: "05" },
+  { label: "06 - Ensino médio incompleto", value: "06" },
+  { label: "07 - Ensino médio completo", value: "07" },
+  { label: "08 - Educação superior incompleta", value: "08" },
+  { label: "09 - Educação superior completa", value: "09" },
+  { label: "10 - Pós-graduação completa", value: "10" },
+  { label: "11 - Mestrado completo", value: "11" },
+  { label: "12 - Doutorado completo", value: "12" },
+]
+
+const tipoContaOptions: FieldOption[] = [
+  { label: "Selecione", value: "" },
+  { label: "1 - Corrente", value: "1 - Corrente" },
+  { label: "2 - Poupança", value: "2 - Poupança" },
+  { label: "3 - Salário", value: "3 - Salário" },
+]
+
+const tipoContratoOptions: FieldOption[] = [
+  { label: "Selecione", value: "" },
+  { label: "1 - Prazo indeterminado", value: "1 - Prazo indeterminado" },
+  { label: "2 - Prazo determinado, definido em dias", value: "2 - Prazo determinado, definido em dias" },
+  { label: "3 - Prazo determinado, vinculado a fato", value: "3 - Prazo determinado, vinculado a fato" },
+  { label: "4 - Prazo determinado sem cláusula assecuratória", value: "4 - Prazo determinado sem cláusula assecuratória" },
+]
+
 export const workflowStatusOrder: WorkflowStatus[] = [
   "rascunho_interno",
   "convite_enviado",
@@ -66,25 +195,20 @@ export const formSections: FormSection[] = [
       { key: "telefone", label: "Telefone", type: "text", audience: "employee" },
       { key: "celular", label: "Celular", type: "text", audience: "employee" },
       { key: "data_nascimento", label: "Data de nascimento", type: "date", audience: "employee", requiredForExport: true },
-      { key: "pais_origem", label: "País de origem", type: "text", audience: "employee" },
-      { key: "naturalidade", label: "Naturalidade", type: "text", audience: "employee" },
+      { key: "pais_origem", label: "País de origem", type: "select", audience: "employee", options: countryOptions },
+      { key: "naturalidade", label: "Naturalidade", type: "select", audience: "employee", options: naturalityOptions },
       {
         key: "sexo",
         label: "Sexo",
         type: "select",
         audience: "employee",
-        options: [
-          { label: "Selecione", value: "" },
-          { label: "Feminino", value: "Feminino" },
-          { label: "Masculino", value: "Masculino" },
-          { label: "Outro", value: "Outro" },
-        ],
+        options: sexoOptions,
       },
-      { key: "raca_cor", label: "Raça/Cor", type: "text", audience: "employee" },
-      { key: "estado_civil", label: "Estado civil", type: "text", audience: "employee" },
+      { key: "raca_cor", label: "Raça/Cor", type: "select", audience: "employee", options: racaCorOptions },
+      { key: "estado_civil", label: "Estado civil", type: "select", audience: "employee", options: estadoCivilOptions },
       { key: "tipo_sanguineo", label: "Tipo sanguíneo", type: "text", audience: "employee" },
-      { key: "nacionalidade", label: "Nacionalidade", type: "text", audience: "employee" },
-      { key: "grau_instrucao", label: "Grau de instrução", type: "text", audience: "employee" },
+      { key: "nacionalidade", label: "Nacionalidade", type: "select", audience: "employee", options: countryOptions },
+      { key: "grau_instrucao", label: "Grau de instrução", type: "select", audience: "employee", options: grauInstrucaoOptions },
       { key: "deficiencia_tipo", label: "Deficiência (tipo)", type: "text", audience: "employee" },
     ],
   },
@@ -100,7 +224,7 @@ export const formSections: FormSection[] = [
       { key: "complemento", label: "Complemento", type: "text", audience: "employee" },
       { key: "bairro", label: "Bairro", type: "text", audience: "employee" },
       { key: "cidade", label: "Cidade", type: "text", audience: "employee", requiredForExport: true },
-      { key: "uf", label: "UF", type: "text", audience: "employee", placeholder: "SP", requiredForExport: true },
+      { key: "uf", label: "UF", type: "select", audience: "employee", options: stateOptions, requiredForExport: true },
     ],
   },
   {
@@ -117,10 +241,27 @@ export const formSections: FormSection[] = [
       { key: "ctps_uf", label: "UF CTPS", type: "text", audience: "employee" },
       { key: "rg_numero", label: "RG", type: "text", audience: "employee", requiredForExport: true },
       { key: "rg_orgao_emissor", label: "Órgão emissor RG", type: "text", audience: "employee" },
-      { key: "uf_rg", label: "UF do RG", type: "text", audience: "employee" },
+      { key: "uf_rg", label: "UF do RG", type: "select", audience: "employee", options: stateOptions },
       { key: "rg_data_expedicao", label: "Data expedição RG", type: "date", audience: "employee" },
       { key: "cnh_numero", label: "Número CNH", type: "text", audience: "employee" },
-      { key: "categoria_cnh", label: "Categoria CNH", type: "text", audience: "employee" },
+      {
+        key: "categoria_cnh",
+        label: "Categoria CNH",
+        type: "select",
+        audience: "employee",
+        options: [
+          { label: "Selecione", value: "" },
+          { label: "A", value: "A" },
+          { label: "B", value: "B" },
+          { label: "C", value: "C" },
+          { label: "D", value: "D" },
+          { label: "E", value: "E" },
+          { label: "AB", value: "AB" },
+          { label: "AC", value: "AC" },
+          { label: "AD", value: "AD" },
+          { label: "AE", value: "AE" },
+        ],
+      },
       { key: "validade_cnh", label: "Validade CNH", type: "date", audience: "employee" },
     ],
   },
@@ -150,7 +291,14 @@ export const formSections: FormSection[] = [
       { key: "data_admissao", label: "Data admissão", type: "date", audience: "client", requiredForExport: true },
       { key: "sindicato", label: "Sindicato representante", type: "text", audience: "client", requiredForExport: true },
       { key: "categoria_normativa", label: "Categoria normativa vinculada", type: "text", audience: "client" },
-      { key: "tipo_contrato", label: "Tipo de contrato", type: "text", audience: "client", requiredForExport: true },
+      {
+        key: "tipo_contrato",
+        label: "Tipo de contrato",
+        type: "select",
+        audience: "client",
+        options: tipoContratoOptions,
+        requiredForExport: true,
+      },
       { key: "salario", label: "Salário", type: "number", audience: "client", requiredForExport: true },
       { key: "cargo", label: "Função", type: "text", audience: "client", requiredForExport: true },
       { key: "cbo", label: "CBO", type: "text", audience: "client", requiredForExport: true },
@@ -192,12 +340,7 @@ export const formSections: FormSection[] = [
         label: "Tipo da conta",
         type: "select",
         audience: "client",
-        options: [
-          { label: "Selecione", value: "" },
-          { label: "Corrente", value: "Corrente" },
-          { label: "Poupança", value: "Poupança" },
-          { label: "Salário", value: "Salário" },
-        ],
+        options: tipoContaOptions,
       },
       { key: "numero_conta", label: "Número da conta", type: "text", audience: "client" },
       { key: "evento_esocial", label: "Evento eSocial", type: "text", audience: "client" },
