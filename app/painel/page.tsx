@@ -1,7 +1,7 @@
 import Link from "next/link"
 import { cookies } from "next/headers"
 import { redirect } from "next/navigation"
-import { CheckCircle2, ClipboardList, FileSpreadsheet } from "lucide-react"
+import { Building2, CheckCircle2, ClipboardList, FileSpreadsheet } from "lucide-react"
 import { listEmployeeRecords } from "@/lib/cadastro-repository"
 import { workflowStatusLabels, type WorkflowStatus } from "@/lib/employee-form-config"
 import { LogoutButton } from "@/components/logout-button"
@@ -27,6 +27,13 @@ const funcoes = [
     href: "/painel/cadastros",
     icone: CheckCircle2,
     acao: "Concluir no painel",
+  },
+  {
+    titulo: "Clientes do assinante",
+    descricao: "Cadastre as empresas que usarão o sistema abaixo do assinante atual.",
+    href: "/painel/clientes",
+    icone: Building2,
+    acao: "Gerenciar clientes",
   },
 ]
 
@@ -68,7 +75,7 @@ export default async function PainelPage() {
       </header>
 
       <section className="mx-auto max-w-6xl px-6 py-10">
-        <div className="grid gap-6 md:grid-cols-3">
+        <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
           {funcoes.map((funcao) => {
             const Icone = funcao.icone
 
