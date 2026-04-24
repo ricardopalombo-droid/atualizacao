@@ -18,7 +18,9 @@ import {
   type FormField,
   type WorkflowStatus,
   workflowStatusLabels,
+  workflowStatusOrder,
 } from "@/lib/employee-form-config"
+import { exportEmployeeWorkbook } from "@/lib/planilha-export"
 
 type FormState = Record<string, string | boolean>
 
@@ -129,7 +131,6 @@ export function EmployeeOnboardingForm({ variant = "client" }: EmployeeOnboardin
       "em_revisao_cliente",
       "O cadastro entrou em revisão do cliente. Complete dados contratuais, banco, eSocial e validações."
     )
-
     if (success) {
       changeViewer("client")
     }
@@ -139,32 +140,13 @@ export function EmployeeOnboardingForm({ variant = "client" }: EmployeeOnboardin
     await persist("finalizado", "Cadastro finalizado. A planilha agora pode ser gerada.")
   }
 
-  function exportToCsv() {
+  function exportToWorkbook() {
     if (status !== "finalizado" && status !== "exportado") {
       setStatusMessage("Finalize o cadastro antes de gerar a planilha.")
       return
     }
 
-    const rows = Object.entries({
-      ...formData,
-      status,
-    }).map(([key, value]) => [
-      key,
-      typeof value === "boolean" ? (value ? "Sim" : "Não") : value,
-    ])
-
-    const csv = [
-      "campo,valor",
-      ...rows.map(([key, value]) => `"${key}","${String(value).replaceAll('"', '""')}"`),
-    ].join("\n")
-
-    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" })
-    const url = URL.createObjectURL(blob)
-    const link = document.createElement("a")
-    link.href = url
-    link.download = `cadastro-funcionario-${Date.now()}.csv`
-    link.click()
-    URL.revokeObjectURL(url)
+    exportEmployeeWorkbook(formData)
     setWorkflow("exportado", "Planilha gerada com sucesso para a próxima etapa operacional.")
   }
 
@@ -279,7 +261,7 @@ export function EmployeeOnboardingForm({ variant = "client" }: EmployeeOnboardin
           onSubmitEmployeeData={submitEmployeeData}
           onMoveToClientReview={moveToClientReview}
           onFinalizeRecord={finalizeRecord}
-          onExport={exportToCsv}
+          onExport={exportToWorkbook}
         />
       </div>
     </div>
