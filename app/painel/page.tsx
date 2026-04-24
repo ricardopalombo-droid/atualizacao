@@ -98,3 +98,62 @@ export default async function PainelPage() {
             <div>
               <h2 className="text-2xl font-bold text-slate-900">Cadastros salvos</h2>
               <p className="mt-2 text-slate-600">
+                Aqui você acompanha os registros já gravados no banco e o estágio de cada fluxo.
+              </p>
+            </div>
+            <Link
+              href="/painel/cadastros"
+              className="inline-flex items-center justify-center rounded-xl border border-slate-300 px-5 py-3 font-semibold text-slate-700 hover:bg-slate-100"
+            >
+              Novo cadastro
+            </Link>
+          </div>
+
+          {records.length === 0 ? (
+            <div className="mt-6 rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-6 text-slate-600">
+              Ainda não há cadastros salvos no banco.
+            </div>
+          ) : (
+            <div className="mt-6 overflow-hidden rounded-2xl border border-slate-200">
+              <table className="min-w-full divide-y divide-slate-200">
+                <thead className="bg-slate-50">
+                  <tr className="text-left text-sm font-semibold text-slate-700">
+                    <th className="px-4 py-3">Funcionário</th>
+                    <th className="px-4 py-3">E-mail</th>
+                    <th className="px-4 py-3">Status</th>
+                    <th className="px-4 py-3">Atualizado</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-200 bg-white">
+                  {records.map((record) => (
+                    <tr key={record.id} className="text-sm text-slate-700">
+                      <td className="px-4 py-3 font-medium text-slate-900">
+                        {record.employee_name || "Sem nome informado"}
+                      </td>
+                      <td className="px-4 py-3">
+                        {record.employee_email || record.invite_email || "Sem e-mail"}
+                      </td>
+                      <td className="px-4 py-3">
+                        <span className="inline-flex rounded-full bg-yellow-100 px-3 py-1 text-xs font-bold text-yellow-800">
+                          {workflowStatusLabels[record.workflow_status as WorkflowStatus] ?? record.workflow_status}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3">{formatDateTime(record.updated_at)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </section>
+      </section>
+    </main>
+  )
+}
+
+function formatDateTime(value: string) {
+  return new Intl.DateTimeFormat("pt-BR", {
+    dateStyle: "short",
+    timeStyle: "short",
+  }).format(new Date(value))
+}
