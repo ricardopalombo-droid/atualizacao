@@ -1,5 +1,26 @@
 import { cadastroPayloadSchema } from "@/lib/cadastro-types"
-import { upsertEmployeeRecord } from "@/lib/cadastro-repository"
+import { listEmployeeRecords, upsertEmployeeRecord } from "@/lib/cadastro-repository"
+
+export async function GET() {
+  try {
+    const records = await listEmployeeRecords()
+
+    return Response.json({
+      ok: true,
+      records,
+    })
+  } catch (error) {
+    console.error(error)
+
+    return Response.json(
+      {
+        ok: false,
+        error: error instanceof Error ? error.message : "Erro ao listar cadastros",
+      },
+      { status: 500 }
+    )
+  }
+}
 
 export async function POST(request: Request) {
   try {
