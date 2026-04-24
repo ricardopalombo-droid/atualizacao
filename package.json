@@ -61,6 +61,7 @@
     "zod": "^3.24.1",
     "@aws-sdk/client-s3": "^3.876.0",
     "@aws-sdk/s3-request-presigner": "^3.876.0",
+    "@supabase/supabase-js": "^2.49.8",
     "nodemailer": "^6.9.14"
   },
   "devDependencies": {
