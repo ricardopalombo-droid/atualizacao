@@ -1,5 +1,15 @@
 export type FieldType = "text" | "date" | "number" | "email" | "select" | "textarea" | "checkbox"
 
+export type FieldAudience = "employee" | "client"
+
+export type WorkflowStatus =
+  | "rascunho_interno"
+  | "convite_enviado"
+  | "preenchido_funcionario"
+  | "em_revisao_cliente"
+  | "finalizado"
+  | "exportado"
+
 export type FieldOption = {
   label: string
   value: string
@@ -9,100 +19,194 @@ export type FormField = {
   key: string
   label: string
   type: FieldType
+  audience: FieldAudience
   placeholder?: string
   options?: FieldOption[]
+  requiredForExport?: boolean
 }
 
 export type FormSection = {
   id: string
   title: string
   description: string
+  audience: FieldAudience
   fields: FormField[]
+}
+
+export const workflowStatusOrder: WorkflowStatus[] = [
+  "rascunho_interno",
+  "convite_enviado",
+  "preenchido_funcionario",
+  "em_revisao_cliente",
+  "finalizado",
+  "exportado",
+]
+
+export const workflowStatusLabels: Record<WorkflowStatus, string> = {
+  rascunho_interno: "Rascunho interno",
+  convite_enviado: "Convite enviado",
+  preenchido_funcionario: "Preenchido pelo funcionário",
+  em_revisao_cliente: "Em revisão do cliente",
+  finalizado: "Finalizado",
+  exportado: "Exportado",
 }
 
 export const formSections: FormSection[] = [
   {
-    id: "dados-cadastrais",
-    title: "Dados cadastrais",
-    description: "Informações pessoais, endereço e dados básicos do colaborador.",
+    id: "dados-pessoais-funcionario",
+    title: "Dados pessoais",
+    description: "Campos liberados no link enviado ao funcionário.",
+    audience: "employee",
     fields: [
-      { key: "nome_completo", label: "Nome completo", type: "text" },
-      { key: "nome_mae", label: "Nome da mãe", type: "text" },
-      { key: "nome_pai", label: "Nome do pai", type: "text" },
-      { key: "cep", label: "CEP", type: "text", placeholder: "12239-036" },
-      { key: "logradouro", label: "Logradouro", type: "text" },
-      { key: "numero", label: "Número", type: "text" },
-      { key: "complemento", label: "Complemento", type: "text" },
-      { key: "bairro", label: "Bairro", type: "text" },
-      { key: "cidade", label: "Cidade", type: "text" },
-      { key: "uf", label: "UF", type: "text", placeholder: "SP" },
-      { key: "email", label: "E-mail", type: "email" },
-      { key: "email_alternativo", label: "E-mail alternativo", type: "email" },
-      { key: "telefone", label: "Telefone", type: "text" },
-      { key: "celular", label: "Celular", type: "text" },
+      { key: "nome_completo", label: "Nome completo", type: "text", audience: "employee", requiredForExport: true },
+      { key: "nome_social", label: "Nome social", type: "text", audience: "employee" },
+      { key: "nome_mae", label: "Nome da mãe", type: "text", audience: "employee", requiredForExport: true },
+      { key: "nome_pai", label: "Nome do pai", type: "text", audience: "employee" },
+      { key: "email", label: "E-mail", type: "email", audience: "employee" },
+      { key: "telefone", label: "Telefone", type: "text", audience: "employee" },
+      { key: "celular", label: "Celular", type: "text", audience: "employee" },
+      { key: "data_nascimento", label: "Data de nascimento", type: "date", audience: "employee", requiredForExport: true },
+      { key: "pais_origem", label: "País de origem", type: "text", audience: "employee" },
+      { key: "naturalidade", label: "Naturalidade", type: "text", audience: "employee" },
       {
         key: "sexo",
         label: "Sexo",
         type: "select",
+        audience: "employee",
         options: [
           { label: "Selecione", value: "" },
-          { label: "Feminino", value: "feminino" },
-          { label: "Masculino", value: "masculino" },
-          { label: "Outro", value: "outro" },
+          { label: "Feminino", value: "Feminino" },
+          { label: "Masculino", value: "Masculino" },
+          { label: "Outro", value: "Outro" },
         ],
       },
-      { key: "data_nascimento", label: "Data de nascimento", type: "date" },
-      { key: "naturalidade", label: "Naturalidade", type: "text" },
+      { key: "raca_cor", label: "Raça/Cor", type: "text", audience: "employee" },
+      { key: "estado_civil", label: "Estado civil", type: "text", audience: "employee" },
+      { key: "tipo_sanguineo", label: "Tipo sanguíneo", type: "text", audience: "employee" },
+      { key: "nacionalidade", label: "Nacionalidade", type: "text", audience: "employee" },
+      { key: "grau_instrucao", label: "Grau de instrução", type: "text", audience: "employee" },
+      { key: "deficiencia_tipo", label: "Deficiência (tipo)", type: "text", audience: "employee" },
     ],
   },
   {
-    id: "dados-contratuais",
-    title: "Dados contratuais",
-    description: "Informações sindicais, salariais e de admissão.",
+    id: "endereco-funcionario",
+    title: "Endereço",
+    description: "Endereço principal do funcionário para compor a planilha final.",
+    audience: "employee",
     fields: [
-      { key: "sindicato", label: "Sindicato", type: "text" },
-      { key: "tipo_tributacao", label: "Tipo de tributação", type: "text" },
-      { key: "matricula_filiacao", label: "Matrícula filiação", type: "text" },
-      { key: "forma_pagamento", label: "Forma de pagamento", type: "text" },
-      { key: "tipo_contrato", label: "Tipo de contrato", type: "text" },
-      { key: "salario", label: "Salário", type: "number" },
-      { key: "horas_semanais", label: "Horas semanais", type: "number" },
-      { key: "horas_mensais", label: "Horas mensais", type: "number" },
-      { key: "data_termino", label: "Término do contrato", type: "date" },
-      { key: "cargo", label: "Cargo", type: "text" },
-      { key: "horario", label: "Horário", type: "text" },
+      { key: "cep", label: "CEP", type: "text", audience: "employee", placeholder: "12239-036", requiredForExport: true },
+      { key: "logradouro", label: "Logradouro", type: "text", audience: "employee", requiredForExport: true },
+      { key: "numero", label: "Número", type: "text", audience: "employee" },
+      { key: "complemento", label: "Complemento", type: "text", audience: "employee" },
+      { key: "bairro", label: "Bairro", type: "text", audience: "employee" },
+      { key: "cidade", label: "Cidade", type: "text", audience: "employee", requiredForExport: true },
+      { key: "uf", label: "UF", type: "text", audience: "employee", placeholder: "SP", requiredForExport: true },
     ],
   },
   {
-    id: "documentos-oficiais",
+    id: "documentos-funcionario",
     title: "Documentos oficiais",
-    description: "Documentos pessoais obrigatórios para cadastro.",
+    description: "Documentos que o próprio funcionário costuma informar no cadastro inicial.",
+    audience: "employee",
     fields: [
-      { key: "cpf", label: "CPF", type: "text" },
-      { key: "pis", label: "PIS", type: "text" },
-      { key: "titulo_eleitor", label: "Título de eleitor", type: "text" },
-      { key: "ctps_numero", label: "Número CTPS", type: "text" },
-      { key: "ctps_serie", label: "Série CTPS", type: "text" },
-      { key: "ctps_uf", label: "UF CTPS", type: "text" },
-      { key: "rg_numero", label: "RG", type: "text" },
-      { key: "rg_orgao_emissor", label: "Órgão emissor RG", type: "text" },
-      { key: "rg_data_expedicao", label: "Data expedição RG", type: "date" },
-      { key: "cnh_numero", label: "CNH", type: "text" },
+      { key: "cpf", label: "CPF", type: "text", audience: "employee", requiredForExport: true },
+      { key: "pis", label: "PIS", type: "text", audience: "employee", requiredForExport: true },
+      { key: "titulo_eleitor", label: "Título de eleitor", type: "text", audience: "employee" },
+      { key: "ctps_numero", label: "Número CTPS", type: "text", audience: "employee", requiredForExport: true },
+      { key: "ctps_serie", label: "Série CTPS", type: "text", audience: "employee" },
+      { key: "ctps_uf", label: "UF CTPS", type: "text", audience: "employee" },
+      { key: "rg_numero", label: "RG", type: "text", audience: "employee", requiredForExport: true },
+      { key: "rg_orgao_emissor", label: "Órgão emissor RG", type: "text", audience: "employee" },
+      { key: "uf_rg", label: "UF do RG", type: "text", audience: "employee" },
+      { key: "rg_data_expedicao", label: "Data expedição RG", type: "date", audience: "employee" },
+      { key: "cnh_numero", label: "Número CNH", type: "text", audience: "employee" },
+      { key: "categoria_cnh", label: "Categoria CNH", type: "text", audience: "employee" },
+      { key: "validade_cnh", label: "Validade CNH", type: "date", audience: "employee" },
     ],
   },
   {
-    id: "outros",
-    title: "Outros",
-    description: "Informações adicionais para o cadastro.",
+    id: "informacoes-adicionais-funcionario",
+    title: "Informações adicionais",
+    description: "Dados extras que o funcionário pode preencher antes da revisão do cliente.",
+    audience: "employee",
     fields: [
-      { key: "nome_social", label: "Nome social", type: "text" },
-      { key: "possui_residencia_propria", label: "Possui residência própria", type: "checkbox" },
-      { key: "imovel_fgts", label: "Imóvel adquirido com recurso do FGTS", type: "checkbox" },
-      { key: "cnpj_vinculo_anterior", label: "CNPJ vínculo anterior", type: "text" },
-      { key: "matricula_anterior", label: "Matrícula anterior", type: "text" },
-      { key: "inicio_aposentadoria", label: "Início aposentadoria", type: "date" },
-      { key: "motivo_aposentadoria", label: "Motivo aposentadoria", type: "text" },
-      { key: "isencao_molestia_grave", label: "Isenção de moléstia grave", type: "textarea" },
+      { key: "possui_residencia_propria", label: "Possui residência própria", type: "checkbox", audience: "employee" },
+      { key: "imovel_fgts", label: "Imóvel adquirido com recurso do FGTS", type: "checkbox", audience: "employee" },
+      { key: "cnpj_vinculo_anterior", label: "CNPJ vínculo anterior", type: "text", audience: "employee" },
+      { key: "matricula_anterior", label: "Matrícula vínculo anterior", type: "text", audience: "employee" },
+      { key: "data_inicio_vinculo_anterior", label: "Data início vínculo anterior", type: "date", audience: "employee" },
+      { key: "data_fim_vinculo_anterior", label: "Data fim vínculo anterior", type: "date", audience: "employee" },
+      { key: "inicio_aposentadoria", label: "Início aposentadoria", type: "date", audience: "employee" },
+      { key: "motivo_aposentadoria", label: "Motivo aposentadoria", type: "text", audience: "employee" },
+      { key: "isencao_molestia_grave", label: "Isenção de moléstia grave", type: "textarea", audience: "employee" },
+    ],
+  },
+  {
+    id: "dados-contratuais-cliente",
+    title: "Dados contratuais",
+    description: "Campos preenchidos pelo cliente após o retorno do funcionário.",
+    audience: "client",
+    fields: [
+      { key: "data_admissao", label: "Data admissão", type: "date", audience: "client", requiredForExport: true },
+      { key: "sindicato", label: "Sindicato representante", type: "text", audience: "client", requiredForExport: true },
+      { key: "categoria_normativa", label: "Categoria normativa vinculada", type: "text", audience: "client" },
+      { key: "tipo_contrato", label: "Tipo de contrato", type: "text", audience: "client", requiredForExport: true },
+      { key: "salario", label: "Salário", type: "number", audience: "client", requiredForExport: true },
+      { key: "cargo", label: "Função", type: "text", audience: "client", requiredForExport: true },
+      { key: "cbo", label: "CBO", type: "text", audience: "client", requiredForExport: true },
+      { key: "horas_semanais", label: "Horas semanais", type: "number", audience: "client" },
+      { key: "horas_mensais", label: "Horas mensais", type: "number", audience: "client" },
+      { key: "horario", label: "Horário", type: "text", audience: "client" },
+      { key: "data_alteracao_cargo", label: "Data alteração do cargo", type: "date", audience: "client" },
+    ],
+  },
+  {
+    id: "lotacao-e-exames-cliente",
+    title: "Lotação e exames",
+    description: "Informações operacionais da empresa e do exame médico.",
+    audience: "client",
+    fields: [
+      { key: "local", label: "Local", type: "text", audience: "client" },
+      { key: "departamento", label: "Departamento", type: "text", audience: "client" },
+      { key: "setor", label: "Setor", type: "text", audience: "client" },
+      { key: "secao", label: "Seção", type: "text", audience: "client" },
+      { key: "data_exame_medico", label: "Data exame médico", type: "date", audience: "client" },
+      { key: "validade_exame_medico", label: "Validade exame médico (meses)", type: "number", audience: "client" },
+      { key: "data_saida", label: "Data de saída", type: "date", audience: "client" },
+      { key: "registro_funcionario", label: "Registro de funcionário", type: "text", audience: "client" },
+      { key: "folha_ficha", label: "Folha/Ficha", type: "text", audience: "client" },
+      { key: "grau_risco", label: "Grau de risco", type: "text", audience: "client" },
+      { key: "caged", label: "CAGED", type: "text", audience: "client" },
+    ],
+  },
+  {
+    id: "dados-bancarios-esocial-cliente",
+    title: "Banco, FGTS e eSocial",
+    description: "Campos complementares de fechamento preenchidos pelo cliente.",
+    audience: "client",
+    fields: [
+      { key: "banco", label: "Banco", type: "text", audience: "client" },
+      { key: "agencia", label: "Agência", type: "text", audience: "client" },
+      {
+        key: "tipo_conta",
+        label: "Tipo da conta",
+        type: "select",
+        audience: "client",
+        options: [
+          { label: "Selecione", value: "" },
+          { label: "Corrente", value: "Corrente" },
+          { label: "Poupança", value: "Poupança" },
+          { label: "Salário", value: "Salário" },
+        ],
+      },
+      { key: "numero_conta", label: "Número da conta", type: "text", audience: "client" },
+      { key: "evento_esocial", label: "Evento eSocial", type: "text", audience: "client" },
+      { key: "matricula_esocial", label: "Matrícula eSocial", type: "text", audience: "client" },
+      { key: "operacao_esocial", label: "Operação eSocial", type: "text", audience: "client" },
+      { key: "status_esocial", label: "Status eSocial", type: "text", audience: "client" },
+      { key: "numero_recibo_esocial", label: "Número recibo eSocial", type: "text", audience: "client" },
+      { key: "numero_protocolo_esocial", label: "Número protocolo eSocial", type: "text", audience: "client" },
+      { key: "antecipar_indenizacao_fgts", label: "Antecipar indenização do FGTS", type: "checkbox", audience: "client" },
     ],
   },
 ]
@@ -116,7 +220,12 @@ export const defaultFormValues = formSections.reduce<Record<string, string | boo
     return accumulator
   },
   {
-    status: "rascunho",
+    status: "rascunho_interno",
     aprovado_para_integracao: false,
+    convite_email: "",
   }
 )
+
+export function getSectionsForAudience(audience: FieldAudience) {
+  return formSections.filter((section) => section.audience === audience)
+}
