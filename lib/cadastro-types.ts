@@ -12,7 +12,7 @@ export const workflowStatusSchema = z.enum([
 export const actorSchema = z.enum(["employee", "client"])
 
 export const cadastroPayloadSchema = z.object({
-  id: z.string().uuid().optional(),
+  id: z.string().uuid().optional().nullable(),
   clientId: z.string().uuid().optional().nullable(),
   subscriberId: z.string().uuid().optional().nullable(),
   actor: actorSchema,
