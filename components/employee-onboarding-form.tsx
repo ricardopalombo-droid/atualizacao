@@ -1,6 +1,6 @@
 "use client"
 
-import { useMemo, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import {
   CheckCircle2,
   Download,
@@ -34,6 +34,7 @@ const viewerLabels: Record<FieldAudience, string> = {
 }
 
 export function EmployeeOnboardingForm({ variant = "client" }: EmployeeOnboardingFormProps) {
+  const [editRecordId, setEditRecordId] = useState<string | null>(null)
   const [viewer, setViewer] = useState<FieldAudience>(variant === "employee" ? "employee" : "client")
   const [activeSection, setActiveSection] = useState(getSectionsForAudience(viewer)[0]?.id ?? "")
   const [formData, setFormData] = useState<FormState>(defaultFormValues)
@@ -49,6 +50,68 @@ export function EmployeeOnboardingForm({ variant = "client" }: EmployeeOnboardin
   const currentSections = useMemo(() => getSectionsForAudience(viewer), [viewer])
   const currentSection = currentSections.find((section) => section.id === activeSection) ?? currentSections[0]
   const canSwitchViewer = variant === "client"
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return
+    }
+
+    const params = new URLSearchParams(window.location.search)
+    setEditRecordId(params.get("id"))
+  }, [])
+
+  useEffect(() => {
+    if (!editRecordId) {
+      return
+    }
+
+    let isMounted = true
+
+    async function loadRecord() {
+      try {
+        const response = await fetch(`/api/cadastros?id=${editRecordId}`, {
+          method: "GET",
+          cache: "no-store",
+        })
+        const result = (await response.json()) as {
+          ok: boolean
+          record?: {
+            id: string
+            workflow_status: WorkflowStatus
+            invite_email: string | null
+            full_payload: FormState
+          } | null
+          error?: string
+        }
+
+        if (!response.ok || !result.ok || !result.record || !isMounted) {
+          if (result.error && isMounted) {
+            setStatusMessage(result.error)
+          }
+          return
+        }
+
+        setRecordId(result.record.id)
+        setStatus(result.record.workflow_status)
+        setFormData({
+          ...defaultFormValues,
+          ...result.record.full_payload,
+          convite_email: result.record.invite_email ?? String(result.record.full_payload.convite_email ?? ""),
+        })
+        setStatusMessage("Cadastro carregado para continuar a edição.")
+      } catch (error) {
+        if (isMounted) {
+          setStatusMessage(error instanceof Error ? error.message : "Erro ao carregar cadastro salvo.")
+        }
+      }
+    }
+
+    void loadRecord()
+
+    return () => {
+      isMounted = false
+    }
+  }, [editRecordId])
 
   function updateField(key: string, value: string | boolean) {
     setFormData((previous) => ({

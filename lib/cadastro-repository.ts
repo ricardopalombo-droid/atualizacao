@@ -12,6 +12,16 @@ export type EmployeeRecordListItem = {
   updated_at: string
 }
 
+export type EmployeeRecordDetail = {
+  id: string
+  subscriber_id: string | null
+  client_id: string | null
+  workflow_status: string
+  invite_email: string | null
+  full_payload: Record<string, string | boolean | number | null>
+  updated_at: string
+}
+
 function statusTimestamps(status: WorkflowStatus) {
   const now = new Date().toISOString()
 
@@ -82,4 +92,30 @@ export async function listEmployeeRecords(
   }
 
   return data ?? []
+}
+
+export async function getEmployeeRecordById(
+  id: string,
+  scope?: { subscriberId?: string | null; clientId?: string | null }
+): Promise<EmployeeRecordDetail | null> {
+  const supabase = getSupabaseServerClient()
+
+  let query = supabase
+    .from("employees")
+    .select("id, subscriber_id, client_id, workflow_status, invite_email, full_payload, updated_at")
+    .eq("id", id)
+
+  if (scope?.clientId) {
+    query = query.eq("client_id", scope.clientId)
+  } else if (scope?.subscriberId) {
+    query = query.eq("subscriber_id", scope.subscriberId)
+  }
+
+  const { data, error } = await query.maybeSingle()
+
+  if (error) {
+    throw error
+  }
+
+  return (data as EmployeeRecordDetail | null) ?? null
 }

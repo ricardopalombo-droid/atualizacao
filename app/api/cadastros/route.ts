@@ -1,13 +1,28 @@
 import { cadastroPayloadSchema } from "@/lib/cadastro-types"
-import { listEmployeeRecords, upsertEmployeeRecord } from "@/lib/cadastro-repository"
+import { getEmployeeRecordById, listEmployeeRecords, upsertEmployeeRecord } from "@/lib/cadastro-repository"
 import { getCurrentSession } from "@/lib/auth-session"
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
     const session = await getCurrentSession()
 
     if (!session) {
       return Response.json({ ok: false, error: "Não autenticado." }, { status: 401 })
+    }
+
+    const url = new URL(request.url)
+    const recordId = url.searchParams.get("id")
+
+    if (recordId) {
+      const record = await getEmployeeRecordById(recordId, {
+        subscriberId: session.subscriberId,
+        clientId: session.clientId,
+      })
+
+      return Response.json({
+        ok: true,
+        record,
+      })
     }
 
     const records = await listEmployeeRecords(20, {

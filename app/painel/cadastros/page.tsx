@@ -1,6 +1,7 @@
 import Link from "next/link"
 import { redirect } from "next/navigation"
 import { EmployeeOnboardingForm } from "@/components/employee-onboarding-form"
+import { EmployeeRecordsList } from "@/components/employee-records-list"
 import { getCurrentSession } from "@/lib/auth-session"
 
 export default async function CadastrosPage() {
@@ -35,6 +36,10 @@ export default async function CadastrosPage() {
           >
             Voltar ao painel
           </Link>
+        </div>
+
+        <div className="mb-6">
+          <EmployeeRecordsList />
         </div>
 
         <EmployeeOnboardingForm />

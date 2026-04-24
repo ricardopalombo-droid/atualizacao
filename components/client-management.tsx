@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { Building2, Plus, Users } from "lucide-react"
+import { Building2, Pencil, Plus, Users } from "lucide-react"
 
 type ClientRecord = {
   id: string
@@ -9,10 +9,13 @@ type ClientRecord = {
   email: string | null
   cnpj: string | null
   max_employees: number | null
+  access_email: string | null
+  contact_name: string | null
   updated_at: string
 }
 
 type FormState = {
+  id: string | null
   name: string
   email: string
   cnpj: string
@@ -23,6 +26,7 @@ type FormState = {
 }
 
 const initialForm: FormState = {
+  id: null,
   name: "",
   email: "",
   cnpj: "",
@@ -78,25 +82,46 @@ export function ClientManagement() {
     }))
   }
 
+  function startEditing(client: ClientRecord) {
+    setForm({
+      id: client.id,
+      name: client.name,
+      email: client.email ?? "",
+      cnpj: client.cnpj ?? "",
+      maxEmployees: client.max_employees ? String(client.max_employees) : "",
+      contactName: client.contact_name ?? "",
+      accessEmail: client.access_email ?? "",
+      temporaryPassword: "",
+    })
+    setStatusMessage(`Editando o cliente ${client.name}.`)
+  }
+
+  function cancelEditing() {
+    setForm(initialForm)
+    setStatusMessage("Edição cancelada.")
+  }
+
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
     setIsSaving(true)
 
     try {
+      const isEditing = Boolean(form.id)
       const response = await fetch("/api/clientes", {
-        method: "POST",
+        method: isEditing ? "PUT" : "POST",
         headers: {
           "Content-Type": "application/json",
         },
-          body: JSON.stringify({
-            name: form.name,
-            email: form.email,
-            cnpj: form.cnpj,
-            maxEmployees: form.maxEmployees ? Number(form.maxEmployees) : undefined,
-            contactName: form.contactName,
-            accessEmail: form.accessEmail,
-            temporaryPassword: form.temporaryPassword,
-          }),
+        body: JSON.stringify({
+          id: form.id,
+          name: form.name,
+          email: form.email,
+          cnpj: form.cnpj,
+          maxEmployees: form.maxEmployees ? Number(form.maxEmployees) : undefined,
+          contactName: form.contactName,
+          accessEmail: form.accessEmail,
+          temporaryPassword: form.temporaryPassword,
+        }),
       })
 
       const result = (await response.json()) as {
@@ -110,9 +135,17 @@ export function ClientManagement() {
         return
       }
 
-      setClients((previous) => [result.record!, ...previous])
+      if (isEditing) {
+        setClients((previous) =>
+          previous.map((item) => (item.id === result.record!.id ? result.record! : item))
+        )
+        setStatusMessage("Cliente atualizado com sucesso.")
+      } else {
+        setClients((previous) => [result.record!, ...previous])
+        setStatusMessage("Cliente cadastrado com sucesso.")
+      }
+
       setForm(initialForm)
-      setStatusMessage("Cliente cadastrado com sucesso.")
     } catch (error) {
       setStatusMessage(error instanceof Error ? error.message : "Erro ao salvar cliente.")
     } finally {
@@ -171,11 +204,11 @@ export function ClientManagement() {
               placeholder="login@cliente.com.br"
             />
             <Field
-              label="Senha provisória"
+              label={form.id ? "Nova senha do cliente (opcional)" : "Senha provisória"}
               type="password"
               value={form.temporaryPassword}
               onChange={(value) => updateField("temporaryPassword", value)}
-              placeholder="Defina uma senha inicial"
+              placeholder={form.id ? "Preencha apenas se quiser trocar" : "Defina uma senha inicial"}
             />
             <Field
               label="Limite de funcionários"
@@ -192,8 +225,17 @@ export function ClientManagement() {
                 className="inline-flex items-center gap-2 rounded-xl bg-slate-900 px-5 py-3 font-semibold text-white hover:bg-slate-800"
               >
                 <Plus size={18} />
-                {isSaving ? "Salvando..." : "Cadastrar cliente"}
+                {isSaving ? "Salvando..." : form.id ? "Salvar alterações" : "Cadastrar cliente"}
               </button>
+              {form.id ? (
+                <button
+                  type="button"
+                  onClick={cancelEditing}
+                  className="inline-flex items-center gap-2 rounded-xl border border-slate-300 px-5 py-3 font-semibold text-slate-700 hover:bg-slate-100"
+                >
+                  Cancelar edição
+                </button>
+              ) : null}
               <p className="text-sm text-slate-600">{statusMessage}</p>
             </div>
           </form>
@@ -227,20 +269,34 @@ export function ClientManagement() {
                 <thead className="bg-slate-50">
                   <tr className="text-left text-sm font-semibold text-slate-700">
                     <th className="px-4 py-3">Cliente</th>
-                    <th className="px-4 py-3">E-mail</th>
+                    <th className="px-4 py-3">Login do cliente</th>
                     <th className="px-4 py-3">CNPJ</th>
                     <th className="px-4 py-3">Limite</th>
                     <th className="px-4 py-3">Atualizado</th>
+                    <th className="px-4 py-3">Ação</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-200 bg-white">
                   {clients.map((client) => (
                     <tr key={client.id} className="text-sm text-slate-700">
-                      <td className="px-4 py-3 font-medium text-slate-900">{client.name}</td>
-                      <td className="px-4 py-3">{client.email || "Sem e-mail"}</td>
+                      <td className="px-4 py-3 font-medium text-slate-900">
+                        <div>{client.name}</div>
+                        <div className="text-xs text-slate-500">{client.contact_name || "Sem responsável"}</div>
+                      </td>
+                      <td className="px-4 py-3">{client.access_email || client.email || "Sem e-mail"}</td>
                       <td className="px-4 py-3">{client.cnpj || "Sem CNPJ"}</td>
                       <td className="px-4 py-3">{client.max_employees ?? "Não definido"}</td>
                       <td className="px-4 py-3">{formatDateTime(client.updated_at)}</td>
+                      <td className="px-4 py-3">
+                        <button
+                          type="button"
+                          onClick={() => startEditing(client)}
+                          className="inline-flex items-center gap-2 rounded-lg bg-slate-900 px-4 py-2 font-semibold text-white hover:bg-slate-800"
+                        >
+                          <Pencil size={16} />
+                          Editar
+                        </button>
+                      </td>
                     </tr>
                   ))}
                 </tbody>

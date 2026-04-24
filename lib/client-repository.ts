@@ -20,6 +20,8 @@ export type ClientRecordListItem = {
   email: string | null
   cnpj: string | null
   max_employees: number | null
+  access_email: string | null
+  contact_name: string | null
   created_at: string
   updated_at: string
 }
@@ -126,7 +128,123 @@ export async function createClientRecord(payload: ClientPayload) {
     throw userError
   }
 
-  return data
+  return {
+    ...data,
+    access_email: payload.accessEmail,
+    contact_name: payload.contactName,
+  }
+}
+
+export async function updateClientRecord(
+  id: string,
+  payload: Partial<ClientPayload> & { accessEmail?: string; contactName?: string; temporaryPassword?: string }
+) {
+  const supabase = getSupabaseServerClient()
+  const subscriber = await ensureDefaultSubscriber()
+
+  const { data: client, error: clientError } = await supabase
+    .from("clients")
+    .select("id")
+    .eq("id", id)
+    .eq("subscriber_id", subscriber.id)
+    .maybeSingle()
+
+  if (clientError) {
+    throw clientError
+  }
+
+  if (!client) {
+    throw new Error("Cliente não encontrado.")
+  }
+
+  const { error: updateClientError } = await supabase
+    .from("clients")
+    .update({
+      name: payload.name,
+      email: payload.email || null,
+      cnpj: payload.cnpj || null,
+      max_employees: payload.maxEmployees ?? null,
+    })
+    .eq("id", id)
+
+  if (updateClientError) {
+    throw updateClientError
+  }
+
+  const { data: appUser, error: appUserError } = await supabase
+    .from("app_users")
+    .select("id, email")
+    .eq("client_id", id)
+    .eq("role", "client_user")
+    .maybeSingle()
+
+  if (appUserError) {
+    throw appUserError
+  }
+
+  if (!appUser) {
+    throw new Error("Usuário do cliente não encontrado.")
+  }
+
+  if (payload.accessEmail && payload.accessEmail !== appUser.email) {
+    const { data: existingUser, error: existingUserError } = await supabase
+      .from("app_users")
+      .select("id")
+      .eq("email", payload.accessEmail)
+      .neq("id", appUser.id)
+      .maybeSingle()
+
+    if (existingUserError) {
+      throw existingUserError
+    }
+
+    if (existingUser) {
+      throw new Error("Já existe outro usuário com esse e-mail de acesso.")
+    }
+  }
+
+  const userUpdates: Record<string, string> = {}
+
+  if (payload.accessEmail) {
+    userUpdates.email = payload.accessEmail
+  }
+
+  if (payload.contactName) {
+    userUpdates.full_name = payload.contactName
+  }
+
+  if (payload.temporaryPassword) {
+    const password = hashPassword(payload.temporaryPassword)
+    userUpdates.password_hash = password.hash
+    userUpdates.password_salt = password.salt
+  }
+
+  if (Object.keys(userUpdates).length > 0) {
+    const { error: updateUserError } = await supabase
+      .from("app_users")
+      .update(userUpdates)
+      .eq("id", appUser.id)
+
+    if (updateUserError) {
+      throw updateUserError
+    }
+  }
+
+  const { data, error } = await supabase
+    .from("clients")
+    .select("id, name, email, cnpj, max_employees, created_at, updated_at")
+    .eq("id", id)
+    .single()
+
+  if (error) {
+    throw error
+  }
+
+  return {
+    ...data,
+    access_email: payload.accessEmail ?? appUser.email,
+    contact_name: payload.contactName ?? null,
+  }
 }
 
 export async function listClientRecords(limit = 100): Promise<ClientRecordListItem[]> {
@@ -144,5 +262,33 @@ export async function listClientRecords(limit = 100): Promise<ClientRecordListIt
     throw error
   }
 
-  return data ?? []
+  const clientIds = (data ?? []).map((item) => item.id)
+
+  if (clientIds.length === 0) {
+    return []
+  }
+
+  const { data: users, error: usersError } = await supabase
+    .from("app_users")
+    .select("client_id, email, full_name")
+    .in("client_id", clientIds)
+    .eq("role", "client_user")
+
+  if (usersError) {
+    throw usersError
+  }
+
+  const userByClientId = new Map(
+    (users ?? []).map((user) => [user.client_id as string, user])
+  )
+
+  return (data ?? []).map((item) => {
+    const user = userByClientId.get(item.id)
+
+    return {
+      ...item,
+      access_email: user?.email ?? null,
+      contact_name: user?.full_name ?? null,
+    }
+  })
 }
