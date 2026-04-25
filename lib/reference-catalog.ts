@@ -1,43 +1,9 @@
 import { z } from "zod"
-import { createRequire } from "node:module"
 import { getSupabaseServerClient } from "@/lib/supabase-server"
 
 export const referenceTypeSchema = z.enum(["cargo", "horario", "sindicato"])
 
 export type ReferenceType = z.infer<typeof referenceTypeSchema>
-
-const require = createRequire(import.meta.url)
-
-function ensurePdfRuntimePolyfills() {
-  const globalScope = globalThis as typeof globalThis & {
-    DOMMatrix?: unknown
-    ImageData?: unknown
-    Path2D?: unknown
-  }
-
-  if (globalScope.DOMMatrix && globalScope.ImageData && globalScope.Path2D) {
-    return
-  }
-
-  const canvasModuleName = ["@napi-rs", "canvas"].join("/")
-  const canvasModule = require(canvasModuleName) as {
-    DOMMatrix?: unknown
-    ImageData?: unknown
-    Path2D?: unknown
-  }
-
-  if (!globalScope.DOMMatrix && canvasModule.DOMMatrix) {
-    globalScope.DOMMatrix = canvasModule.DOMMatrix
-  }
-
-  if (!globalScope.ImageData && canvasModule.ImageData) {
-    globalScope.ImageData = canvasModule.ImageData
-  }
-
-  if (!globalScope.Path2D && canvasModule.Path2D) {
-    globalScope.Path2D = canvasModule.Path2D
-  }
-}
 
 export type ReferenceCatalogItem = {
   id: string
@@ -192,14 +158,23 @@ function parseHorarioText(text: string) {
 }
 
 export async function parseReferencePdf(buffer: Buffer, referenceType: ReferenceType) {
-  ensurePdfRuntimePolyfills()
-  const parserModuleName = ["pdf", "parse"].join("-")
-  const { PDFParse } = require(parserModuleName)
-  const parser = new PDFParse({ data: buffer })
-  const parsed = await parser.getText()
-  const text = parsed.text ?? ""
+  const pdfjs = await import("pdfjs-dist/legacy/build/pdf.mjs")
+  const loadingTask = pdfjs.getDocument({ data: new Uint8Array(buffer) })
+  const document = await loadingTask.promise
+  let text = ""
 
-  await parser.destroy()
+  for (let pageNumber = 1; pageNumber <= document.numPages; pageNumber += 1) {
+    const page = await document.getPage(pageNumber)
+    const content = await page.getTextContent()
+    const pageText = content.items
+      .map((item) => ("str" in item ? item.str : ""))
+      .filter(Boolean)
+      .join("\n")
+
+    text += `${pageText}\n`
+  }
+
+  await document.destroy()
 
   if (!text.trim()) {
     throw new Error("Nao foi possivel extrair texto do PDF informado.")
