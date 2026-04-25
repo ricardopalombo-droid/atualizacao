@@ -1,4 +1,5 @@
 import type { CadastroPayload, DependentPayload, WorkflowStatus } from "@/lib/cadastro-types"
+import { createInviteToken, sha256Hex } from "@/lib/auth-crypto"
 import { getSupabaseServerClient } from "@/lib/supabase-server"
 
 export type EmployeeRecordListItem = {
@@ -87,11 +88,8 @@ async function syncDependents(employeeId: string, dependents: DependentPayload[]
   }
 }
 
-export async function upsertEmployeeRecord(payload: CadastroPayload) {
-  const supabase = getSupabaseServerClient()
-  const data = payload.data
-  const timestamps = statusTimestamps(payload.workflowStatus)
-  const dependentsForPayload = payload.dependents.map((dependent) => ({
+function buildDependentsForPayload(dependents: DependentPayload[]) {
+  return dependents.map((dependent) => ({
     id: dependent.id ?? "",
     codigo: dependent.id ?? "",
     nome_parentesco: dependent.relationshipName,
@@ -101,6 +99,12 @@ export async function upsertEmployeeRecord(payload: CadastroPayload) {
     data_entrega_registro: dependent.registryDeliveryDate,
     observacoes: dependent.notes,
   }))
+}
+
+export async function upsertEmployeeRecord(payload: CadastroPayload) {
+  const supabase = getSupabaseServerClient()
+  const data = payload.data
+  const timestamps = statusTimestamps(payload.workflowStatus)
 
   const record = {
     id: payload.id ?? undefined,
@@ -114,7 +118,7 @@ export async function upsertEmployeeRecord(payload: CadastroPayload) {
     actor_last_updated: payload.actor,
     full_payload: {
       ...data,
-      dependentes: dependentsForPayload,
+      dependentes: buildDependentsForPayload(payload.dependents),
     },
     ...timestamps,
   }
@@ -204,6 +208,118 @@ export async function getEmployeeRecordById(
     ...(data as Omit<EmployeeRecordDetail, "dependents">),
     dependents: (dependents as DependentRecordDetail[] | null) ?? [],
   }
+}
+
+export async function createEmployeeInviteLink(
+  id: string,
+  inviteEmail: string,
+  baseUrl: string,
+  scope?: { subscriberId?: string | null; clientId?: string | null }
+) {
+  const supabase = getSupabaseServerClient()
+  const record = await getEmployeeRecordById(id, scope)
+
+  if (!record) {
+    throw new Error("Cadastro do funcionário não encontrado.")
+  }
+
+  const token = createInviteToken()
+  const tokenHash = sha256Hex(token)
+  const expiresAt = new Date(Date.now() + 1000 * 60 * 60 * 24 * 7).toISOString()
+
+  const { error } = await supabase
+    .from("employees")
+    .update({
+      invite_email: inviteEmail,
+      invite_token_hash: tokenHash,
+      invite_token_expires_at: expiresAt,
+      workflow_status: "convite_enviado",
+      invited_at: new Date().toISOString(),
+    })
+    .eq("id", id)
+
+  if (error) {
+    throw error
+  }
+
+  const inviteLink = `${baseUrl}/cadastro/funcionario?token=${token}`
+
+  return {
+    inviteLink,
+    expiresAt,
+    employeeName: String(record.full_payload.nome_completo ?? ""),
+  }
+}
+
+export async function getEmployeeRecordByInviteToken(token: string): Promise<EmployeeRecordDetail | null> {
+  const supabase = getSupabaseServerClient()
+  const tokenHash = sha256Hex(token)
+
+  const { data: employee, error } = await supabase
+    .from("employees")
+    .select(
+      "id, subscriber_id, client_id, workflow_status, invite_email, full_payload, updated_at, invite_token_expires_at"
+    )
+    .eq("invite_token_hash", tokenHash)
+    .maybeSingle()
+
+  if (error) {
+    throw error
+  }
+
+  if (!employee) {
+    return null
+  }
+
+  if (
+    employee.invite_token_expires_at &&
+    new Date(employee.invite_token_expires_at).getTime() < Date.now()
+  ) {
+    return null
+  }
+
+  const { data: dependents, error: dependentsError } = await supabase
+    .from("dependents")
+    .select("id, relationship_name, cpf, relationship_degree, birth_date, registry_delivery_date, full_payload")
+    .eq("employee_id", employee.id)
+    .order("created_at", { ascending: true })
+
+  if (dependentsError) {
+    throw dependentsError
+  }
+
+  return {
+    id: employee.id,
+    subscriber_id: employee.subscriber_id,
+    client_id: employee.client_id,
+    workflow_status: employee.workflow_status,
+    invite_email: employee.invite_email,
+    full_payload: employee.full_payload as Record<string, string | boolean | number | null>,
+    updated_at: employee.updated_at,
+    dependents: (dependents as DependentRecordDetail[] | null) ?? [],
+  }
+}
+
+export async function submitEmployeeRecordByInviteToken(
+  token: string,
+  payload: Pick<CadastroPayload, "data" | "dependents">
+) {
+  const record = await getEmployeeRecordByInviteToken(token)
+
+  if (!record) {
+    throw new Error("Link inválido ou expirado.")
+  }
+
+  return upsertEmployeeRecord({
+    id: record.id,
+    clientId: record.client_id,
+    subscriberId: record.subscriber_id,
+    actor: "employee",
+    workflowStatus: "preenchido_funcionario",
+    inviteEmail: record.invite_email ?? String(payload.data.email ?? ""),
+    data: payload.data,
+    dependents: payload.dependents,
+  })
 }
 
 export async function deleteEmployeeRecord(

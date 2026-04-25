@@ -40,6 +40,7 @@ type DependentFormState = {
 type EmployeeOnboardingFormProps = {
   variant?: "client" | "employee"
   initialRecordId?: string | null
+  publicToken?: string | null
 }
 
 const viewerLabels: Record<FieldAudience, string> = {
@@ -91,6 +92,7 @@ const dependentRelationshipOptions = [
 export function EmployeeOnboardingForm({
   variant = "client",
   initialRecordId = null,
+  publicToken = null,
 }: EmployeeOnboardingFormProps) {
   const editRecordId = initialRecordId
   const [viewer, setViewer] = useState<FieldAudience>(variant === "employee" ? "employee" : "client")
@@ -112,7 +114,7 @@ export function EmployeeOnboardingForm({
   const canSwitchViewer = variant === "client"
 
   useEffect(() => {
-    if (!editRecordId) {
+    if (!editRecordId && !publicToken) {
       return
     }
 
@@ -120,7 +122,12 @@ export function EmployeeOnboardingForm({
 
     async function loadRecord() {
       try {
-        const response = await fetch(`/api/cadastros?id=${editRecordId}`, {
+        const targetUrl =
+          variant === "employee"
+            ? `/api/cadastros/funcionario?token=${encodeURIComponent(publicToken ?? "")}`
+            : `/api/cadastros?id=${editRecordId}`
+
+        const response = await fetch(targetUrl, {
           method: "GET",
           cache: "no-store",
         })
@@ -182,7 +189,7 @@ export function EmployeeOnboardingForm({
     return () => {
       isMounted = false
     }
-  }, [editRecordId])
+  }, [editRecordId, publicToken, variant])
 
   function updateField(key: string, value: string | boolean) {
     setFormData((previous) => ({
@@ -284,15 +291,15 @@ export function EmployeeOnboardingForm({
 
       if (!response.ok || !result.ok || !result.id) {
         setStatusMessage(result.error ?? "Não foi possível salvar no banco agora.")
-        return false
+        return null
       }
 
       setRecordId(result.id)
       setWorkflow(nextStatus, message)
-      return true
+      return result.id
     } catch (error) {
       setStatusMessage(error instanceof Error ? error.message : "Erro ao persistir cadastro.")
-      return false
+      return null
     } finally {
       setIsSaving(false)
     }
@@ -311,10 +318,94 @@ export function EmployeeOnboardingForm({
     }
 
     updateField("convite_email", email)
-    await persist("convite_enviado", `Link preparado para envio ao funcionário em ${email}.`)
+
+    let currentRecordId = recordId
+
+    if (!currentRecordId) {
+      const savedId = await persist(
+        "rascunho_interno",
+        "Cadastro salvo antes do disparo do link. Agora estamos enviando o convite."
+      )
+
+      if (!savedId) {
+        return
+      }
+
+      currentRecordId = savedId
+    }
+
+    if (!currentRecordId) {
+      setStatusMessage("Salve o cadastro antes de disparar o link.")
+      return
+    }
+
+    setIsSaving(true)
+
+    try {
+      const response = await fetch("/api/cadastros/convite", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          id: currentRecordId,
+          inviteEmail: email,
+        }),
+      })
+
+      const result = (await response.json()) as { ok: boolean; error?: string }
+
+      if (!response.ok || !result.ok) {
+        setStatusMessage(result.error ?? "Não foi possível enviar o link por e-mail.")
+        return
+      }
+
+      setWorkflow("convite_enviado", `Link enviado com sucesso para ${email}.`)
+    } catch (error) {
+      setStatusMessage(error instanceof Error ? error.message : "Erro ao enviar convite.")
+    } finally {
+      setIsSaving(false)
+    }
   }
 
   async function submitEmployeeData() {
+    if (variant === "employee") {
+      setIsSaving(true)
+
+      try {
+        const response = await fetch("/api/cadastros/funcionario", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            token: publicToken,
+            data: formData,
+            dependents,
+          }),
+        })
+
+        const result = (await response.json()) as { ok: boolean; error?: string; id?: string }
+
+        if (!response.ok || !result.ok || !result.id) {
+          setStatusMessage(result.error ?? "Não foi possível enviar o cadastro básico.")
+          return
+        }
+
+        setRecordId(result.id)
+        setWorkflow(
+          "preenchido_funcionario",
+          "Cadastro básico enviado. Agora o cliente deve revisar e completar os campos internos."
+        )
+      } catch (error) {
+        setStatusMessage(error instanceof Error ? error.message : "Erro ao enviar cadastro básico.")
+      } finally {
+        setIsSaving(false)
+      }
+
+      return
+    }
+
     await persist(
       "preenchido_funcionario",
       "Cadastro básico enviado. Agora o cliente deve revisar e completar os campos internos."
@@ -322,11 +413,11 @@ export function EmployeeOnboardingForm({
   }
 
   async function moveToClientReview() {
-    const success = await persist(
+    const savedId = await persist(
       "em_revisao_cliente",
       "O cadastro entrou em revisão do cliente. Complete dados contratuais, banco, eSocial e validações."
     )
-    if (success) {
+    if (savedId) {
       changeViewer("client")
     }
   }

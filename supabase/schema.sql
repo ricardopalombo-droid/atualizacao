@@ -48,6 +48,8 @@ create table if not exists public.employees (
   workflow_status text not null default 'rascunho_interno',
   actor_last_updated text not null default 'client',
   invite_email text,
+  invite_token_hash text,
+  invite_token_expires_at timestamptz,
   employee_name text,
   employee_email text,
   cpf text,
