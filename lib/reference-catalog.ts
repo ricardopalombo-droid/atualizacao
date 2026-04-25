@@ -158,7 +158,7 @@ function parseHorarioText(text: string) {
 }
 
 export async function parseReferencePdf(buffer: Buffer, referenceType: ReferenceType) {
-  const { PDFParse } = await import("pdf-parse")
+  const { PDFParse } = await import("pdf-parse/node")
   const parser = new PDFParse({ data: buffer })
   const parsed = await parser.getText()
   const text = parsed.text ?? ""
