@@ -8,6 +8,37 @@ export type ReferenceType = z.infer<typeof referenceTypeSchema>
 
 const require = createRequire(import.meta.url)
 
+function ensurePdfRuntimePolyfills() {
+  const globalScope = globalThis as typeof globalThis & {
+    DOMMatrix?: unknown
+    ImageData?: unknown
+    Path2D?: unknown
+  }
+
+  if (globalScope.DOMMatrix && globalScope.ImageData && globalScope.Path2D) {
+    return
+  }
+
+  const canvasModuleName = ["@napi-rs", "canvas"].join("/")
+  const canvasModule = require(canvasModuleName) as {
+    DOMMatrix?: unknown
+    ImageData?: unknown
+    Path2D?: unknown
+  }
+
+  if (!globalScope.DOMMatrix && canvasModule.DOMMatrix) {
+    globalScope.DOMMatrix = canvasModule.DOMMatrix
+  }
+
+  if (!globalScope.ImageData && canvasModule.ImageData) {
+    globalScope.ImageData = canvasModule.ImageData
+  }
+
+  if (!globalScope.Path2D && canvasModule.Path2D) {
+    globalScope.Path2D = canvasModule.Path2D
+  }
+}
+
 export type ReferenceCatalogItem = {
   id: string
   client_id: string
@@ -161,7 +192,9 @@ function parseHorarioText(text: string) {
 }
 
 export async function parseReferencePdf(buffer: Buffer, referenceType: ReferenceType) {
-  const { PDFParse } = require("pdf-parse")
+  ensurePdfRuntimePolyfills()
+  const parserModuleName = ["pdf", "parse"].join("-")
+  const { PDFParse } = require(parserModuleName)
   const parser = new PDFParse({ data: buffer })
   const parsed = await parser.getText()
   const text = parsed.text ?? ""
