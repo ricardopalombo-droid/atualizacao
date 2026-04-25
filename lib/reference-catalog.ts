@@ -1,9 +1,12 @@
 import { z } from "zod"
+import { createRequire } from "node:module"
 import { getSupabaseServerClient } from "@/lib/supabase-server"
 
 export const referenceTypeSchema = z.enum(["cargo", "horario", "sindicato"])
 
 export type ReferenceType = z.infer<typeof referenceTypeSchema>
+
+const require = createRequire(import.meta.url)
 
 export type ReferenceCatalogItem = {
   id: string
@@ -158,7 +161,7 @@ function parseHorarioText(text: string) {
 }
 
 export async function parseReferencePdf(buffer: Buffer, referenceType: ReferenceType) {
-  const { PDFParse } = await import("pdf-parse/node")
+  const { PDFParse } = require("pdf-parse")
   const parser = new PDFParse({ data: buffer })
   const parsed = await parser.getText()
   const text = parsed.text ?? ""
