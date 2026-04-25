@@ -7,6 +7,9 @@ import {
   replaceReferenceCatalog,
 } from "@/lib/reference-catalog"
 
+export const runtime = "nodejs"
+export const maxDuration = 60
+
 export async function GET(request: Request) {
   try {
     const session = await getCurrentSession()

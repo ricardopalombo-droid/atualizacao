@@ -43,6 +43,16 @@ export function ReferenceCatalogManagement() {
     void loadSummary()
   }, [])
 
+  async function parseApiResponse<T>(response: Response): Promise<T> {
+    const raw = await response.text()
+
+    try {
+      return JSON.parse(raw) as T
+    } catch {
+      throw new Error(raw.startsWith("<!DOCTYPE") ? "A funcao retornou uma pagina de erro do servidor." : raw || "Resposta invalida da API.")
+    }
+  }
+
   async function loadSummary() {
     setIsLoading(true)
 
@@ -51,11 +61,11 @@ export function ReferenceCatalogManagement() {
         method: "GET",
         cache: "no-store",
       })
-      const result = (await response.json()) as {
+      const result = await parseApiResponse<{
         ok: boolean
         summary?: ReferenceSummary
         error?: string
-      }
+      }>(response)
 
       if (!response.ok || !result.ok || !result.summary) {
         setStatusMessage(result.error ?? "Nao foi possivel carregar as bases da empresa.")
@@ -91,7 +101,7 @@ export function ReferenceCatalogManagement() {
         body: formData,
       })
 
-      const result = (await response.json()) as { ok: boolean; importedCount?: number; error?: string }
+      const result = await parseApiResponse<{ ok: boolean; importedCount?: number; error?: string }>(response)
 
       if (!response.ok || !result.ok) {
         setStatusMessage(result.error ?? "Nao foi possivel importar o PDF.")
