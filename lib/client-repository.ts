@@ -26,46 +26,28 @@ export type ClientRecordListItem = {
   updated_at: string
 }
 
-export async function ensureDefaultSubscriber() {
+async function getSubscriberOrThrow(subscriberId: string) {
   const supabase = getSupabaseServerClient()
-  const subscriberEmail = process.env.APP_LOGIN_EMAIL ?? "assinante@palsys.com.br"
-  const subscriberName = process.env.APP_SUBSCRIBER_NAME ?? "Assinante principal"
-
-  const { data: existing, error: existingError } = await supabase
+  const { data, error } = await supabase
     .from("subscribers")
-    .select("id, name, email, max_clients, max_employees")
-    .eq("email", subscriberEmail)
+    .select("id, max_clients, max_employees")
+    .eq("id", subscriberId)
     .maybeSingle()
 
-  if (existingError) {
-    throw existingError
+  if (error) {
+    throw error
   }
 
-  if (existing) {
-    return existing
+  if (!data) {
+    throw new Error("Assinante não encontrado.")
   }
 
-  const { data: created, error: createError } = await supabase
-    .from("subscribers")
-    .insert({
-      name: subscriberName,
-      email: subscriberEmail,
-      max_clients: 10,
-      max_employees: 1000,
-    })
-    .select("id, name, email, max_clients, max_employees")
-    .single()
-
-  if (createError) {
-    throw createError
-  }
-
-  return created
+  return data
 }
 
-export async function createClientRecord(payload: ClientPayload) {
+export async function createClientRecord(subscriberId: string, payload: ClientPayload) {
   const supabase = getSupabaseServerClient()
-  const subscriber = await ensureDefaultSubscriber()
+  const subscriber = await getSubscriberOrThrow(subscriberId)
 
   const { count, error: countError } = await supabase
     .from("clients")
@@ -136,17 +118,18 @@ export async function createClientRecord(payload: ClientPayload) {
 }
 
 export async function updateClientRecord(
+  subscriberId: string,
   id: string,
   payload: Partial<ClientPayload> & { accessEmail?: string; contactName?: string; temporaryPassword?: string }
 ) {
   const supabase = getSupabaseServerClient()
-  const subscriber = await ensureDefaultSubscriber()
+  await getSubscriberOrThrow(subscriberId)
 
   const { data: client, error: clientError } = await supabase
     .from("clients")
     .select("id")
     .eq("id", id)
-    .eq("subscriber_id", subscriber.id)
+    .eq("subscriber_id", subscriberId)
     .maybeSingle()
 
   if (clientError) {
@@ -173,7 +156,7 @@ export async function updateClientRecord(
 
   const { data: appUser, error: appUserError } = await supabase
     .from("app_users")
-    .select("id, email")
+    .select("id, email, full_name")
     .eq("client_id", id)
     .eq("role", "client_user")
     .maybeSingle()
@@ -243,18 +226,17 @@ export async function updateClientRecord(
   return {
     ...data,
     access_email: payload.accessEmail ?? appUser.email,
-    contact_name: payload.contactName ?? null,
+    contact_name: payload.contactName ?? appUser.full_name,
   }
 }
 
-export async function listClientRecords(limit = 100): Promise<ClientRecordListItem[]> {
+export async function listClientRecords(subscriberId: string, limit = 100): Promise<ClientRecordListItem[]> {
   const supabase = getSupabaseServerClient()
-  const subscriber = await ensureDefaultSubscriber()
 
   const { data, error } = await supabase
     .from("clients")
     .select("id, name, email, cnpj, max_employees, created_at, updated_at")
-    .eq("subscriber_id", subscriber.id)
+    .eq("subscriber_id", subscriberId)
     .order("updated_at", { ascending: false })
     .limit(limit)
 
@@ -278,9 +260,7 @@ export async function listClientRecords(limit = 100): Promise<ClientRecordListIt
     throw usersError
   }
 
-  const userByClientId = new Map(
-    (users ?? []).map((user) => [user.client_id as string, user])
-  )
+  const userByClientId = new Map((users ?? []).map((user) => [user.client_id as string, user]))
 
   return (data ?? []).map((item) => {
     const user = userByClientId.get(item.id)

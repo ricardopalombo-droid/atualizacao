@@ -1,6 +1,6 @@
 import Link from "next/link"
 import { redirect } from "next/navigation"
-import { Building2, CheckCircle2, ClipboardList, FileSpreadsheet } from "lucide-react"
+import { Building2, CheckCircle2, ClipboardList, FileSpreadsheet, Shield } from "lucide-react"
 import { listEmployeeRecords } from "@/lib/cadastro-repository"
 import { workflowStatusLabels, type WorkflowStatus } from "@/lib/employee-form-config"
 import { LogoutButton } from "@/components/logout-button"
@@ -13,45 +13,65 @@ export default async function PainelPage() {
     redirect("/acesso")
   }
 
-  const records = await listEmployeeRecords(20, {
-    subscriberId: session.subscriberId,
-    clientId: session.clientId,
-  })
+  const records =
+    session.role === "palsys_admin"
+      ? []
+      : await listEmployeeRecords(20, {
+          subscriberId: session.subscriberId,
+          clientId: session.clientId,
+        })
 
   const funcoes =
-    session.role === "subscriber_admin"
+    session.role === "palsys_admin"
       ? [
           {
-            titulo: "Clientes do assinante",
-            descricao: "Cadastre as empresas que usarão o sistema abaixo do assinante atual.",
-            href: "/painel/clientes",
-            icone: Building2,
-            acao: "Gerenciar clientes",
+            titulo: "Assinantes da plataforma",
+            descricao: "Cadastre e administre os escritórios e empresas que contratam a PalSys.",
+            href: "/painel/assinantes",
+            icone: Shield,
+            acao: "Gerenciar assinantes",
           },
         ]
-      : [
-          {
-            titulo: "Cadastro de funcionários",
-            descricao: "Preencha os dados cadastrais em abas e organize o envio para integração.",
-            href: "/painel/cadastros",
-            icone: ClipboardList,
-            acao: "Abrir módulo",
-          },
-          {
-            titulo: "Exportação de planilha",
-            descricao: "Gere um arquivo com os dados preenchidos para revisão ou importação.",
-            href: "/painel/cadastros",
-            icone: FileSpreadsheet,
-            acao: "Ir para exportação",
-          },
-          {
-            titulo: "Conferência interna",
-            descricao: "Finalize o fluxo do cadastro dentro da própria área interna do cliente.",
-            href: "/painel/cadastros",
-            icone: CheckCircle2,
-            acao: "Concluir no painel",
-          },
-        ]
+      : session.role === "subscriber_admin"
+        ? [
+            {
+              titulo: "Clientes do assinante",
+              descricao: "Cadastre as empresas que usarão o sistema abaixo do assinante atual.",
+              href: "/painel/clientes",
+              icone: Building2,
+              acao: "Gerenciar clientes",
+            },
+          ]
+        : [
+            {
+              titulo: "Cadastro de funcionários",
+              descricao: "Preencha os dados cadastrais em abas e organize o envio para integração.",
+              href: "/painel/cadastros",
+              icone: ClipboardList,
+              acao: "Abrir módulo",
+            },
+            {
+              titulo: "Exportação de planilha",
+              descricao: "Gere um arquivo com os dados preenchidos para revisão ou importação.",
+              href: "/painel/cadastros",
+              icone: FileSpreadsheet,
+              acao: "Ir para exportação",
+            },
+            {
+              titulo: "Conferência interna",
+              descricao: "Finalize o fluxo do cadastro dentro da própria área interna do cliente.",
+              href: "/painel/cadastros",
+              icone: CheckCircle2,
+              acao: "Concluir no painel",
+            },
+          ]
+
+  const descriptionByRole =
+    session.role === "palsys_admin"
+      ? "Este acesso administra a plataforma, os assinantes e os limites contratados, sem operar cadastros de funcionários por padrão."
+      : session.role === "subscriber_admin"
+        ? "Este acesso administra a carteira de clientes do assinante e prepara os logins de cada empresa."
+        : "Este acesso pertence a um cliente e permite cadastrar apenas os funcionários da própria empresa."
 
   return (
     <main className="min-h-screen bg-slate-50">
@@ -62,11 +82,7 @@ export default async function PainelPage() {
               Painel interno
             </span>
             <h1 className="mt-4 text-4xl font-bold text-slate-900">Funções liberadas após o login</h1>
-            <p className="mt-3 max-w-3xl text-slate-600">
-              {session.role === "subscriber_admin"
-                ? "Este acesso administra a carteira de clientes do assinante e prepara os logins de cada empresa."
-                : "Este acesso pertence a um cliente e permite cadastrar apenas os funcionários da própria empresa."}
-            </p>
+            <p className="mt-3 max-w-3xl text-slate-600">{descriptionByRole}</p>
             <p className="mt-2 text-sm font-semibold text-slate-500">
               Usuário logado: {session.displayName} ({session.email})
             </p>
@@ -110,65 +126,67 @@ export default async function PainelPage() {
           })}
         </div>
 
-        <section className="mt-8 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-          <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
-            <div>
-              <h2 className="text-2xl font-bold text-slate-900">
-                {session.role === "subscriber_admin" ? "Funcionários da carteira" : "Funcionários do cliente"}
-              </h2>
-              <p className="mt-2 text-slate-600">
-                {session.role === "subscriber_admin"
-                  ? "Visão agregada dos registros vinculados ao assinante."
-                  : "Aqui você acompanha apenas os registros gravados para o seu cliente."}
-              </p>
+        {session.role !== "palsys_admin" ? (
+          <section className="mt-8 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+            <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
+              <div>
+                <h2 className="text-2xl font-bold text-slate-900">
+                  {session.role === "subscriber_admin" ? "Funcionários da carteira" : "Funcionários do cliente"}
+                </h2>
+                <p className="mt-2 text-slate-600">
+                  {session.role === "subscriber_admin"
+                    ? "Visão agregada dos registros vinculados ao assinante."
+                    : "Aqui você acompanha apenas os registros gravados para o seu cliente."}
+                </p>
+              </div>
+              {session.role === "client_user" ? (
+                <Link
+                  href="/painel/cadastros"
+                  className="inline-flex items-center justify-center rounded-xl border border-slate-300 px-5 py-3 font-semibold text-slate-700 hover:bg-slate-100"
+                >
+                  Novo cadastro
+                </Link>
+              ) : null}
             </div>
-            {session.role === "client_user" ? (
-              <Link
-                href="/painel/cadastros"
-                className="inline-flex items-center justify-center rounded-xl border border-slate-300 px-5 py-3 font-semibold text-slate-700 hover:bg-slate-100"
-              >
-                Novo cadastro
-              </Link>
-            ) : null}
-          </div>
 
-          {records.length === 0 ? (
-            <div className="mt-6 rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-6 text-slate-600">
-              Ainda não há cadastros salvos neste escopo.
-            </div>
-          ) : (
-            <div className="mt-6 overflow-hidden rounded-2xl border border-slate-200">
-              <table className="min-w-full divide-y divide-slate-200">
-                <thead className="bg-slate-50">
-                  <tr className="text-left text-sm font-semibold text-slate-700">
-                    <th className="px-4 py-3">Funcionário</th>
-                    <th className="px-4 py-3">E-mail</th>
-                    <th className="px-4 py-3">Status</th>
-                    <th className="px-4 py-3">Atualizado</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-200 bg-white">
-                  {records.map((record) => (
-                    <tr key={record.id} className="text-sm text-slate-700">
-                      <td className="px-4 py-3 font-medium text-slate-900">
-                        {record.employee_name || "Sem nome informado"}
-                      </td>
-                      <td className="px-4 py-3">
-                        {record.employee_email || record.invite_email || "Sem e-mail"}
-                      </td>
-                      <td className="px-4 py-3">
-                        <span className="inline-flex rounded-full bg-yellow-100 px-3 py-1 text-xs font-bold text-yellow-800">
-                          {workflowStatusLabels[record.workflow_status as WorkflowStatus] ?? record.workflow_status}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3">{formatDateTime(record.updated_at)}</td>
+            {records.length === 0 ? (
+              <div className="mt-6 rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-6 text-slate-600">
+                Ainda não há cadastros salvos neste escopo.
+              </div>
+            ) : (
+              <div className="mt-6 overflow-hidden rounded-2xl border border-slate-200">
+                <table className="min-w-full divide-y divide-slate-200">
+                  <thead className="bg-slate-50">
+                    <tr className="text-left text-sm font-semibold text-slate-700">
+                      <th className="px-4 py-3">Funcionário</th>
+                      <th className="px-4 py-3">E-mail</th>
+                      <th className="px-4 py-3">Status</th>
+                      <th className="px-4 py-3">Atualizado</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </section>
+                  </thead>
+                  <tbody className="divide-y divide-slate-200 bg-white">
+                    {records.map((record) => (
+                      <tr key={record.id} className="text-sm text-slate-700">
+                        <td className="px-4 py-3 font-medium text-slate-900">
+                          {record.employee_name || "Sem nome informado"}
+                        </td>
+                        <td className="px-4 py-3">
+                          {record.employee_email || record.invite_email || "Sem e-mail"}
+                        </td>
+                        <td className="px-4 py-3">
+                          <span className="inline-flex rounded-full bg-yellow-100 px-3 py-1 text-xs font-bold text-yellow-800">
+                            {workflowStatusLabels[record.workflow_status as WorkflowStatus] ?? record.workflow_status}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3">{formatDateTime(record.updated_at)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </section>
+        ) : null}
       </section>
     </main>
   )

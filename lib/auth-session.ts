@@ -3,7 +3,7 @@ import { cookies } from "next/headers"
 export type AppSession = {
   userId: string
   email: string
-  role: "subscriber_admin" | "client_user"
+  role: "palsys_admin" | "subscriber_admin" | "client_user"
   subscriberId: string | null
   clientId: string | null
   displayName: string

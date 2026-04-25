@@ -25,7 +25,11 @@ export async function GET() {
       return Response.json({ ok: false, error: "Somente o assinante pode listar clientes." }, { status: 403 })
     }
 
-    const records = await listClientRecords()
+    if (!session.subscriberId) {
+      return Response.json({ ok: false, error: "Assinante sem escopo definido." }, { status: 400 })
+    }
+
+    const records = await listClientRecords(session.subscriberId)
 
     return Response.json({
       ok: true,
@@ -58,7 +62,11 @@ export async function POST(request: Request) {
 
     const body = await request.json()
     const payload = clientPayloadSchema.parse(body)
-    const saved = await createClientRecord(payload)
+    if (!session.subscriberId) {
+      return Response.json({ ok: false, error: "Assinante sem escopo definido." }, { status: 400 })
+    }
+
+    const saved = await createClientRecord(session.subscriberId, payload)
 
     return Response.json({
       ok: true,
@@ -91,7 +99,11 @@ export async function PUT(request: Request) {
 
     const payload = updateClientPayloadSchema.parse(await request.json())
 
-    const record = await updateClientRecord(payload.id, payload)
+    if (!session.subscriberId) {
+      return Response.json({ ok: false, error: "Assinante sem escopo definido." }, { status: 400 })
+    }
+
+    const record = await updateClientRecord(session.subscriberId, payload.id, payload)
 
     return Response.json({
       ok: true,

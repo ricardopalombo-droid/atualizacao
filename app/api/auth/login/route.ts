@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server"
 import { verifyPassword } from "@/lib/auth-crypto"
 import { encodeSession, getSessionCookieName } from "@/lib/auth-session"
-import { ensureDefaultSubscriber } from "@/lib/client-repository"
 import { getSupabaseServerClient } from "@/lib/supabase-server"
 
 export async function POST(request: Request) {
@@ -13,18 +12,17 @@ export async function POST(request: Request) {
   const expectedPassword = process.env.APP_LOGIN_PASSWORD
 
   if (expectedEmail && expectedPassword && email === expectedEmail && password === expectedPassword) {
-    const subscriber = await ensureDefaultSubscriber()
     const response = NextResponse.json({ ok: true })
 
     response.cookies.set(
       getSessionCookieName(),
       encodeSession({
-        userId: "default-subscriber-admin",
+        userId: "palsys-admin",
         email,
-        role: "subscriber_admin",
-        subscriberId: subscriber.id,
+        role: "palsys_admin",
+        subscriberId: null,
         clientId: null,
-        displayName: "Assinante principal",
+        displayName: "Administrador PalSys",
       }),
       {
         httpOnly: true,
