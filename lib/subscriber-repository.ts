@@ -201,3 +201,19 @@ export async function listSubscriberRecords(limit = 100): Promise<SubscriberReco
     }
   })
 }
+
+export async function deleteSubscriberRecord(id: string) {
+  const supabase = getSupabaseServerClient()
+
+  const { error: deleteEmployeesError } = await supabase.from("employees").delete().eq("subscriber_id", id)
+
+  if (deleteEmployeesError) {
+    throw deleteEmployeesError
+  }
+
+  const { error: deleteSubscriberError } = await supabase.from("subscribers").delete().eq("id", id)
+
+  if (deleteSubscriberError) {
+    throw deleteSubscriberError
+  }
+}

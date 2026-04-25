@@ -272,3 +272,35 @@ export async function listClientRecords(subscriberId: string, limit = 100): Prom
     }
   })
 }
+
+export async function deleteClientRecord(subscriberId: string, id: string) {
+  const supabase = getSupabaseServerClient()
+  await getSubscriberOrThrow(subscriberId)
+
+  const { data: client, error: clientError } = await supabase
+    .from("clients")
+    .select("id")
+    .eq("id", id)
+    .eq("subscriber_id", subscriberId)
+    .maybeSingle()
+
+  if (clientError) {
+    throw clientError
+  }
+
+  if (!client) {
+    throw new Error("Cliente não encontrado.")
+  }
+
+  const { error: deleteEmployeesError } = await supabase.from("employees").delete().eq("client_id", id)
+
+  if (deleteEmployeesError) {
+    throw deleteEmployeesError
+  }
+
+  const { error: deleteClientError } = await supabase.from("clients").delete().eq("id", id)
+
+  if (deleteClientError) {
+    throw deleteClientError
+  }
+}

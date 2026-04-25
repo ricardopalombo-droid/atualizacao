@@ -1,5 +1,11 @@
 import { z } from "zod"
-import { clientPayloadSchema, createClientRecord, listClientRecords, updateClientRecord } from "@/lib/client-repository"
+import {
+  clientPayloadSchema,
+  createClientRecord,
+  deleteClientRecord,
+  listClientRecords,
+  updateClientRecord,
+} from "@/lib/client-repository"
 import { getCurrentSession } from "@/lib/auth-session"
 
 const updateClientPayloadSchema = z.object({
@@ -11,6 +17,10 @@ const updateClientPayloadSchema = z.object({
   contactName: z.string().trim().min(2, "Informe o nome do responsável."),
   accessEmail: z.string().trim().email("Informe um e-mail de acesso válido."),
   temporaryPassword: z.string().optional().or(z.literal("")),
+})
+
+const deleteClientPayloadSchema = z.object({
+  id: z.string().uuid(),
 })
 
 export async function GET() {
@@ -62,6 +72,7 @@ export async function POST(request: Request) {
 
     const body = await request.json()
     const payload = clientPayloadSchema.parse(body)
+
     if (!session.subscriberId) {
       return Response.json({ ok: false, error: "Assinante sem escopo definido." }, { status: 400 })
     }
@@ -116,6 +127,39 @@ export async function PUT(request: Request) {
       {
         ok: false,
         error: error instanceof Error ? error.message : "Erro ao editar cliente",
+      },
+      { status: 500 }
+    )
+  }
+}
+
+export async function DELETE(request: Request) {
+  try {
+    const session = await getCurrentSession()
+
+    if (!session) {
+      return Response.json({ ok: false, error: "Não autenticado." }, { status: 401 })
+    }
+
+    if (session.role !== "subscriber_admin") {
+      return Response.json({ ok: false, error: "Somente o assinante pode excluir clientes." }, { status: 403 })
+    }
+
+    if (!session.subscriberId) {
+      return Response.json({ ok: false, error: "Assinante sem escopo definido." }, { status: 400 })
+    }
+
+    const payload = deleteClientPayloadSchema.parse(await request.json())
+    await deleteClientRecord(session.subscriberId, payload.id)
+
+    return Response.json({ ok: true })
+  } catch (error) {
+    console.error(error)
+
+    return Response.json(
+      {
+        ok: false,
+        error: error instanceof Error ? error.message : "Erro ao excluir cliente",
       },
       { status: 500 }
     )

@@ -1,6 +1,7 @@
 import { z } from "zod"
 import {
   createSubscriberRecord,
+  deleteSubscriberRecord,
   listSubscriberRecords,
   subscriberPayloadSchema,
   updateSubscriberRecord,
@@ -16,6 +17,10 @@ const updateSubscriberPayloadSchema = z.object({
   adminName: z.string().trim().min(2, "Informe o nome do responsável pelo assinante."),
   accessEmail: z.string().trim().email("Informe um e-mail de acesso válido."),
   temporaryPassword: z.string().min(6, "A senha provisória deve ter pelo menos 6 caracteres."),
+})
+
+const deleteSubscriberPayloadSchema = z.object({
+  id: z.string().uuid(),
 })
 
 export async function GET() {
@@ -107,6 +112,35 @@ export async function PUT(request: Request) {
       {
         ok: false,
         error: error instanceof Error ? error.message : "Erro ao editar assinante",
+      },
+      { status: 500 }
+    )
+  }
+}
+
+export async function DELETE(request: Request) {
+  try {
+    const session = await getCurrentSession()
+
+    if (!session) {
+      return Response.json({ ok: false, error: "Não autenticado." }, { status: 401 })
+    }
+
+    if (session.role !== "palsys_admin") {
+      return Response.json({ ok: false, error: "Somente a PalSys pode excluir assinantes." }, { status: 403 })
+    }
+
+    const payload = deleteSubscriberPayloadSchema.parse(await request.json())
+    await deleteSubscriberRecord(payload.id)
+
+    return Response.json({ ok: true })
+  } catch (error) {
+    console.error(error)
+
+    return Response.json(
+      {
+        ok: false,
+        error: error instanceof Error ? error.message : "Erro ao excluir assinante",
       },
       { status: 500 }
     )

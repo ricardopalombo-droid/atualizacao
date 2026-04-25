@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { Building2, Pencil, Plus, Shield } from "lucide-react"
+import { Building2, Pencil, Plus, Shield, Trash2 } from "lucide-react"
 
 type SubscriberRecord = {
   id: string
@@ -42,6 +42,7 @@ export function SubscriberManagement() {
   const [statusMessage, setStatusMessage] = useState("Cadastre os assinantes que contratarão a plataforma.")
   const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
+  const [isDeletingId, setIsDeletingId] = useState<string | null>(null)
 
   useEffect(() => {
     void loadSubscribers()
@@ -99,6 +100,49 @@ export function SubscriberManagement() {
   function cancelEditing() {
     setForm(initialForm)
     setStatusMessage("Edição cancelada.")
+  }
+
+  async function handleDelete(record: SubscriberRecord) {
+    const confirmed = window.confirm(
+      `Excluir o assinante ${record.name}? Isso também remove clientes, usuários e funcionários vinculados.`
+    )
+
+    if (!confirmed) {
+      return
+    }
+
+    setIsDeletingId(record.id)
+
+    try {
+      const response = await fetch("/api/assinantes", {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          id: record.id,
+        }),
+      })
+
+      const result = (await response.json()) as { ok: boolean; error?: string }
+
+      if (!response.ok || !result.ok) {
+        setStatusMessage(result.error ?? "Não foi possível excluir o assinante.")
+        return
+      }
+
+      setRecords((previous) => previous.filter((item) => item.id !== record.id))
+
+      if (form.id === record.id) {
+        setForm(initialForm)
+      }
+
+      setStatusMessage("Assinante excluído com sucesso.")
+    } catch (error) {
+      setStatusMessage(error instanceof Error ? error.message : "Erro ao excluir assinante.")
+    } finally {
+      setIsDeletingId(null)
+    }
   }
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
@@ -249,14 +293,25 @@ export function SubscriberManagement() {
                       <td className="px-4 py-3">{record.max_employees}</td>
                       <td className="px-4 py-3">{formatDateTime(record.updated_at)}</td>
                       <td className="px-4 py-3">
-                        <button
-                          type="button"
-                          onClick={() => startEditing(record)}
-                          className="inline-flex items-center gap-2 rounded-lg bg-slate-900 px-4 py-2 font-semibold text-white hover:bg-slate-800"
-                        >
-                          <Pencil size={16} />
-                          Editar
-                        </button>
+                        <div className="flex flex-wrap gap-2">
+                          <button
+                            type="button"
+                            onClick={() => startEditing(record)}
+                            className="inline-flex items-center gap-2 rounded-lg bg-slate-900 px-4 py-2 font-semibold text-white hover:bg-slate-800"
+                          >
+                            <Pencil size={16} />
+                            Editar
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => void handleDelete(record)}
+                            disabled={isDeletingId === record.id}
+                            className="inline-flex items-center gap-2 rounded-lg border border-red-200 px-4 py-2 font-semibold text-red-700 hover:bg-red-50 disabled:opacity-60"
+                          >
+                            <Trash2 size={16} />
+                            {isDeletingId === record.id ? "Excluindo..." : "Excluir"}
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))}

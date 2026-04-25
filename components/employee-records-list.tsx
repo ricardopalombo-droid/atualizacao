@@ -2,6 +2,7 @@
 
 import Link from "next/link"
 import { useEffect, useState } from "react"
+import { Trash2 } from "lucide-react"
 
 type EmployeeRecord = {
   id: string
@@ -25,6 +26,7 @@ export function EmployeeRecordsList() {
   const [records, setRecords] = useState<EmployeeRecord[]>([])
   const [statusMessage, setStatusMessage] = useState("Carregando funcionários do cliente.")
   const [isLoading, setIsLoading] = useState(true)
+  const [isDeletingId, setIsDeletingId] = useState<string | null>(null)
 
   useEffect(() => {
     void loadRecords()
@@ -55,6 +57,44 @@ export function EmployeeRecordsList() {
       setStatusMessage(error instanceof Error ? error.message : "Erro ao carregar funcionários.")
     } finally {
       setIsLoading(false)
+    }
+  }
+
+  async function handleDelete(record: EmployeeRecord) {
+    const confirmed = window.confirm(
+      `Excluir o funcionário ${record.employee_name || "sem nome informado"}? Essa ação remove o cadastro salvo.`
+    )
+
+    if (!confirmed) {
+      return
+    }
+
+    setIsDeletingId(record.id)
+
+    try {
+      const response = await fetch("/api/cadastros", {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          id: record.id,
+        }),
+      })
+
+      const result = (await response.json()) as { ok: boolean; error?: string }
+
+      if (!response.ok || !result.ok) {
+        setStatusMessage(result.error ?? "Não foi possível excluir o funcionário.")
+        return
+      }
+
+      setRecords((previous) => previous.filter((item) => item.id !== record.id))
+      setStatusMessage("Funcionário excluído com sucesso.")
+    } catch (error) {
+      setStatusMessage(error instanceof Error ? error.message : "Erro ao excluir funcionário.")
+    } finally {
+      setIsDeletingId(null)
     }
   }
 
@@ -111,12 +151,23 @@ export function EmployeeRecordsList() {
                   </td>
                   <td className="px-4 py-3">{formatDateTime(record.updated_at)}</td>
                   <td className="px-4 py-3">
-                    <Link
-                      href={`/painel/cadastros?id=${record.id}`}
-                      className="inline-flex items-center justify-center rounded-lg bg-slate-900 px-4 py-2 font-semibold text-white hover:bg-slate-800"
-                    >
-                      Continuar edição
-                    </Link>
+                    <div className="flex flex-wrap gap-2">
+                      <Link
+                        href={`/painel/cadastros?id=${record.id}`}
+                        className="inline-flex items-center justify-center rounded-lg bg-slate-900 px-4 py-2 font-semibold text-white hover:bg-slate-800"
+                      >
+                        Continuar edição
+                      </Link>
+                      <button
+                        type="button"
+                        onClick={() => void handleDelete(record)}
+                        disabled={isDeletingId === record.id}
+                        className="inline-flex items-center gap-2 rounded-lg border border-red-200 px-4 py-2 font-semibold text-red-700 hover:bg-red-50 disabled:opacity-60"
+                      >
+                        <Trash2 size={16} />
+                        {isDeletingId === record.id ? "Excluindo..." : "Excluir"}
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}

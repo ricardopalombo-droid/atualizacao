@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { Building2, Pencil, Plus, Users } from "lucide-react"
+import { Building2, Pencil, Plus, Trash2, Users } from "lucide-react"
 
 type ClientRecord = {
   id: string
@@ -42,6 +42,7 @@ export function ClientManagement() {
   const [statusMessage, setStatusMessage] = useState("Cadastre os clientes que ficarão abaixo do assinante.")
   const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
+  const [isDeletingId, setIsDeletingId] = useState<string | null>(null)
 
   useEffect(() => {
     void loadClients()
@@ -99,6 +100,49 @@ export function ClientManagement() {
   function cancelEditing() {
     setForm(initialForm)
     setStatusMessage("Edição cancelada.")
+  }
+
+  async function handleDelete(client: ClientRecord) {
+    const confirmed = window.confirm(
+      `Excluir o cliente ${client.name}? Isso também remove o login e os funcionários vinculados.`
+    )
+
+    if (!confirmed) {
+      return
+    }
+
+    setIsDeletingId(client.id)
+
+    try {
+      const response = await fetch("/api/clientes", {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          id: client.id,
+        }),
+      })
+
+      const result = (await response.json()) as { ok: boolean; error?: string }
+
+      if (!response.ok || !result.ok) {
+        setStatusMessage(result.error ?? "Não foi possível excluir o cliente.")
+        return
+      }
+
+      setClients((previous) => previous.filter((item) => item.id !== client.id))
+
+      if (form.id === client.id) {
+        setForm(initialForm)
+      }
+
+      setStatusMessage("Cliente excluído com sucesso.")
+    } catch (error) {
+      setStatusMessage(error instanceof Error ? error.message : "Erro ao excluir cliente.")
+    } finally {
+      setIsDeletingId(null)
+    }
   }
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
@@ -288,14 +332,25 @@ export function ClientManagement() {
                       <td className="px-4 py-3">{client.max_employees ?? "Não definido"}</td>
                       <td className="px-4 py-3">{formatDateTime(client.updated_at)}</td>
                       <td className="px-4 py-3">
-                        <button
-                          type="button"
-                          onClick={() => startEditing(client)}
-                          className="inline-flex items-center gap-2 rounded-lg bg-slate-900 px-4 py-2 font-semibold text-white hover:bg-slate-800"
-                        >
-                          <Pencil size={16} />
-                          Editar
-                        </button>
+                        <div className="flex flex-wrap gap-2">
+                          <button
+                            type="button"
+                            onClick={() => startEditing(client)}
+                            className="inline-flex items-center gap-2 rounded-lg bg-slate-900 px-4 py-2 font-semibold text-white hover:bg-slate-800"
+                          >
+                            <Pencil size={16} />
+                            Editar
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => void handleDelete(client)}
+                            disabled={isDeletingId === client.id}
+                            className="inline-flex items-center gap-2 rounded-lg border border-red-200 px-4 py-2 font-semibold text-red-700 hover:bg-red-50 disabled:opacity-60"
+                          >
+                            <Trash2 size={16} />
+                            {isDeletingId === client.id ? "Excluindo..." : "Excluir"}
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))}

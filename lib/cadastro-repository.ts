@@ -119,3 +119,24 @@ export async function getEmployeeRecordById(
 
   return (data as EmployeeRecordDetail | null) ?? null
 }
+
+export async function deleteEmployeeRecord(
+  id: string,
+  scope?: { subscriberId?: string | null; clientId?: string | null }
+) {
+  const supabase = getSupabaseServerClient()
+
+  let query = supabase.from("employees").delete().eq("id", id)
+
+  if (scope?.clientId) {
+    query = query.eq("client_id", scope.clientId)
+  } else if (scope?.subscriberId) {
+    query = query.eq("subscriber_id", scope.subscriberId)
+  }
+
+  const { error } = await query
+
+  if (error) {
+    throw error
+  }
+}
