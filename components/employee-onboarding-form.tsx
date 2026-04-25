@@ -89,6 +89,35 @@ const dependentRelationshipOptions = [
   { value: "99 - Agregado/Outros", label: "99 - Agregado/Outros" },
 ] as const
 
+function normalizeHoursValue(rawValue: string) {
+  const sanitized = rawValue.replace(",", ".").replace(/[^0-9.]/g, "")
+  const [integerPart = "", decimalPart = ""] = sanitized.split(".")
+  const limitedInteger = integerPart.slice(0, 2)
+  const limitedDecimal = decimalPart.slice(0, 2)
+
+  if (!limitedInteger && !limitedDecimal) {
+    return ""
+  }
+
+  return limitedDecimal.length > 0 ? `${limitedInteger}.${limitedDecimal}` : limitedInteger
+}
+
+function calculateMonthlyHours(weeklyHours: string) {
+  const normalized = normalizeHoursValue(weeklyHours)
+
+  if (!normalized) {
+    return ""
+  }
+
+  const parsed = Number.parseFloat(normalized)
+
+  if (Number.isNaN(parsed)) {
+    return ""
+  }
+
+  return (parsed * 5).toFixed(2)
+}
+
 export function EmployeeOnboardingForm({
   variant = "client",
   initialRecordId = null,
@@ -192,6 +221,21 @@ export function EmployeeOnboardingForm({
   }, [editRecordId, publicToken, variant])
 
   function updateField(key: string, value: string | boolean) {
+    if (key === "horas_semanais" && typeof value === "string") {
+      const normalizedWeeklyHours = normalizeHoursValue(value)
+
+      setFormData((previous) => ({
+        ...previous,
+        horas_semanais: normalizedWeeklyHours,
+        horas_mensais: calculateMonthlyHours(normalizedWeeklyHours),
+      }))
+      return
+    }
+
+    if (key === "horas_mensais") {
+      return
+    }
+
     setFormData((previous) => ({
       ...previous,
       [key]: value,
@@ -1020,11 +1064,11 @@ function FieldRenderer({
         id={field.key}
         type={field.type}
         value={String(value ?? "")}
-        readOnly={readOnly}
+        readOnly={readOnly || field.key === "horas_mensais"}
         placeholder={field.placeholder}
         onChange={(event) => onChange(event.target.value)}
         className={`w-full rounded-2xl border px-4 py-3 outline-none transition ${
-          readOnly
+          readOnly || field.key === "horas_mensais"
             ? "border-slate-200 bg-slate-100 text-slate-500"
             : "border-slate-300 bg-white text-slate-900 focus:border-yellow-400 focus:ring-2 focus:ring-yellow-200"
         }`}
