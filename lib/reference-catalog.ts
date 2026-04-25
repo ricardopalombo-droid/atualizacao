@@ -446,6 +446,16 @@ export async function replaceReferenceCatalog(
     throw new Error("Nenhum registro valido foi identificado no PDF.")
   }
 
+  const { error: deleteExistingError } = await supabase
+    .from("reference_catalog_items")
+    .delete()
+    .eq("client_id", clientId)
+    .eq("reference_type", referenceType)
+
+  if (deleteExistingError) {
+    throw deleteExistingError
+  }
+
   const payload = uniqueItems.map((item) => ({
     client_id: clientId,
     reference_type: referenceType,
@@ -454,25 +464,10 @@ export async function replaceReferenceCatalog(
     metadata: item.metadata ?? {},
   }))
 
-  const { error: upsertError } = await supabase.from("reference_catalog_items").upsert(payload, {
-    onConflict: "client_id,reference_type,code",
-  })
+  const { error: insertError } = await supabase.from("reference_catalog_items").insert(payload)
 
-  if (upsertError) {
-    throw upsertError
-  }
-
-  const codes = uniqueItems.map((item) => item.code)
-  const serializedCodes = `(${codes.map((code) => `'${code.replace(/'/g, "''")}'`).join(",")})`
-  const { error: deleteError } = await supabase
-    .from("reference_catalog_items")
-    .delete()
-    .eq("client_id", clientId)
-    .eq("reference_type", referenceType)
-    .not("code", "in", serializedCodes)
-
-  if (deleteError) {
-    throw deleteError
+  if (insertError) {
+    throw insertError
   }
 
   return uniqueItems.length
