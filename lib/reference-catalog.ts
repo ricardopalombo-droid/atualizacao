@@ -105,7 +105,7 @@ function parseHorarioLine(line: string) {
 function parseSindicatoText(text: string) {
   const lines = text
     .split(/\r?\n/)
-    .map((line) => line.trim())
+    .map((line) => normalizeWhitespace(line))
     .filter(Boolean)
 
   const items: ParsedReferenceItem[] = []
@@ -113,18 +113,41 @@ function parseSindicatoText(text: string) {
   for (let index = 0; index < lines.length; index += 1) {
     const line = lines[index]
 
-    if (!line.includes("Mes Data Base:")) {
+    if (!line.includes("Mes Data Base:") && !line.includes("Mês Data Base:")) {
       continue
     }
 
-    const possibleCode = lines[index + 1] ?? ""
-    const possibleName = lines[index + 3] ?? ""
+    let codeIndex = index + 1
+
+    while (codeIndex < lines.length && !/^\d+$/.test(lines[codeIndex] ?? "")) {
+      codeIndex += 1
+    }
+
+    const possibleCode = lines[codeIndex] ?? ""
 
     if (!/^\d+$/.test(possibleCode)) {
       continue
     }
 
-    const label = normalizeWhitespace(possibleName.replace(/C[oó]d\.: Nome:.*$/i, ""))
+    let markerIndex = codeIndex + 1
+
+    while (markerIndex < lines.length && !/^C[oó]d\.:?$/i.test(lines[markerIndex] ?? "")) {
+      markerIndex += 1
+    }
+
+    const between = lines.slice(codeIndex + 1, markerIndex).filter((currentLine) => {
+      if (/^[A-Z]{2}$/.test(currentLine)) {
+        return false
+      }
+
+      if (/^P[aá]g\.:/i.test(currentLine) || /^P[aá]ginas?:/i.test(currentLine)) {
+        return false
+      }
+
+      return !/^\d[\d()./\- ]*$/.test(currentLine)
+    })
+
+    const label = normalizeWhitespace(between[between.length - 1] ?? "")
 
     if (!label) {
       continue
@@ -140,19 +163,114 @@ function parseSindicatoText(text: string) {
 }
 
 function parseCargoText(text: string) {
-  const items = text
+  const lines = text
     .split(/\r?\n/)
-    .map((line) => parseCargoLine(line))
-    .filter((item): item is ParsedReferenceItem => Boolean(item))
+    .map((line) => normalizeWhitespace(line))
+    .filter(Boolean)
+
+  const items: ParsedReferenceItem[] = []
+
+  for (let index = 0; index < lines.length; index += 1) {
+    const code = lines[index] ?? ""
+
+    if (!/^\d+$/.test(code)) {
+      continue
+    }
+
+    const label = lines[index + 1] ?? ""
+
+    if (!label || /^C\.?B\.?O/i.test(label) || /^P[aá]ginas?:/i.test(label)) {
+      continue
+    }
+
+    const numericValues: string[] = []
+    let cursor = index + 2
+
+    while (cursor < lines.length && numericValues.length < 3) {
+      const currentLine = lines[cursor] ?? ""
+      const nextLine = lines[cursor + 1] ?? ""
+
+      if (/^\d+$/.test(currentLine) && /[A-Za-zÀ-ÿ]/.test(nextLine)) {
+        break
+      }
+
+      if (/^\d+$/.test(currentLine)) {
+        numericValues.push(currentLine)
+      } else if (/^P[aá]ginas?:/i.test(currentLine)) {
+        break
+      }
+
+      cursor += 1
+    }
+
+    items.push({
+      code,
+      label,
+      metadata: {
+        cbo_novo: numericValues[0] ?? "",
+        cbo_antigo: numericValues[1] ?? "",
+        cbo_esocial: numericValues[2] ?? numericValues[0] ?? "",
+      },
+    })
+  }
 
   return uniqueByCode(items)
 }
 
 function parseHorarioText(text: string) {
-  const items = text
+  const lines = text
     .split(/\r?\n/)
-    .map((line) => parseHorarioLine(line))
-    .filter((item): item is ParsedReferenceItem => Boolean(item))
+    .map((line) => normalizeWhitespace(line))
+    .filter(Boolean)
+
+  const items: ParsedReferenceItem[] = []
+
+  for (let index = 0; index < lines.length; index += 1) {
+    const code = lines[index] ?? ""
+
+    if (!/^\d+$/.test(code)) {
+      continue
+    }
+
+    let cursor = index + 1
+    let label = ""
+
+    while (cursor < lines.length) {
+      const currentLine = lines[cursor] ?? ""
+
+      if (/^\d+$/.test(currentLine)) {
+        break
+      }
+
+      if (/^[1-9]\s*[–-]/.test(currentLine) || /^P[aá]ginas?:/i.test(currentLine)) {
+        break
+      }
+
+      if (
+        currentLine !== "Descrição" &&
+        currentLine !== "Código" &&
+        currentLine !== "Carga Horária Qtde" &&
+        currentLine !== "Carga Horária Período" &&
+        currentLine !== "Intervalo Qtde" &&
+        currentLine !== "Intervalo Tipo" &&
+        currentLine !== "Listagem de Horários"
+      ) {
+        label = currentLine
+        break
+      }
+
+      cursor += 1
+    }
+
+    if (!label) {
+      continue
+    }
+
+    items.push({
+      code,
+      label,
+    })
+  }
 
   return uniqueByCode(items)
 }
