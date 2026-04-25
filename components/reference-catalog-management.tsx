@@ -26,6 +26,15 @@ const helpByType: Record<ReferenceType, string> = {
   sindicato: "Importe o PDF de sindicatos para oferecer uma lista padronizada no cadastro contratual.",
 }
 
+const replaceWarningByType: Record<ReferenceType, string> = {
+  cargo:
+    "Esta importacao vai substituir toda a base atual de cargos desta empresa pelo conteudo do novo PDF.",
+  horario:
+    "Esta importacao vai substituir toda a base atual de horarios desta empresa pelo conteudo do novo PDF.",
+  sindicato:
+    "Esta importacao vai substituir toda a base atual de sindicatos desta empresa pelo conteudo do novo PDF.",
+}
+
 export function ReferenceCatalogManagement() {
   const [summary, setSummary] = useState<ReferenceSummary>({
     cargo: [],
@@ -89,6 +98,16 @@ export function ReferenceCatalogManagement() {
       return
     }
 
+    const currentCount = summary[referenceType].length
+    const confirmed = window.confirm(
+      `${replaceWarningByType[referenceType]}\n\nRegistros atuais: ${currentCount}\nArquivo selecionado: ${file.name}\n\nDeseja continuar?`
+    )
+
+    if (!confirmed) {
+      setStatusMessage(`Importacao de ${referenceLabels[referenceType]} cancelada.`)
+      return
+    }
+
     setIsUploading(referenceType)
 
     try {
@@ -140,6 +159,10 @@ export function ReferenceCatalogManagement() {
             </div>
 
             <div className="mt-6 space-y-4">
+              <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+                {replaceWarningByType[referenceType]}
+              </div>
+
               <input
                 type="file"
                 accept="application/pdf"
