@@ -1,12 +1,9 @@
 import { z } from "zod"
-import { createRequire } from "node:module"
 import { getSupabaseServerClient } from "@/lib/supabase-server"
 
 export const referenceTypeSchema = z.enum(["cargo", "horario", "sindicato"])
 
 export type ReferenceType = z.infer<typeof referenceTypeSchema>
-
-const require = createRequire(import.meta.url)
 
 export type ReferenceCatalogItem = {
   id: string
@@ -167,28 +164,118 @@ async function ensurePdfJsPolyfills() {
     Path2D?: unknown
   }
 
-  if (globalScope.DOMMatrix && globalScope.ImageData) {
+  if (globalScope.DOMMatrix) {
     return
   }
 
-  const canvasModuleName = ["@napi-rs", "canvas"].join("/")
-  const canvasModule = require(canvasModuleName) as {
-    DOMMatrix?: unknown
-    ImageData?: unknown
-    Path2D?: unknown
+  class SimpleDOMMatrix {
+    a: number
+    b: number
+    c: number
+    d: number
+    e: number
+    f: number
+
+    constructor(init?: number[]) {
+      this.a = init?.[0] ?? 1
+      this.b = init?.[1] ?? 0
+      this.c = init?.[2] ?? 0
+      this.d = init?.[3] ?? 1
+      this.e = init?.[4] ?? 0
+      this.f = init?.[5] ?? 0
+    }
+
+    multiplySelf(other: { a?: number; b?: number; c?: number; d?: number; e?: number; f?: number }) {
+      const a = this.a * (other.a ?? 1) + this.c * (other.b ?? 0)
+      const b = this.b * (other.a ?? 1) + this.d * (other.b ?? 0)
+      const c = this.a * (other.c ?? 0) + this.c * (other.d ?? 1)
+      const d = this.b * (other.c ?? 0) + this.d * (other.d ?? 1)
+      const e = this.a * (other.e ?? 0) + this.c * (other.f ?? 0) + this.e
+      const f = this.b * (other.e ?? 0) + this.d * (other.f ?? 0) + this.f
+
+      this.a = a
+      this.b = b
+      this.c = c
+      this.d = d
+      this.e = e
+      this.f = f
+      return this
+    }
+
+    preMultiplySelf(other: { a?: number; b?: number; c?: number; d?: number; e?: number; f?: number }) {
+      return new SimpleDOMMatrix([
+        other.a ?? 1,
+        other.b ?? 0,
+        other.c ?? 0,
+        other.d ?? 1,
+        other.e ?? 0,
+        other.f ?? 0,
+      ]).multiplySelf(this).copyTo(this)
+    }
+
+    translateSelf(tx = 0, ty = 0) {
+      return this.multiplySelf({ e: tx, f: ty })
+    }
+
+    scaleSelf(scaleX = 1, scaleY = scaleX) {
+      return this.multiplySelf({ a: scaleX, d: scaleY })
+    }
+
+    rotateSelf(_rotX = 0, _rotY = 0, rotZ = 0) {
+      const radians = (rotZ * Math.PI) / 180
+      const cos = Math.cos(radians)
+      const sin = Math.sin(radians)
+      return this.multiplySelf({ a: cos, b: sin, c: -sin, d: cos })
+    }
+
+    invertSelf() {
+      const determinant = this.a * this.d - this.b * this.c
+
+      if (!determinant) {
+        this.a = NaN
+        this.b = NaN
+        this.c = NaN
+        this.d = NaN
+        this.e = NaN
+        this.f = NaN
+        return this
+      }
+
+      const a = this.d / determinant
+      const b = -this.b / determinant
+      const c = -this.c / determinant
+      const d = this.a / determinant
+      const e = (this.c * this.f - this.d * this.e) / determinant
+      const f = (this.b * this.e - this.a * this.f) / determinant
+
+      this.a = a
+      this.b = b
+      this.c = c
+      this.d = d
+      this.e = e
+      this.f = f
+      return this
+    }
+
+    transformPoint(point: { x: number; y: number }) {
+      return {
+        x: this.a * point.x + this.c * point.y + this.e,
+        y: this.b * point.x + this.d * point.y + this.f,
+      }
+    }
+
+    private copyTo(target: SimpleDOMMatrix) {
+      target.a = this.a
+      target.b = this.b
+      target.c = this.c
+      target.d = this.d
+      target.e = this.e
+      target.f = this.f
+      return target
+    }
   }
 
-  if (!globalScope.DOMMatrix && "DOMMatrix" in canvasModule) {
-    globalScope.DOMMatrix = canvasModule.DOMMatrix
-  }
-
-  if (!globalScope.ImageData && "ImageData" in canvasModule) {
-    globalScope.ImageData = canvasModule.ImageData
-  }
-
-  if (!globalScope.Path2D && "Path2D" in canvasModule) {
-    globalScope.Path2D = canvasModule.Path2D
-  }
+  globalScope.DOMMatrix = SimpleDOMMatrix
 }
 
 export async function parseReferencePdf(buffer: Buffer, referenceType: ReferenceType) {
