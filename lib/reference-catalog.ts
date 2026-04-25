@@ -281,7 +281,10 @@ async function ensurePdfJsPolyfills() {
 export async function parseReferencePdf(buffer: Buffer, referenceType: ReferenceType) {
   await ensurePdfJsPolyfills()
   const pdfjs = await import("pdfjs-dist/legacy/build/pdf.mjs")
-  const loadingTask = pdfjs.getDocument({ data: new Uint8Array(buffer) })
+  const loadingTask = pdfjs.getDocument({
+    data: new Uint8Array(buffer),
+    disableWorker: true,
+  })
   const document = await loadingTask.promise
   let text = ""
 
