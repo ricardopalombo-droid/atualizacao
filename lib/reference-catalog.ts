@@ -280,6 +280,7 @@ async function ensurePdfJsPolyfills() {
 
 export async function parseReferencePdf(buffer: Buffer, referenceType: ReferenceType) {
   await ensurePdfJsPolyfills()
+  await import("pdfjs-dist/legacy/build/pdf.worker.mjs")
   const pdfjs = await import("pdfjs-dist/legacy/build/pdf.mjs")
   const loadingTask = pdfjs.getDocument({
     data: new Uint8Array(buffer),
