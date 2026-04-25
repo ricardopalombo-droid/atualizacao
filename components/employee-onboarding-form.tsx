@@ -57,6 +57,37 @@ const emptyDependentForm: DependentFormState = {
   notes: "",
 }
 
+const dependentRelationshipOptions = [
+  { value: "", label: "Selecione" },
+  { value: "01 - Cônjuge", label: "01 - Cônjuge" },
+  {
+    value: "02 - Companheiro(a) com filho ou união estável",
+    label: "02 - Companheiro(a) com filho ou união estável",
+  },
+  { value: "03 - Filho(a) ou enteado(a)", label: "03 - Filho(a) ou enteado(a)" },
+  {
+    value: "04 - Filho(a) ou enteado(a), universitário(a) ou escola técnica de 2º grau",
+    label: "04 - Filho(a) ou enteado(a), universitário(a) ou escola técnica de 2º grau (desativado)",
+  },
+  {
+    value: "06 - Irmão(ã), neto(a) ou bisneto(a) sem arrimo dos pais, com guarda judicial",
+    label: "06 - Irmão(ã), neto(a) ou bisneto(a) sem arrimo dos pais, com guarda judicial",
+  },
+  {
+    value: "07 - Irmão(ã), neto(a) ou bisneto(a) universitário(a) ou escola técnica, com guarda judicial",
+    label:
+      "07 - Irmão(ã), neto(a) ou bisneto(a) universitário(a) ou escola técnica, com guarda judicial (desativado)",
+  },
+  { value: "09 - Pais, avós e bisavós", label: "09 - Pais, avós e bisavós" },
+  { value: "10 - Menor pobre com guarda judicial", label: "10 - Menor pobre com guarda judicial" },
+  {
+    value: "11 - Pessoa absolutamente incapaz, tutor ou curador",
+    label: "11 - Pessoa absolutamente incapaz, tutor ou curador",
+  },
+  { value: "12 - Ex-cônjuge", label: "12 - Ex-cônjuge" },
+  { value: "99 - Agregado/Outros", label: "99 - Agregado/Outros" },
+] as const
+
 export function EmployeeOnboardingForm({
   variant = "client",
   initialRecordId = null,
@@ -600,9 +631,10 @@ function DependentsSection({
         />
         <SimpleField
           label="Grau de parentesco"
+          type="select"
           value={dependentForm.relationshipDegree}
           onChange={(value) => onFieldChange("relationshipDegree", value)}
-          placeholder="Ex.: Filho(a)"
+          options={dependentRelationshipOptions}
         />
         <SimpleField
           label="Data de nascimento"
@@ -916,13 +948,34 @@ function SimpleField({
   onChange,
   placeholder,
   type = "text",
+  options,
 }: {
   label: string
   value: string
   onChange: (value: string) => void
   placeholder?: string
-  type?: "text" | "date"
+  type?: "text" | "date" | "select"
+  options?: ReadonlyArray<{ value: string; label: string }>
 }) {
+  if (type === "select") {
+    return (
+      <div>
+        <label className="mb-2 block text-sm font-semibold text-slate-700">{label}</label>
+        <select
+          value={value}
+          onChange={(event) => onChange(event.target.value)}
+          className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-slate-900 outline-none transition focus:border-yellow-400 focus:ring-2 focus:ring-yellow-200"
+        >
+          {options?.map((option) => (
+            <option key={option.value} value={option.value}>
+              {option.label}
+            </option>
+          ))}
+        </select>
+      </div>
+    )
+  }
+
   return (
     <div>
       <label className="mb-2 block text-sm font-semibold text-slate-700">{label}</label>
