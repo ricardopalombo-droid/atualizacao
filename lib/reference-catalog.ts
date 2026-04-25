@@ -1,9 +1,12 @@
 import { z } from "zod"
+import { createRequire } from "node:module"
 import { getSupabaseServerClient } from "@/lib/supabase-server"
 
 export const referenceTypeSchema = z.enum(["cargo", "horario", "sindicato"])
 
 export type ReferenceType = z.infer<typeof referenceTypeSchema>
+
+const require = createRequire(import.meta.url)
 
 export type ReferenceCatalogItem = {
   id: string
@@ -157,7 +160,39 @@ function parseHorarioText(text: string) {
   return uniqueByCode(items)
 }
 
+async function ensurePdfJsPolyfills() {
+  const globalScope = globalThis as typeof globalThis & {
+    DOMMatrix?: unknown
+    ImageData?: unknown
+    Path2D?: unknown
+  }
+
+  if (globalScope.DOMMatrix && globalScope.ImageData) {
+    return
+  }
+
+  const canvasModuleName = ["@napi-rs", "canvas"].join("/")
+  const canvasModule = require(canvasModuleName) as {
+    DOMMatrix?: unknown
+    ImageData?: unknown
+    Path2D?: unknown
+  }
+
+  if (!globalScope.DOMMatrix && "DOMMatrix" in canvasModule) {
+    globalScope.DOMMatrix = canvasModule.DOMMatrix
+  }
+
+  if (!globalScope.ImageData && "ImageData" in canvasModule) {
+    globalScope.ImageData = canvasModule.ImageData
+  }
+
+  if (!globalScope.Path2D && "Path2D" in canvasModule) {
+    globalScope.Path2D = canvasModule.Path2D
+  }
+}
+
 export async function parseReferencePdf(buffer: Buffer, referenceType: ReferenceType) {
+  await ensurePdfJsPolyfills()
   const pdfjs = await import("pdfjs-dist/legacy/build/pdf.mjs")
   const loadingTask = pdfjs.getDocument({ data: new Uint8Array(buffer) })
   const document = await loadingTask.promise
