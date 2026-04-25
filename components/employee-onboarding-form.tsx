@@ -38,7 +38,7 @@ export function EmployeeOnboardingForm({
   variant = "client",
   initialRecordId = null,
 }: EmployeeOnboardingFormProps) {
-  const [editRecordId] = useState<string | null>(initialRecordId)
+  const editRecordId = initialRecordId
   const [viewer, setViewer] = useState<FieldAudience>(variant === "employee" ? "employee" : "client")
   const [activeSection, setActiveSection] = useState(getSectionsForAudience(viewer)[0]?.id ?? "")
   const [formData, setFormData] = useState<FormState>(defaultFormValues)
