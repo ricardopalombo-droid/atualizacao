@@ -3,6 +3,7 @@ import { redirect } from "next/navigation"
 import { EmployeeOnboardingForm } from "@/components/employee-onboarding-form"
 import { EmployeeRecordsList } from "@/components/employee-records-list"
 import { getCurrentSession } from "@/lib/auth-session"
+import { getReferenceCatalogSummary } from "@/lib/reference-catalog"
 
 export default async function CadastrosPage({
   searchParams,
@@ -19,6 +20,10 @@ export default async function CadastrosPage({
   if (session.role !== "client_user") {
     redirect("/painel")
   }
+
+  const lookupCatalog = session.subscriberId
+    ? await getReferenceCatalogSummary(session.subscriberId)
+    : { cargo: [], horario: [], sindicato: [] }
 
   return (
     <main className="min-h-screen bg-slate-50 px-6 py-8">
@@ -47,7 +52,10 @@ export default async function CadastrosPage({
           <EmployeeRecordsList />
         </div>
 
-        <EmployeeOnboardingForm initialRecordId={resolvedSearchParams?.id ?? null} />
+        <EmployeeOnboardingForm
+          initialRecordId={resolvedSearchParams?.id ?? null}
+          lookupCatalog={lookupCatalog}
+        />
       </div>
     </main>
   )

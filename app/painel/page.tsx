@@ -1,6 +1,6 @@
 import Link from "next/link"
 import { redirect } from "next/navigation"
-import { Building2, CheckCircle2, ClipboardList, FileSpreadsheet, Shield } from "lucide-react"
+import { Building2, CheckCircle2, ClipboardList, Database, FileSpreadsheet, Shield } from "lucide-react"
 import { listEmployeeRecords } from "@/lib/cadastro-repository"
 import { workflowStatusLabels, type WorkflowStatus } from "@/lib/employee-form-config"
 import { LogoutButton } from "@/components/logout-button"
@@ -40,6 +40,13 @@ export default async function PainelPage() {
               href: "/painel/clientes",
               icone: Building2,
               acao: "Gerenciar clientes",
+            },
+            {
+              titulo: "Bases importadas",
+              descricao: "Importe cargos, horários e sindicatos para alimentar as listas do cadastro.",
+              href: "/painel/referencias",
+              icone: Database,
+              acao: "Gerenciar bases",
             },
           ]
         : [

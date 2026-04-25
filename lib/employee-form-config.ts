@@ -33,6 +33,8 @@ export type FormSection = {
   fields: FormField[]
 }
 
+export const dynamicReferenceFieldKeys = ["cargo", "horario", "sindicato"] as const
+
 function buildOptions(values: readonly string[]): FieldOption[] {
   return [{ label: "Selecione", value: "" }, ...values.map((value) => ({ label: value, value }))]
 }
@@ -419,15 +421,14 @@ export const formSections: FormSection[] = [
     fields: [
       { key: "data_admissao", label: "Data admissao", type: "date", audience: "client", requiredForExport: true },
       { key: "indicativo_admissao", label: "Indicativo de admissao", type: "select", audience: "client", options: indicativoAdmissaoOptions },
-      { key: "sindicato", label: "Sindicato representante", type: "text", audience: "client", requiredForExport: true },
+      { key: "sindicato", label: "Sindicato representante", type: "select", audience: "client", requiredForExport: true },
       { key: "categoria_normativa", label: "Categoria normativa vinculada", type: "text", audience: "client" },
       { key: "tipo_contrato", label: "Tipo de contrato", type: "select", audience: "client", options: tipoContratoOptions, requiredForExport: true },
       { key: "salario", label: "Salario", type: "number", audience: "client", requiredForExport: true },
-      { key: "cargo", label: "Funcao", type: "text", audience: "client", requiredForExport: true },
-      { key: "cbo", label: "CBO", type: "text", audience: "client", requiredForExport: true },
+      { key: "cargo", label: "Cargo", type: "select", audience: "client", requiredForExport: true },
       { key: "horas_semanais", label: "Horas semanais", type: "text", audience: "client", placeholder: "44.00" },
       { key: "horas_mensais", label: "Horas mensais", type: "text", audience: "client", placeholder: "220.00" },
-      { key: "horario", label: "Horario", type: "text", audience: "client" },
+      { key: "horario", label: "Horario", type: "select", audience: "client" },
       { key: "data_alteracao_cargo", label: "Data alteracao do cargo", type: "date", audience: "client" },
     ],
   },

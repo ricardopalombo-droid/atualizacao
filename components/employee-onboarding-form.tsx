@@ -16,8 +16,10 @@ import {
 } from "lucide-react"
 import {
   defaultFormValues,
+  dynamicReferenceFieldKeys,
   getSectionsForAudience,
   type FieldAudience,
+  type FieldOption,
   type FormField,
   type WorkflowStatus,
   workflowStatusLabels,
@@ -41,6 +43,13 @@ type EmployeeOnboardingFormProps = {
   variant?: "client" | "employee"
   initialRecordId?: string | null
   publicToken?: string | null
+  lookupCatalog?: Partial<Record<"cargo" | "horario" | "sindicato", LookupRecord[]>>
+}
+
+type LookupRecord = {
+  code: string
+  label: string
+  metadata?: Record<string, string | number | boolean | null>
 }
 
 const viewerLabels: Record<FieldAudience, string> = {
@@ -94,9 +103,14 @@ function normalizeHoursValue(rawValue: string) {
   const [integerPart = "", decimalPart = ""] = sanitized.split(".")
   const limitedInteger = integerPart.slice(0, 2)
   const limitedDecimal = decimalPart.slice(0, 2)
+  const hasTrailingDot = sanitized.endsWith(".") && decimalPart.length === 0
 
   if (!limitedInteger && !limitedDecimal) {
     return ""
+  }
+
+  if (hasTrailingDot) {
+    return `${limitedInteger}.`
   }
 
   return limitedDecimal.length > 0 ? `${limitedInteger}.${limitedDecimal}` : limitedInteger
@@ -105,7 +119,7 @@ function normalizeHoursValue(rawValue: string) {
 function calculateMonthlyHours(weeklyHours: string) {
   const normalized = normalizeHoursValue(weeklyHours)
 
-  if (!normalized) {
+  if (!normalized || normalized.endsWith(".")) {
     return ""
   }
 
@@ -118,10 +132,21 @@ function calculateMonthlyHours(weeklyHours: string) {
   return (parsed * 5).toFixed(2)
 }
 
+function buildLookupOptions(records: LookupRecord[]) {
+  return [
+    { label: "Selecione", value: "" },
+    ...records.map((record) => ({
+      label: `${record.code} - ${record.label}`,
+      value: record.code,
+    })),
+  ] satisfies FieldOption[]
+}
+
 export function EmployeeOnboardingForm({
   variant = "client",
   initialRecordId = null,
   publicToken = null,
+  lookupCatalog = {},
 }: EmployeeOnboardingFormProps) {
   const editRecordId = initialRecordId
   const [viewer, setViewer] = useState<FieldAudience>(variant === "employee" ? "employee" : "client")
@@ -141,6 +166,22 @@ export function EmployeeOnboardingForm({
   const currentSections = useMemo(() => getSectionsForAudience(viewer), [viewer])
   const currentSection = currentSections.find((section) => section.id === activeSection) ?? currentSections[0]
   const canSwitchViewer = variant === "client"
+  const lookupOptionsByKey = useMemo(
+    () => ({
+      cargo: buildLookupOptions(lookupCatalog.cargo ?? []),
+      horario: buildLookupOptions(lookupCatalog.horario ?? []),
+      sindicato: buildLookupOptions(lookupCatalog.sindicato ?? []),
+    }),
+    [lookupCatalog]
+  )
+  const lookupRecordByKey = useMemo(
+    () => ({
+      cargo: new Map((lookupCatalog.cargo ?? []).map((record) => [record.code, record])),
+      horario: new Map((lookupCatalog.horario ?? []).map((record) => [record.code, record])),
+      sindicato: new Map((lookupCatalog.sindicato ?? []).map((record) => [record.code, record])),
+    }),
+    [lookupCatalog]
+  )
 
   useEffect(() => {
     if (!editRecordId && !publicToken) {
@@ -221,6 +262,23 @@ export function EmployeeOnboardingForm({
   }, [editRecordId, publicToken, variant])
 
   function updateField(key: string, value: string | boolean) {
+    if (dynamicReferenceFieldKeys.includes(key as (typeof dynamicReferenceFieldKeys)[number]) && typeof value === "string") {
+      const typedKey = key as "cargo" | "horario" | "sindicato"
+      const selectedRecord = lookupRecordByKey[typedKey].get(value)
+
+      setFormData((previous) => ({
+        ...previous,
+        [typedKey]: value,
+        [`${typedKey}_descricao`]: selectedRecord?.label ?? "",
+        ...(typedKey === "cargo"
+          ? {
+              cargo_cbo: String(selectedRecord?.metadata?.cbo_esocial ?? ""),
+            }
+          : {}),
+      }))
+      return
+    }
+
     if (key === "horas_semanais" && typeof value === "string") {
       const normalizedWeeklyHours = normalizeHoursValue(value)
 
@@ -597,6 +655,7 @@ export function EmployeeOnboardingForm({
                   key={field.key}
                   field={field}
                   value={formData[field.key]}
+                  optionsOverride={lookupOptionsByKey[field.key as "cargo" | "horario" | "sindicato"]}
                   readOnly={variant === "employee" ? field.audience === "client" : false}
                   onChange={(value) => updateField(field.key, value)}
                 />
@@ -973,11 +1032,13 @@ function ActionPanel({
 function FieldRenderer({
   field,
   value,
+  optionsOverride,
   readOnly,
   onChange,
 }: {
   field: FormField
   value: string | boolean | undefined
+  optionsOverride?: FieldOption[]
   readOnly?: boolean
   onChange: (value: string | boolean) => void
 }) {
@@ -1044,7 +1105,7 @@ function FieldRenderer({
               : "border-slate-300 bg-white text-slate-900 focus:border-yellow-400 focus:ring-2 focus:ring-yellow-200"
           }`}
         >
-          {field.options?.map((option) => (
+          {(optionsOverride ?? field.options ?? []).map((option) => (
             <option key={option.value} value={option.value}>
               {option.label}
             </option>
