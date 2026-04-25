@@ -77,14 +77,14 @@ create table if not exists public.dependents (
 
 create table if not exists public.reference_catalog_items (
   id uuid primary key default gen_random_uuid(),
-  subscriber_id uuid not null references public.subscribers(id) on delete cascade,
+  client_id uuid not null references public.clients(id) on delete cascade,
   reference_type text not null check (reference_type in ('cargo', 'horario', 'sindicato')),
   code text not null,
   label text not null,
   metadata jsonb not null default '{}'::jsonb,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
-  constraint reference_catalog_items_unique_scope unique (subscriber_id, reference_type, code)
+  constraint reference_catalog_items_unique_scope unique (client_id, reference_type, code)
 );
 
 create or replace function public.set_updated_at()
@@ -135,8 +135,8 @@ create index if not exists employees_client_id_idx on public.employees(client_id
 create index if not exists employees_subscriber_id_idx on public.employees(subscriber_id);
 create index if not exists employees_workflow_status_idx on public.employees(workflow_status);
 create index if not exists dependents_employee_id_idx on public.dependents(employee_id);
-create index if not exists reference_catalog_items_subscriber_type_idx
-on public.reference_catalog_items(subscriber_id, reference_type);
+create index if not exists reference_catalog_items_client_type_idx
+on public.reference_catalog_items(client_id, reference_type);
 
 alter table public.subscribers enable row level security;
 alter table public.app_users enable row level security;

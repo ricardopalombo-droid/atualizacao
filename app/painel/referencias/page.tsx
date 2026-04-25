@@ -10,7 +10,7 @@ export default async function ReferenciasPage() {
     redirect("/acesso")
   }
 
-  if (session.role !== "subscriber_admin") {
+  if (session.role !== "client_user") {
     redirect("/painel")
   }
 
@@ -22,10 +22,10 @@ export default async function ReferenciasPage() {
             <span className="inline-flex rounded-full bg-yellow-100 px-4 py-1 text-sm font-bold text-yellow-800">
               Modulo interno
             </span>
-            <h1 className="mt-4 text-4xl font-bold text-slate-900">Bases importadas do sistema</h1>
+            <h1 className="mt-4 text-4xl font-bold text-slate-900">Bases importadas do cliente</h1>
             <p className="mt-3 max-w-3xl text-slate-600">
-              Importe os PDFs de cargos, horarios e sindicatos para alimentar as listas usadas pelos
-              clientes no cadastro de funcionarios.
+              Importe os PDFs de cargos, horarios e sindicatos da sua empresa para alimentar as
+              listas usadas no cadastro de funcionarios.
             </p>
           </div>
 

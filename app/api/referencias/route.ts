@@ -11,8 +11,15 @@ export async function GET(request: Request) {
   try {
     const session = await getCurrentSession()
 
-    if (!session?.subscriberId) {
-      return Response.json({ ok: false, error: "Assinante nao identificado." }, { status: 401 })
+    if (!session?.clientId) {
+      return Response.json({ ok: false, error: "Cliente nao identificado." }, { status: 401 })
+    }
+
+    if (session.role !== "client_user") {
+      return Response.json(
+        { ok: false, error: "Somente o cliente pode visualizar as bases importadas." },
+        { status: 403 }
+      )
     }
 
     const url = new URL(request.url)
@@ -20,12 +27,12 @@ export async function GET(request: Request) {
 
     if (typeParam) {
       const referenceType = referenceTypeSchema.parse(typeParam)
-      const records = await listReferenceCatalog(session.subscriberId, referenceType)
+      const records = await listReferenceCatalog(session.clientId, referenceType)
 
       return Response.json({ ok: true, records })
     }
 
-    const summary = await getReferenceCatalogSummary(session.subscriberId)
+    const summary = await getReferenceCatalogSummary(session.clientId)
 
     return Response.json({ ok: true, summary })
   } catch (error) {
@@ -45,13 +52,13 @@ export async function POST(request: Request) {
   try {
     const session = await getCurrentSession()
 
-    if (!session?.subscriberId) {
-      return Response.json({ ok: false, error: "Assinante nao identificado." }, { status: 401 })
+    if (!session?.clientId) {
+      return Response.json({ ok: false, error: "Cliente nao identificado." }, { status: 401 })
     }
 
-    if (session.role !== "subscriber_admin") {
+    if (session.role !== "client_user") {
       return Response.json(
-        { ok: false, error: "Somente o assinante pode importar cargos, horarios e sindicatos." },
+        { ok: false, error: "Somente o cliente pode importar cargos, horarios e sindicatos." },
         { status: 403 }
       )
     }
@@ -66,7 +73,7 @@ export async function POST(request: Request) {
 
     const buffer = Buffer.from(await file.arrayBuffer())
     const items = await parseReferencePdf(buffer, referenceType)
-    const importedCount = await replaceReferenceCatalog(session.subscriberId, referenceType, items)
+    const importedCount = await replaceReferenceCatalog(session.clientId, referenceType, items)
 
     return Response.json({
       ok: true,

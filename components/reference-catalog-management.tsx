@@ -34,7 +34,7 @@ export function ReferenceCatalogManagement() {
   })
   const [selectedFiles, setSelectedFiles] = useState<Partial<Record<ReferenceType, File | null>>>({})
   const [statusMessage, setStatusMessage] = useState(
-    "Importe os PDFs de cargos, horarios e sindicatos para alimentar as listas do sistema."
+    "Importe os PDFs de cargos, horarios e sindicatos para alimentar as listas da sua empresa."
   )
   const [isLoading, setIsLoading] = useState(true)
   const [isUploading, setIsUploading] = useState<ReferenceType | null>(null)
@@ -58,7 +58,7 @@ export function ReferenceCatalogManagement() {
       }
 
       if (!response.ok || !result.ok || !result.summary) {
-        setStatusMessage(result.error ?? "Nao foi possivel carregar as referencias.")
+        setStatusMessage(result.error ?? "Nao foi possivel carregar as bases da empresa.")
         return
       }
 
@@ -161,7 +161,7 @@ export function ReferenceCatalogManagement() {
           <div>
             <h2 className="text-2xl font-bold text-slate-900">Resumo das bases importadas</h2>
             <p className="mt-2 text-slate-600">
-              Confira as primeiras entradas carregadas para validar se o parser leu os PDFs corretamente.
+            Confira as primeiras entradas carregadas para validar se o parser leu os PDFs da sua empresa corretamente.
             </p>
           </div>
           <div className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-4 py-2 text-sm font-semibold text-slate-700">

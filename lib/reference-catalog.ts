@@ -8,7 +8,7 @@ export type ReferenceType = z.infer<typeof referenceTypeSchema>
 
 export type ReferenceCatalogItem = {
   id: string
-  subscriber_id: string
+  client_id: string
   reference_type: ReferenceType
   code: string
   label: string
@@ -180,7 +180,7 @@ export async function parseReferencePdf(buffer: Buffer, referenceType: Reference
 }
 
 export async function replaceReferenceCatalog(
-  subscriberId: string,
+  clientId: string,
   referenceType: ReferenceType,
   items: ParsedReferenceItem[]
 ) {
@@ -192,7 +192,7 @@ export async function replaceReferenceCatalog(
   }
 
   const payload = uniqueItems.map((item) => ({
-    subscriber_id: subscriberId,
+    client_id: clientId,
     reference_type: referenceType,
     code: item.code,
     label: item.label,
@@ -200,7 +200,7 @@ export async function replaceReferenceCatalog(
   }))
 
   const { error: upsertError } = await supabase.from("reference_catalog_items").upsert(payload, {
-    onConflict: "subscriber_id,reference_type,code",
+    onConflict: "client_id,reference_type,code",
   })
 
   if (upsertError) {
@@ -212,7 +212,7 @@ export async function replaceReferenceCatalog(
   const { error: deleteError } = await supabase
     .from("reference_catalog_items")
     .delete()
-    .eq("subscriber_id", subscriberId)
+    .eq("client_id", clientId)
     .eq("reference_type", referenceType)
     .not("code", "in", serializedCodes)
 
@@ -224,15 +224,15 @@ export async function replaceReferenceCatalog(
 }
 
 export async function listReferenceCatalog(
-  subscriberId: string,
+  clientId: string,
   referenceType?: ReferenceType
 ): Promise<ReferenceCatalogItem[]> {
   const supabase = getSupabaseServerClient()
 
   let query = supabase
     .from("reference_catalog_items")
-    .select("id, subscriber_id, reference_type, code, label, metadata, updated_at")
-    .eq("subscriber_id", subscriberId)
+    .select("id, client_id, reference_type, code, label, metadata, updated_at")
+    .eq("client_id", clientId)
     .order("code", { ascending: true })
 
   if (referenceType) {
@@ -248,8 +248,8 @@ export async function listReferenceCatalog(
   return (data as ReferenceCatalogItem[] | null) ?? []
 }
 
-export async function getReferenceCatalogSummary(subscriberId: string) {
-  const records = await listReferenceCatalog(subscriberId)
+export async function getReferenceCatalogSummary(clientId: string) {
+  const records = await listReferenceCatalog(clientId)
 
   const grouped = {
     cargo: [] as ReferenceCatalogItem[],

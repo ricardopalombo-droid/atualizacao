@@ -41,13 +41,6 @@ export default async function PainelPage() {
               icone: Building2,
               acao: "Gerenciar clientes",
             },
-            {
-              titulo: "Bases importadas",
-              descricao: "Importe cargos, horários e sindicatos para alimentar as listas do cadastro.",
-              href: "/painel/referencias",
-              icone: Database,
-              acao: "Gerenciar bases",
-            },
           ]
         : [
             {
@@ -70,6 +63,13 @@ export default async function PainelPage() {
               href: "/painel/cadastros",
               icone: CheckCircle2,
               acao: "Concluir no painel",
+            },
+            {
+              titulo: "Bases importadas",
+              descricao: "Importe cargos, horários e sindicatos da sua empresa para alimentar as listas do cadastro.",
+              href: "/painel/referencias",
+              icone: Database,
+              acao: "Gerenciar bases",
             },
           ]
 
