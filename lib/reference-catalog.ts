@@ -110,10 +110,30 @@ function parseSindicatoText(text: string) {
 
   const items: ParsedReferenceItem[] = []
 
+  for (const line of lines) {
+    const inlineMatch = line.match(/^C[o???]d.:s*(\d+)s+Nome:s*(.+)$/i)
+
+    if (!inlineMatch) {
+      continue
+    }
+
+    const code = inlineMatch[1]
+    const label = normalizeWhitespace(inlineMatch[2] ?? "")
+
+    if (!label) {
+      continue
+    }
+
+    items.push({
+      code,
+      label,
+    })
+  }
+
   for (let index = 0; index < lines.length; index += 1) {
     const line = lines[index]
 
-    if (!line.includes("Mes Data Base:") && !line.includes("Mês Data Base:")) {
+    if (!line.includes("Mes Data Base:") && !line.includes("M??s Data Base:")) {
       continue
     }
 
@@ -131,7 +151,7 @@ function parseSindicatoText(text: string) {
 
     let markerIndex = codeIndex + 1
 
-    while (markerIndex < lines.length && !/^C[oó]d\.:?$/i.test(lines[markerIndex] ?? "")) {
+    while (markerIndex < lines.length && !/^C[o???]d.:?$/i.test(lines[markerIndex] ?? "")) {
       markerIndex += 1
     }
 
@@ -140,7 +160,7 @@ function parseSindicatoText(text: string) {
         return false
       }
 
-      if (/^P[aá]g\.:/i.test(currentLine) || /^P[aá]ginas?:/i.test(currentLine)) {
+      if (/^P[a???]g.:/i.test(currentLine) || /^P[a???]ginas?:/i.test(currentLine)) {
         return false
       }
 
@@ -179,38 +199,18 @@ function parseCargoText(text: string) {
 
     const label = lines[index + 1] ?? ""
 
-    if (!label || /^C\.?B\.?O/i.test(label) || /^P[aá]ginas?:/i.test(label)) {
+    if (
+      !label ||
+      !/[A-Za-z?-???-??]/.test(label) ||
+      /^C\.?B\.?O/i.test(label) ||
+      /^P[a???]ginas?:/i.test(label)
+    ) {
       continue
-    }
-
-    const numericValues: string[] = []
-    let cursor = index + 2
-
-    while (cursor < lines.length && numericValues.length < 3) {
-      const currentLine = lines[cursor] ?? ""
-      const nextLine = lines[cursor + 1] ?? ""
-
-      if (/^\d+$/.test(currentLine) && /[A-Za-zÀ-ÿ]/.test(nextLine)) {
-        break
-      }
-
-      if (/^\d+$/.test(currentLine)) {
-        numericValues.push(currentLine)
-      } else if (/^P[aá]ginas?:/i.test(currentLine)) {
-        break
-      }
-
-      cursor += 1
     }
 
     items.push({
       code,
       label,
-      metadata: {
-        cbo_novo: numericValues[0] ?? "",
-        cbo_antigo: numericValues[1] ?? "",
-        cbo_esocial: numericValues[2] ?? numericValues[0] ?? "",
-      },
     })
   }
 
