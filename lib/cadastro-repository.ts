@@ -1,4 +1,4 @@
-import type { CadastroPayload, WorkflowStatus } from "@/lib/cadastro-types"
+import type { CadastroPayload, DependentPayload, WorkflowStatus } from "@/lib/cadastro-types"
 import { getSupabaseServerClient } from "@/lib/supabase-server"
 
 export type EmployeeRecordListItem = {
@@ -12,6 +12,16 @@ export type EmployeeRecordListItem = {
   updated_at: string
 }
 
+export type DependentRecordDetail = {
+  id: string
+  relationship_name: string | null
+  cpf: string | null
+  relationship_degree: string | null
+  birth_date: string | null
+  registry_delivery_date: string | null
+  full_payload: Record<string, string | boolean | number | null>
+}
+
 export type EmployeeRecordDetail = {
   id: string
   subscriber_id: string | null
@@ -20,6 +30,7 @@ export type EmployeeRecordDetail = {
   invite_email: string | null
   full_payload: Record<string, string | boolean | number | null>
   updated_at: string
+  dependents: DependentRecordDetail[]
 }
 
 function statusTimestamps(status: WorkflowStatus) {
@@ -33,10 +44,63 @@ function statusTimestamps(status: WorkflowStatus) {
   }
 }
 
+function mapDependentPayload(dependent: DependentPayload, employeeId: string) {
+  return {
+    id: dependent.id ?? undefined,
+    employee_id: employeeId,
+    relationship_name: dependent.relationshipName || null,
+    cpf: dependent.cpf || null,
+    relationship_degree: dependent.relationshipDegree || null,
+    birth_date: dependent.birthDate || null,
+    registry_delivery_date: dependent.registryDeliveryDate || null,
+    full_payload: {
+      notes: dependent.notes || "",
+    },
+  }
+}
+
+async function syncDependents(employeeId: string, dependents: DependentPayload[]) {
+  const supabase = getSupabaseServerClient()
+  const normalized = dependents.map((dependent) => mapDependentPayload(dependent, employeeId))
+
+  if (normalized.length > 0) {
+    const { error: upsertError } = await supabase.from("dependents").upsert(normalized, {
+      onConflict: "id",
+    })
+
+    if (upsertError) {
+      throw upsertError
+    }
+  }
+
+  const currentIds = normalized.map((dependent) => dependent.id).filter(Boolean) as string[]
+  let deleteQuery = supabase.from("dependents").delete().eq("employee_id", employeeId)
+
+  if (currentIds.length > 0) {
+    deleteQuery = deleteQuery.not("id", "in", `(${currentIds.map((id) => `'${id}'`).join(",")})`)
+  }
+
+  const { error: deleteError } = await deleteQuery
+
+  if (deleteError) {
+    throw deleteError
+  }
+}
+
 export async function upsertEmployeeRecord(payload: CadastroPayload) {
   const supabase = getSupabaseServerClient()
   const data = payload.data
   const timestamps = statusTimestamps(payload.workflowStatus)
+  const dependentsForPayload = payload.dependents.map((dependent) => ({
+    id: dependent.id ?? "",
+    codigo: dependent.id ?? "",
+    nome_parentesco: dependent.relationshipName,
+    cpf: dependent.cpf,
+    grau_parentesco: dependent.relationshipDegree,
+    nascimento: dependent.birthDate,
+    data_entrega_registro: dependent.registryDeliveryDate,
+    observacoes: dependent.notes,
+  }))
 
   const record = {
     id: payload.id ?? undefined,
@@ -48,7 +112,10 @@ export async function upsertEmployeeRecord(payload: CadastroPayload) {
     employee_email: String(data.email ?? ""),
     cpf: String(data.cpf ?? ""),
     actor_last_updated: payload.actor,
-    full_payload: data,
+    full_payload: {
+      ...data,
+      dependentes: dependentsForPayload,
+    },
     ...timestamps,
   }
 
@@ -63,6 +130,8 @@ export async function upsertEmployeeRecord(payload: CadastroPayload) {
   if (error) {
     throw error
   }
+
+  await syncDependents(saved.id, payload.dependents)
 
   return saved
 }
@@ -117,7 +186,24 @@ export async function getEmployeeRecordById(
     throw error
   }
 
-  return (data as EmployeeRecordDetail | null) ?? null
+  if (!data) {
+    return null
+  }
+
+  const { data: dependents, error: dependentsError } = await supabase
+    .from("dependents")
+    .select("id, relationship_name, cpf, relationship_degree, birth_date, registry_delivery_date, full_payload")
+    .eq("employee_id", id)
+    .order("created_at", { ascending: true })
+
+  if (dependentsError) {
+    throw dependentsError
+  }
+
+  return {
+    ...(data as Omit<EmployeeRecordDetail, "dependents">),
+    dependents: (dependents as DependentRecordDetail[] | null) ?? [],
+  }
 }
 
 export async function deleteEmployeeRecord(

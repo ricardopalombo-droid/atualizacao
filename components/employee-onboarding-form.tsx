@@ -6,8 +6,11 @@ import {
   Download,
   Link2,
   Mail,
+  Pencil,
+  Plus,
   Save,
   SendHorizontal,
+  Trash2,
   UserRound,
   UsersRound,
 } from "lucide-react"
@@ -24,6 +27,16 @@ import { exportEmployeeWorkbook } from "@/lib/planilha-export"
 
 type FormState = Record<string, string | boolean>
 
+type DependentFormState = {
+  id: string | null
+  relationshipName: string
+  cpf: string
+  relationshipDegree: string
+  birthDate: string
+  registryDeliveryDate: string
+  notes: string
+}
+
 type EmployeeOnboardingFormProps = {
   variant?: "client" | "employee"
   initialRecordId?: string | null
@@ -34,6 +47,16 @@ const viewerLabels: Record<FieldAudience, string> = {
   client: "Cliente",
 }
 
+const emptyDependentForm: DependentFormState = {
+  id: null,
+  relationshipName: "",
+  cpf: "",
+  relationshipDegree: "",
+  birthDate: "",
+  registryDeliveryDate: "",
+  notes: "",
+}
+
 export function EmployeeOnboardingForm({
   variant = "client",
   initialRecordId = null,
@@ -42,6 +65,8 @@ export function EmployeeOnboardingForm({
   const [viewer, setViewer] = useState<FieldAudience>(variant === "employee" ? "employee" : "client")
   const [activeSection, setActiveSection] = useState(getSectionsForAudience(viewer)[0]?.id ?? "")
   const [formData, setFormData] = useState<FormState>(defaultFormValues)
+  const [dependents, setDependents] = useState<DependentFormState[]>([])
+  const [dependentForm, setDependentForm] = useState<DependentFormState>(emptyDependentForm)
   const [status, setStatus] = useState<WorkflowStatus>("rascunho_interno")
   const [recordId, setRecordId] = useState<string | null>(null)
   const [isSaving, setIsSaving] = useState(false)
@@ -75,6 +100,15 @@ export function EmployeeOnboardingForm({
             workflow_status: WorkflowStatus
             invite_email: string | null
             full_payload: FormState
+            dependents?: Array<{
+              id: string
+              relationship_name: string | null
+              cpf: string | null
+              relationship_degree: string | null
+              birth_date: string | null
+              registry_delivery_date: string | null
+              full_payload?: Record<string, string | boolean | number | null>
+            }>
           } | null
           error?: string
         }
@@ -93,6 +127,17 @@ export function EmployeeOnboardingForm({
           ...result.record.full_payload,
           convite_email: result.record.invite_email ?? String(result.record.full_payload.convite_email ?? ""),
         })
+        setDependents(
+          (result.record.dependents ?? []).map((dependent) => ({
+            id: dependent.id,
+            relationshipName: dependent.relationship_name ?? "",
+            cpf: dependent.cpf ?? "",
+            relationshipDegree: dependent.relationship_degree ?? "",
+            birthDate: dependent.birth_date ?? "",
+            registryDeliveryDate: dependent.registry_delivery_date ?? "",
+            notes: String(dependent.full_payload?.notes ?? ""),
+          }))
+        )
         setStatusMessage("Cadastro carregado para continuar a edição.")
       } catch (error) {
         if (isMounted) {
@@ -113,6 +158,66 @@ export function EmployeeOnboardingForm({
       ...previous,
       [key]: value,
     }))
+  }
+
+  function updateDependentField<Key extends keyof DependentFormState>(key: Key, value: DependentFormState[Key]) {
+    setDependentForm((previous) => ({
+      ...previous,
+      [key]: value,
+    }))
+  }
+
+  function resetDependentForm() {
+    setDependentForm(emptyDependentForm)
+  }
+
+  function saveDependent() {
+    if (!dependentForm.relationshipName.trim()) {
+      setStatusMessage("Informe o nome do dependente antes de salvar.")
+      return
+    }
+
+    if (dependentForm.id) {
+      setDependents((previous) =>
+        previous.map((item) => (item.id === dependentForm.id ? dependentForm : item))
+      )
+      setStatusMessage("Dependente atualizado na sessão atual.")
+    } else {
+      setDependents((previous) => [
+        ...previous,
+        {
+          ...dependentForm,
+          id: crypto.randomUUID(),
+        },
+      ])
+      setStatusMessage("Dependente adicionado na sessão atual.")
+    }
+
+    resetDependentForm()
+  }
+
+  function editDependent(dependent: DependentFormState) {
+    setDependentForm(dependent)
+    setStatusMessage(`Editando o dependente ${dependent.relationshipName}.`)
+  }
+
+  function deleteDependent(id: string) {
+    const target = dependents.find((item) => item.id === id)
+    const confirmed = window.confirm(
+      `Excluir o dependente ${target?.relationshipName || "selecionado"} da lista atual?`
+    )
+
+    if (!confirmed) {
+      return
+    }
+
+    setDependents((previous) => previous.filter((item) => item.id !== id))
+
+    if (dependentForm.id === id) {
+      resetDependentForm()
+    }
+
+    setStatusMessage("Dependente removido da sessão atual.")
   }
 
   function changeViewer(nextViewer: FieldAudience) {
@@ -140,6 +245,7 @@ export function EmployeeOnboardingForm({
           workflowStatus: nextStatus,
           inviteEmail: String(formData.convite_email ?? formData.email ?? ""),
           data: formData,
+          dependents,
         }),
       })
 
@@ -204,9 +310,22 @@ export function EmployeeOnboardingForm({
       return
     }
 
-    exportEmployeeWorkbook(formData)
+    exportEmployeeWorkbook({
+      ...formData,
+      dependentes: dependents.map((dependent) => ({
+        codigo: dependent.id ?? "",
+        nome_parentesco: dependent.relationshipName,
+        cpf: dependent.cpf,
+        grau_parentesco: dependent.relationshipDegree,
+        nascimento: dependent.birthDate,
+        data_entrega_registro: dependent.registryDeliveryDate,
+        observacoes: dependent.notes,
+      })),
+    })
     setWorkflow("exportado", "Planilha gerada com sucesso para a próxima etapa operacional.")
   }
+
+  const currentStatusIndex = workflowStatusOrder.indexOf(status)
 
   return (
     <div className="space-y-6">
@@ -281,9 +400,20 @@ export function EmployeeOnboardingForm({
               {section.title}
             </button>
           ))}
+          <button
+            type="button"
+            onClick={() => setActiveSection("__dependentes__")}
+            className={`rounded-full px-4 py-2 text-sm font-semibold transition ${
+              activeSection === "__dependentes__"
+                ? "bg-yellow-400 text-slate-900"
+                : "bg-slate-100 text-slate-700 hover:bg-slate-200"
+            }`}
+          >
+            Dependentes
+          </button>
         </div>
 
-        {currentSection ? (
+        {activeSection !== "__dependentes__" && currentSection ? (
           <section className="mt-6 rounded-3xl border border-slate-200 bg-slate-50 p-6">
             <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
               <div>
@@ -307,13 +437,24 @@ export function EmployeeOnboardingForm({
               ))}
             </div>
           </section>
-        ) : null}
+        ) : (
+          <DependentsSection
+            dependentForm={dependentForm}
+            dependents={dependents}
+            onFieldChange={updateDependentField}
+            onSave={saveDependent}
+            onCancelEdit={resetDependentForm}
+            onEdit={editDependent}
+            onDelete={deleteDependent}
+          />
+        )}
 
         <ActionPanel
           variant={variant}
           viewer={viewer}
           status={status}
           isSaving={isSaving}
+          currentStatusIndex={currentStatusIndex}
           onSaveDraft={saveDraft}
           onSendInvite={sendInvite}
           onSubmitEmployeeData={submitEmployeeData}
@@ -359,7 +500,7 @@ function WorkflowOverview({
           />
           <WorkflowCard
             title="2. Cadastro básico"
-            description="O funcionário informa documentos, endereço e dados pessoais liberados."
+            description="O funcionário informa documentos, endereço, dados pessoais e dependentes."
             highlighted={status === "preenchido_funcionario"}
           />
           <WorkflowCard
@@ -372,9 +513,7 @@ function WorkflowOverview({
 
       <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
         <h3 className="text-xl font-semibold text-slate-900">Convite do funcionário</h3>
-        <p className="mt-2 text-slate-600">
-          Informe o e-mail que receberá o link de preenchimento.
-        </p>
+        <p className="mt-2 text-slate-600">Informe o e-mail que receberá o link de preenchimento.</p>
         <label className="mt-6 block text-sm font-semibold text-slate-700" htmlFor="convite_email">
           E-mail do funcionário
         </label>
@@ -415,11 +554,158 @@ function WorkflowCard({
   )
 }
 
+function DependentsSection({
+  dependentForm,
+  dependents,
+  onFieldChange,
+  onSave,
+  onCancelEdit,
+  onEdit,
+  onDelete,
+}: {
+  dependentForm: DependentFormState
+  dependents: DependentFormState[]
+  onFieldChange: <Key extends keyof DependentFormState>(key: Key, value: DependentFormState[Key]) => void
+  onSave: () => void
+  onCancelEdit: () => void
+  onEdit: (dependent: DependentFormState) => void
+  onDelete: (id: string) => void
+}) {
+  return (
+    <section className="mt-6 space-y-6 rounded-3xl border border-slate-200 bg-slate-50 p-6">
+      <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+        <div>
+          <h3 className="text-2xl font-bold text-slate-900">Dependentes</h3>
+          <p className="mt-2 text-slate-600">
+            Cadastre os dependentes do funcionário para compor a aba específica da planilha.
+          </p>
+        </div>
+        <div className="rounded-2xl bg-white px-4 py-3 text-sm font-semibold text-slate-700">
+          {dependents.length} dependente(s) na lista
+        </div>
+      </div>
+
+      <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+        <SimpleField
+          label="Nome do dependente"
+          value={dependentForm.relationshipName}
+          onChange={(value) => onFieldChange("relationshipName", value)}
+          placeholder="Ex.: Ana da Silva"
+        />
+        <SimpleField
+          label="CPF"
+          value={dependentForm.cpf}
+          onChange={(value) => onFieldChange("cpf", value)}
+          placeholder="000.000.000-00"
+        />
+        <SimpleField
+          label="Grau de parentesco"
+          value={dependentForm.relationshipDegree}
+          onChange={(value) => onFieldChange("relationshipDegree", value)}
+          placeholder="Ex.: Filho(a)"
+        />
+        <SimpleField
+          label="Data de nascimento"
+          type="date"
+          value={dependentForm.birthDate}
+          onChange={(value) => onFieldChange("birthDate", value)}
+        />
+        <SimpleField
+          label="Data de entrega do registro"
+          type="date"
+          value={dependentForm.registryDeliveryDate}
+          onChange={(value) => onFieldChange("registryDeliveryDate", value)}
+        />
+        <div className="md:col-span-2 xl:col-span-3">
+          <label className="mb-2 block text-sm font-semibold text-slate-700">Observações</label>
+          <textarea
+            value={dependentForm.notes}
+            onChange={(event) => onFieldChange("notes", event.target.value)}
+            placeholder="Anotações complementares sobre o dependente"
+            className="min-h-28 w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-slate-900 outline-none transition focus:border-yellow-400 focus:ring-2 focus:ring-yellow-200"
+          />
+        </div>
+      </div>
+
+      <div className="flex flex-wrap gap-3">
+        <button
+          type="button"
+          onClick={onSave}
+          className="inline-flex items-center gap-2 rounded-xl bg-slate-900 px-4 py-3 font-semibold text-white hover:bg-slate-800"
+        >
+          <Plus size={18} />
+          {dependentForm.id ? "Salvar dependente" : "Adicionar dependente"}
+        </button>
+        {dependentForm.id ? (
+          <button
+            type="button"
+            onClick={onCancelEdit}
+            className="inline-flex items-center gap-2 rounded-xl border border-slate-300 px-4 py-3 font-semibold text-slate-700 hover:bg-slate-100"
+          >
+            Cancelar edição
+          </button>
+        ) : null}
+      </div>
+
+      {dependents.length === 0 ? (
+        <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-6 text-slate-600">
+          Ainda não há dependentes adicionados para este funcionário.
+        </div>
+      ) : (
+        <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
+          <table className="min-w-full divide-y divide-slate-200">
+            <thead className="bg-slate-50">
+              <tr className="text-left text-sm font-semibold text-slate-700">
+                <th className="px-4 py-3">Dependente</th>
+                <th className="px-4 py-3">CPF</th>
+                <th className="px-4 py-3">Parentesco</th>
+                <th className="px-4 py-3">Nascimento</th>
+                <th className="px-4 py-3">Ação</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-200 bg-white">
+              {dependents.map((dependent) => (
+                <tr key={dependent.id ?? dependent.relationshipName} className="text-sm text-slate-700">
+                  <td className="px-4 py-3 font-medium text-slate-900">{dependent.relationshipName}</td>
+                  <td className="px-4 py-3">{dependent.cpf || "Sem CPF"}</td>
+                  <td className="px-4 py-3">{dependent.relationshipDegree || "Não informado"}</td>
+                  <td className="px-4 py-3">{dependent.birthDate ? formatDateLabel(dependent.birthDate) : "Sem data"}</td>
+                  <td className="px-4 py-3">
+                    <div className="flex flex-wrap gap-2">
+                      <button
+                        type="button"
+                        onClick={() => onEdit(dependent)}
+                        className="inline-flex items-center gap-2 rounded-lg bg-slate-900 px-4 py-2 font-semibold text-white hover:bg-slate-800"
+                      >
+                        <Pencil size={16} />
+                        Editar
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => dependent.id && onDelete(dependent.id)}
+                        className="inline-flex items-center gap-2 rounded-lg border border-red-200 px-4 py-2 font-semibold text-red-700 hover:bg-red-50"
+                      >
+                        <Trash2 size={16} />
+                        Excluir
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </section>
+  )
+}
+
 function ActionPanel({
   variant,
   viewer,
   status,
   isSaving,
+  currentStatusIndex,
   onSaveDraft,
   onSendInvite,
   onSubmitEmployeeData,
@@ -431,6 +717,7 @@ function ActionPanel({
   viewer: FieldAudience
   status: WorkflowStatus
   isSaving: boolean
+  currentStatusIndex: number
   onSaveDraft: () => Promise<void>
   onSendInvite: () => Promise<void>
   onSubmitEmployeeData: () => Promise<void>
@@ -481,7 +768,7 @@ function ActionPanel({
                 Iniciar revisão
               </button>
             ) : null}
-            {viewer === "client" ? (
+            {viewer === "client" && currentStatusIndex < workflowStatusOrder.indexOf("finalizado") ? (
               <button
                 type="button"
                 onClick={onFinalizeRecord}
@@ -621,4 +908,36 @@ function FieldRenderer({
       />
     </div>
   )
+}
+
+function SimpleField({
+  label,
+  value,
+  onChange,
+  placeholder,
+  type = "text",
+}: {
+  label: string
+  value: string
+  onChange: (value: string) => void
+  placeholder?: string
+  type?: "text" | "date"
+}) {
+  return (
+    <div>
+      <label className="mb-2 block text-sm font-semibold text-slate-700">{label}</label>
+      <input
+        type={type}
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        placeholder={placeholder}
+        className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-slate-900 outline-none transition focus:border-yellow-400 focus:ring-2 focus:ring-yellow-200"
+      />
+    </div>
+  )
+}
+
+function formatDateLabel(value: string) {
+  const parts = value.split("-")
+  return parts.length === 3 ? `${parts[2]}/${parts[1]}/${parts[0]}` : value
 }
