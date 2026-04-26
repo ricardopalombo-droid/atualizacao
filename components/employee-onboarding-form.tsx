@@ -18,6 +18,7 @@ import {
   defaultFormValues,
   dynamicReferenceFieldKeys,
   getSectionsForAudience,
+  requiredExportFields,
   type FieldAudience,
   type FieldOption,
   type FormField,
@@ -142,6 +143,20 @@ function buildLookupOptions(records: LookupRecord[]) {
   ] satisfies FieldOption[]
 }
 
+function hasFilledValue(value: string | boolean | undefined) {
+  if (typeof value === "boolean") {
+    return value
+  }
+
+  return typeof value === "string" ? value.trim().length > 0 : false
+}
+
+function getMissingRequiredFieldLabels(formData: FormState) {
+  return requiredExportFields
+    .filter((field) => !hasFilledValue(formData[field.key]))
+    .map((field) => field.label)
+}
+
 export function EmployeeOnboardingForm({
   variant = "client",
   initialRecordId = null,
@@ -182,6 +197,7 @@ export function EmployeeOnboardingForm({
     }),
     [lookupCatalog]
   )
+  const missingRequiredFieldLabels = useMemo(() => getMissingRequiredFieldLabels(formData), [formData])
 
   useEffect(() => {
     if (!editRecordId && !publicToken) {
@@ -534,6 +550,17 @@ export function EmployeeOnboardingForm({
       return
     }
 
+    if (missingRequiredFieldLabels.length > 0) {
+      const preview = missingRequiredFieldLabels.slice(0, 6).join(", ")
+      const suffix =
+        missingRequiredFieldLabels.length > 6
+          ? ` e mais ${missingRequiredFieldLabels.length - 6} campo(s).`
+          : "."
+
+      setStatusMessage(`Preencha os campos obrigatorios antes de exportar: ${preview}${suffix}`)
+      return
+    }
+
     exportEmployeeWorkbook({
       ...formData,
       dependentes: dependents.map((dependent) => ({
@@ -579,6 +606,10 @@ export function EmployeeOnboardingForm({
             Status atual: {workflowStatusLabels[status]}
           </div>
         </div>
+
+        {variant === "client" ? (
+          <RequiredFieldsNotice missingRequiredFieldLabels={missingRequiredFieldLabels} />
+        ) : null}
 
         {canSwitchViewer ? (
           <div className="mt-6 flex flex-wrap gap-3">
@@ -680,6 +711,7 @@ export function EmployeeOnboardingForm({
           status={status}
           isSaving={isSaving}
           currentStatusIndex={currentStatusIndex}
+          missingRequiredFieldCount={missingRequiredFieldLabels.length}
           onSaveDraft={saveDraft}
           onSendInvite={sendInvite}
           onSubmitEmployeeData={submitEmployeeData}
@@ -776,6 +808,44 @@ function WorkflowCard({
       <strong className="text-slate-900">{title}</strong>
       <p className="mt-2 text-sm leading-6 text-slate-600">{description}</p>
     </article>
+  )
+}
+
+function RequiredFieldsNotice({
+  missingRequiredFieldLabels,
+}: {
+  missingRequiredFieldLabels: string[]
+}) {
+  if (missingRequiredFieldLabels.length === 0) {
+    return (
+      <section className="mt-6 rounded-3xl border border-green-200 bg-green-50 p-6">
+        <strong className="text-green-800">Checklist de exportacao concluido</strong>
+        <p className="mt-2 text-green-700">
+          Os campos obrigatorios destacados pelo sistema de destino ja foram preenchidos.
+        </p>
+      </section>
+    )
+  }
+
+  return (
+    <section className="mt-6 rounded-3xl border border-amber-200 bg-amber-50 p-6">
+      <strong className="text-amber-900">
+        Ainda faltam {missingRequiredFieldLabels.length} campo(s) obrigatorio(s) para exportar
+      </strong>
+      <p className="mt-2 text-amber-800">
+        Corrija os itens abaixo antes de gerar a planilha final.
+      </p>
+      <div className="mt-4 flex flex-wrap gap-2">
+        {missingRequiredFieldLabels.map((label) => (
+          <span
+            key={label}
+            className="inline-flex rounded-full border border-amber-300 bg-white px-3 py-1 text-sm font-medium text-amber-900"
+          >
+            {label}
+          </span>
+        ))}
+      </div>
+    </section>
   )
 }
 
@@ -932,6 +1002,7 @@ function ActionPanel({
   status,
   isSaving,
   currentStatusIndex,
+  missingRequiredFieldCount,
   onSaveDraft,
   onSendInvite,
   onSubmitEmployeeData,
@@ -944,6 +1015,7 @@ function ActionPanel({
   status: WorkflowStatus
   isSaving: boolean
   currentStatusIndex: number
+  missingRequiredFieldCount: number
   onSaveDraft: () => Promise<void>
   onSendInvite: () => Promise<void>
   onSubmitEmployeeData: () => Promise<void>
@@ -1007,10 +1079,13 @@ function ActionPanel({
             <button
               type="button"
               onClick={onExport}
+              disabled={missingRequiredFieldCount > 0}
               className="inline-flex items-center gap-2 rounded-xl border border-slate-300 px-4 py-3 font-semibold text-slate-700 hover:bg-slate-100"
             >
               <Download size={18} />
-              Exportar planilha
+              {missingRequiredFieldCount > 0
+                ? `Exportacao bloqueada (${missingRequiredFieldCount})`
+                : "Exportar planilha"}
             </button>
           </>
         ) : (

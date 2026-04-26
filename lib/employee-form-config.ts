@@ -33,6 +33,11 @@ export type FormSection = {
   fields: FormField[]
 }
 
+export type RequiredExportField = {
+  key: string
+  label: string
+}
+
 export const dynamicReferenceFieldKeys = ["cargo", "horario", "sindicato"] as const
 
 function buildOptions(values: readonly string[]): FieldOption[] {
@@ -320,14 +325,14 @@ export const formSections: FormSection[] = [
       { key: "telefone", label: "Telefone", type: "text", audience: "employee" },
       { key: "celular", label: "Celular", type: "text", audience: "employee" },
       { key: "data_nascimento", label: "Data de nascimento", type: "date", audience: "employee", requiredForExport: true },
-      { key: "pais_origem", label: "Pais de origem", type: "select", audience: "employee", options: countryOptions },
+      { key: "pais_origem", label: "Pais de origem", type: "select", audience: "employee", options: countryOptions, requiredForExport: true },
       { key: "naturalidade", label: "Naturalidade", type: "select", audience: "employee", options: brazilCityOptions },
-      { key: "sexo", label: "Sexo", type: "select", audience: "employee", options: sexoOptions },
-      { key: "raca_cor", label: "Raca/Cor", type: "select", audience: "employee", options: racaCorOptions },
-      { key: "estado_civil", label: "Estado civil", type: "select", audience: "employee", options: estadoCivilOptions },
+      { key: "sexo", label: "Sexo", type: "select", audience: "employee", options: sexoOptions, requiredForExport: true },
+      { key: "raca_cor", label: "Tipo de raca/cor", type: "select", audience: "employee", options: racaCorOptions, requiredForExport: true },
+      { key: "estado_civil", label: "Estado civil", type: "select", audience: "employee", options: estadoCivilOptions, requiredForExport: true },
       { key: "tipo_sanguineo", label: "Tipo sanguineo", type: "text", audience: "employee" },
       { key: "nacionalidade", label: "Nacionalidade", type: "select", audience: "employee", options: countryOptions },
-      { key: "grau_instrucao", label: "Grau de instrucao", type: "select", audience: "employee", options: grauInstrucaoOptions },
+      { key: "grau_instrucao", label: "Grau de instrucao", type: "select", audience: "employee", options: grauInstrucaoOptions, requiredForExport: true },
     ],
   },
   {
@@ -360,6 +365,7 @@ export const formSections: FormSection[] = [
     description: "Endereco principal do funcionario para compor a planilha final.",
     audience: "employee",
     fields: [
+      { key: "pais", label: "Pais", type: "select", audience: "employee", options: countryOptions, requiredForExport: true },
       { key: "cep", label: "CEP", type: "text", audience: "employee", placeholder: "12239-036", requiredForExport: true },
       { key: "logradouro", label: "Logradouro", type: "text", audience: "employee", requiredForExport: true },
       { key: "numero", label: "Numero", type: "text", audience: "employee" },
@@ -379,8 +385,8 @@ export const formSections: FormSection[] = [
       { key: "pis", label: "PIS", type: "text", audience: "employee", requiredForExport: true },
       { key: "titulo_eleitor", label: "Titulo de eleitor", type: "text", audience: "employee" },
       { key: "ctps_numero", label: "Numero CTPS", type: "text", audience: "employee", requiredForExport: true },
-      { key: "ctps_serie", label: "Serie CTPS", type: "text", audience: "employee" },
-      { key: "ctps_uf", label: "UF CTPS", type: "text", audience: "employee" },
+      { key: "ctps_serie", label: "Serie CTPS", type: "text", audience: "employee", requiredForExport: true },
+      { key: "ctps_uf", label: "UF CTPS", type: "select", audience: "employee", options: stateOptions, requiredForExport: true },
       { key: "rg_numero", label: "RG", type: "text", audience: "employee", requiredForExport: true },
       { key: "rg_orgao_emissor", label: "Orgao emissor RG", type: "text", audience: "employee" },
       { key: "uf_rg", label: "UF do RG", type: "select", audience: "employee", options: stateOptions },
@@ -420,15 +426,18 @@ export const formSections: FormSection[] = [
     audience: "client",
     fields: [
       { key: "data_admissao", label: "Data admissao", type: "date", audience: "client", requiredForExport: true },
-      { key: "indicativo_admissao", label: "Indicativo de admissao", type: "select", audience: "client", options: indicativoAdmissaoOptions },
+      { key: "indicativo_admissao", label: "Codigo de admissao", type: "select", audience: "client", options: indicativoAdmissaoOptions, requiredForExport: true },
       { key: "sindicato", label: "Sindicato representante", type: "select", audience: "client", requiredForExport: true },
+      { key: "tipo_tributacao_sindical", label: "Tipo tributacao sindical", type: "text", audience: "client", placeholder: "Informe o codigo ou descricao", requiredForExport: true },
       { key: "categoria_normativa", label: "Categoria normativa vinculada", type: "text", audience: "client" },
       { key: "tipo_contrato", label: "Tipo de contrato", type: "select", audience: "client", options: tipoContratoOptions, requiredForExport: true },
       { key: "salario", label: "Salario", type: "number", audience: "client", requiredForExport: true },
       { key: "cargo", label: "Cargo", type: "select", audience: "client", requiredForExport: true },
       { key: "horas_semanais", label: "Horas semanais", type: "text", audience: "client", placeholder: "44.00" },
       { key: "horas_mensais", label: "Horas mensais", type: "text", audience: "client", placeholder: "220.00" },
-      { key: "horario", label: "Horario", type: "select", audience: "client" },
+      { key: "horario", label: "Regime de jornada", type: "select", audience: "client", requiredForExport: true },
+      { key: "vinculo_empregaticio", label: "Vinculo empregaticio", type: "text", audience: "client", placeholder: "Informe o codigo ou descricao", requiredForExport: true },
+      { key: "ocorrencia", label: "Ocorrencia", type: "text", audience: "client", placeholder: "Informe a ocorrencia", requiredForExport: true },
       { key: "data_alteracao_cargo", label: "Data alteracao do cargo", type: "date", audience: "client" },
     ],
   },
@@ -448,7 +457,7 @@ export const formSections: FormSection[] = [
       { key: "registro_funcionario", label: "Registro de funcionario", type: "text", audience: "client" },
       { key: "folha_ficha", label: "Folha/Ficha", type: "text", audience: "client" },
       { key: "grau_risco", label: "Grau de risco", type: "select", audience: "client", options: grauRiscoOptions },
-      { key: "caged", label: "CAGED", type: "select", audience: "client", options: cagedOptions },
+      { key: "caged", label: "Situacao Caged entrada", type: "select", audience: "client", options: cagedOptions, requiredForExport: true },
     ],
   },
   {
@@ -484,3 +493,12 @@ export const defaultFormValues = formSections.reduce<Record<string, string | boo
 export function getSectionsForAudience(audience: FieldAudience) {
   return formSections.filter((section) => section.audience === audience)
 }
+
+export const requiredExportFields: RequiredExportField[] = formSections.flatMap((section) =>
+  section.fields
+    .filter((field) => field.requiredForExport)
+    .map((field) => ({
+      key: field.key,
+      label: field.label,
+    }))
+)
