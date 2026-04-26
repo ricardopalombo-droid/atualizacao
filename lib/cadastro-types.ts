@@ -21,6 +21,10 @@ export const dependentPayloadSchema = z.object({
   notes: z.string().default(""),
 })
 
+const jsonValueSchema: z.ZodType<unknown> = z.lazy(() =>
+  z.union([z.string(), z.boolean(), z.number(), z.null(), z.array(jsonValueSchema), z.record(z.string(), jsonValueSchema)])
+)
+
 export const cadastroPayloadSchema = z.object({
   id: z.string().uuid().optional().nullable(),
   clientId: z.string().uuid().optional().nullable(),
@@ -28,7 +32,7 @@ export const cadastroPayloadSchema = z.object({
   actor: actorSchema,
   workflowStatus: workflowStatusSchema,
   inviteEmail: z.string().email().optional().or(z.literal("")).nullable(),
-  data: z.record(z.string(), z.union([z.string(), z.boolean(), z.number(), z.null()])).default({}),
+  data: z.record(z.string(), jsonValueSchema).default({}),
   dependents: z.array(dependentPayloadSchema).default([]),
 })
 
