@@ -292,6 +292,22 @@ const indicativoAdmissaoOptions = [
   { label: "3 - Decorrente de decisao judicial", value: "3 - Decorrente de decisao judicial" },
 ]
 
+const tipoTributacaoSindicalOptions = [
+  { label: "Selecione", value: "" },
+  { label: "1 - Ja contribui este ano", value: "1 - Ja contribui este ano" },
+  { label: "2 - Desconta sindical mes admissao", value: "2 - Desconta sindical mes admissao" },
+  { label: "3 - Desconta sindical mes subsequente a admissao", value: "3 - Desconta sindical mes subsequente a admissao" },
+  { label: "4 - Nao desconta sindical (contador)", value: "4 - Nao desconta sindical (contador)" },
+]
+
+const regimeJornadaOptions = [
+  { label: "Selecione", value: "" },
+  { label: "1 - Submetidos a horario de trabalho (Cap. II da CLT)", value: "1 - Submetidos a horario de trabalho (Cap. II da CLT)" },
+  { label: "2 - Atividade externa especificada no inciso I do Art. 62 da CLT", value: "2 - Atividade externa especificada no inciso I do Art. 62 da CLT" },
+  { label: "3 - Funcoes especificadas no inciso II do Art. 62 da CLT", value: "3 - Funcoes especificadas no inciso II do Art. 62 da CLT" },
+  { label: "4 - Teletrabalho, previsto no Inciso III do Art. 62 da CLT", value: "4 - Teletrabalho, previsto no Inciso III do Art. 62 da CLT" },
+]
+
 export const workflowStatusOrder: WorkflowStatus[] = [
   "rascunho_interno",
   "convite_enviado",
@@ -426,18 +442,18 @@ export const formSections: FormSection[] = [
     audience: "client",
     fields: [
       { key: "data_admissao", label: "Data admissao", type: "date", audience: "client", requiredForExport: true },
-      { key: "indicativo_admissao", label: "Codigo de admissao", type: "select", audience: "client", options: indicativoAdmissaoOptions, requiredForExport: true },
+      { key: "indicativo_admissao", label: "Indicativo admissao", type: "select", audience: "client", options: indicativoAdmissaoOptions, requiredForExport: true },
       { key: "sindicato", label: "Sindicato representante", type: "select", audience: "client", requiredForExport: true },
-      { key: "tipo_tributacao_sindical", label: "Tipo tributacao sindical", type: "text", audience: "client", placeholder: "Informe o codigo ou descricao", requiredForExport: true },
+      { key: "tipo_tributacao_sindical", label: "Tipo tributacao sindical", type: "select", audience: "client", options: tipoTributacaoSindicalOptions, requiredForExport: true },
       { key: "categoria_normativa", label: "Categoria normativa vinculada", type: "text", audience: "client" },
       { key: "tipo_contrato", label: "Tipo de contrato", type: "select", audience: "client", options: tipoContratoOptions, requiredForExport: true },
       { key: "salario", label: "Salario", type: "number", audience: "client", requiredForExport: true },
       { key: "cargo", label: "Cargo", type: "select", audience: "client", requiredForExport: true },
+      { key: "regime_jornada", label: "Regime de jornada", type: "select", audience: "client", options: regimeJornadaOptions, requiredForExport: true },
       { key: "horas_semanais", label: "Horas semanais", type: "text", audience: "client", placeholder: "44.00" },
       { key: "horas_mensais", label: "Horas mensais", type: "text", audience: "client", placeholder: "220.00" },
-      { key: "horario", label: "Regime de jornada", type: "select", audience: "client", requiredForExport: true },
+      { key: "horario", label: "Horario", type: "select", audience: "client" },
       { key: "vinculo_empregaticio", label: "Vinculo empregaticio", type: "text", audience: "client", placeholder: "Informe o codigo ou descricao", requiredForExport: true },
-      { key: "ocorrencia", label: "Ocorrencia", type: "text", audience: "client", placeholder: "Informe a ocorrencia", requiredForExport: true },
       { key: "data_alteracao_cargo", label: "Data alteracao do cargo", type: "date", audience: "client" },
     ],
   },
