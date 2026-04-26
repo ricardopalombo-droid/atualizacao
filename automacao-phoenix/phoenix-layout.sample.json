@@ -1,0 +1,15 @@
+{
+  "windowOrigin": {
+    "x": 0,
+    "y": 0
+  },
+  "targets": {
+    "botao_funcionario": { "x": 81, "y": 59 },
+    "botao_inserir": { "x": 48, "y": 165 },
+    "cep": { "x": 143, "y": 146 },
+    "buscar_cep": { "x": 253, "y": 146 },
+    "numero_endereco": { "x": 838, "y": 146 },
+    "nome_mae": { "x": 223, "y": 223 },
+    "nome_pai": { "x": 224, "y": 247 }
+  }
+}
