@@ -133,6 +133,48 @@ function calculateMonthlyHours(weeklyHours: string) {
   return (parsed * 5).toFixed(2)
 }
 
+function parsePositiveInteger(value: string) {
+  const digits = value.replace(/\D/g, "")
+
+  if (!digits) {
+    return null
+  }
+
+  const parsed = Number.parseInt(digits, 10)
+  return Number.isNaN(parsed) ? null : parsed
+}
+
+function formatDateInputValue(date: Date) {
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, "0")
+  const day = String(date.getDate()).padStart(2, "0")
+
+  return `${year}-${month}-${day}`
+}
+
+function addDaysToIsoDate(baseDateValue: string, daysToAdd: string) {
+  if (!baseDateValue) {
+    return ""
+  }
+
+  const parsedDays = parsePositiveInteger(daysToAdd)
+
+  if (parsedDays === null) {
+    return ""
+  }
+
+  const [year, month, day] = baseDateValue.split("-").map((part) => Number.parseInt(part, 10))
+
+  if (!year || !month || !day) {
+    return ""
+  }
+
+  const calculatedDate = new Date(year, month - 1, day)
+  calculatedDate.setDate(calculatedDate.getDate() + parsedDays)
+
+  return formatDateInputValue(calculatedDate)
+}
+
 function buildLookupOptions(records: LookupRecord[]) {
   return [
     { label: "Selecione", value: "" },
@@ -182,6 +224,23 @@ function buildDigitalCtpsFields(cpfValue: string | boolean | undefined) {
   }
 }
 
+function buildExperienceFields(
+  admissionDate: string | boolean | undefined,
+  experienceDays: string | boolean | undefined,
+  extensionDays: string | boolean | undefined
+) {
+  const normalizedAdmissionDate = typeof admissionDate === "string" ? admissionDate : ""
+  const normalizedExperienceDays = typeof experienceDays === "string" ? experienceDays : ""
+  const normalizedExtensionDays = typeof extensionDays === "string" ? extensionDays : ""
+  const experienceEndDate = addDaysToIsoDate(normalizedAdmissionDate, normalizedExperienceDays)
+  const extensionEndDate = addDaysToIsoDate(experienceEndDate, normalizedExtensionDays)
+
+  return {
+    experiencia_termino: experienceEndDate,
+    experiencia_termino_prorrogacao: extensionEndDate,
+  }
+}
+
 export function EmployeeOnboardingForm({
   variant = "client",
   initialRecordId = null,
@@ -223,6 +282,33 @@ export function EmployeeOnboardingForm({
     [lookupCatalog]
   )
   const missingRequiredFields = useMemo(() => getMissingRequiredFields(formData), [formData])
+
+  useEffect(() => {
+    const recalculatedExperienceFields = buildExperienceFields(
+      formData.data_admissao,
+      formData.experiencia_qtde_dias,
+      formData.experiencia_qtde_dias_prorrogacao
+    )
+
+    if (
+      recalculatedExperienceFields.experiencia_termino === String(formData.experiencia_termino ?? "") &&
+      recalculatedExperienceFields.experiencia_termino_prorrogacao ===
+        String(formData.experiencia_termino_prorrogacao ?? "")
+    ) {
+      return
+    }
+
+    setFormData((previous) => ({
+      ...previous,
+      ...recalculatedExperienceFields,
+    }))
+  }, [
+    formData.data_admissao,
+    formData.experiencia_qtde_dias,
+    formData.experiencia_qtde_dias_prorrogacao,
+    formData.experiencia_termino,
+    formData.experiencia_termino_prorrogacao,
+  ])
 
   useEffect(() => {
     if (!editRecordId && !publicToken) {
@@ -335,6 +421,10 @@ export function EmployeeOnboardingForm({
       return
     }
 
+    if (key === "experiencia_termino" || key === "experiencia_termino_prorrogacao") {
+      return
+    }
+
     if (key === "ctps_digital") {
       const digitalEnabled = Boolean(value)
 
@@ -358,6 +448,29 @@ export function EmployeeOnboardingForm({
         ...buildDigitalCtpsFields(value),
         ctps_uf: "",
       }))
+      return
+    }
+
+    if (
+      key === "data_admissao" ||
+      key === "experiencia_qtde_dias" ||
+      key === "experiencia_qtde_dias_prorrogacao"
+    ) {
+      setFormData((previous) => {
+        const nextData = {
+          ...previous,
+          [key]: typeof value === "string" ? value : "",
+        }
+
+        return {
+          ...nextData,
+          ...buildExperienceFields(
+            nextData.data_admissao,
+            nextData.experiencia_qtde_dias,
+            nextData.experiencia_qtde_dias_prorrogacao
+          ),
+        }
+      })
       return
     }
 
@@ -1273,11 +1386,19 @@ function FieldRenderer({
         id={field.key}
         type={field.type}
         value={String(value ?? "")}
-        readOnly={readOnly || field.key === "horas_mensais"}
+        readOnly={
+          readOnly ||
+          field.key === "horas_mensais" ||
+          field.key === "experiencia_termino" ||
+          field.key === "experiencia_termino_prorrogacao"
+        }
         placeholder={field.placeholder}
         onChange={(event) => onChange(event.target.value)}
         className={`w-full rounded-2xl border px-4 py-3 outline-none transition ${
-          readOnly || field.key === "horas_mensais"
+          readOnly ||
+          field.key === "horas_mensais" ||
+          field.key === "experiencia_termino" ||
+          field.key === "experiencia_termino_prorrogacao"
             ? "border-slate-200 bg-slate-100 text-slate-500"
             : "border-slate-300 bg-white text-slate-900 focus:border-yellow-400 focus:ring-2 focus:ring-yellow-200"
         }`}
