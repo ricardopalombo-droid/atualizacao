@@ -80,6 +80,8 @@ def print_preview(payload: dict, legacy_columns: dict):
         ("Z", "Categoria normativa", legacy_columns.get("Z", "")),
         ("AA", "Tipo contrato", legacy_columns.get("AA", "")),
         ("AB", "Salario", legacy_columns.get("AB", "")),
+        ("EXTRA_HORAS_SEMANAIS", "Horas semanais", legacy_columns.get("EXTRA_HORAS_SEMANAIS", "")),
+        ("EXTRA_HORAS_MENSAIS", "Horas mensais", legacy_columns.get("EXTRA_HORAS_MENSAIS", "")),
         ("AC", "Funcao/Cargo", legacy_columns.get("AC", "")),
         ("AD", "CBO", legacy_columns.get("AD", "")),
         ("AF", "Horario", legacy_columns.get("AF", "")),
@@ -118,6 +120,13 @@ def main():
     login(session, args.base_url, args.email, args.password)
     payload = fetch_payload(session, args.base_url, args.employee_id)
     legacy_columns = payload["legacyColumns"]
+    form_data = payload.get("formData", {})
+    legacy_columns.update(
+        {
+            "EXTRA_HORAS_SEMANAIS": "" if form_data.get("horas_semanais") is None else str(form_data.get("horas_semanais")),
+            "EXTRA_HORAS_MENSAIS": "" if form_data.get("horas_mensais") is None else str(form_data.get("horas_mensais")),
+        }
+    )
     legacy_columns.update(load_overrides(args.overrides_file))
 
     if args.dump_legacy_json:

@@ -63,6 +63,13 @@ function normalizeGrauInstrucaoForLegacy(value: unknown) {
   return text
 }
 
+function normalizeNaturalidadeForLegacy(value: unknown) {
+  const text = asText(value).trim()
+  if (!text) return ""
+
+  return text.replace(/\s*-\s*[A-Z]{2}$/i, "").trim()
+}
+
 export function buildPhoenixLegacyColumns(record: EmployeeRecordDetail): PhoenixLegacyColumns {
   const data = record.full_payload
 
@@ -78,7 +85,7 @@ export function buildPhoenixLegacyColumns(record: EmployeeRecordDetail): Phoenix
     H: asText(data.email),
     I: asText(data.data_nascimento),
     J: asText(data.pais_origem),
-    K: asText(data.naturalidade),
+    K: normalizeNaturalidadeForLegacy(data.naturalidade),
     L: asText(data.deficiencia_tipo),
     M: normalizeRacaCorForLegacy(data.raca_cor),
     N: normalizeSexoForLegacy(data.sexo),
@@ -133,6 +140,8 @@ export function buildPhoenixLegacyColumns(record: EmployeeRecordDetail): Phoenix
     DO: asText(data.vinculo_empregaticio),
     DP: asText(data.indicativo_admissao),
     DQ: asText(data.caged),
+    EXTRA_HORAS_SEMANAIS: asText(data.horas_semanais),
+    EXTRA_HORAS_MENSAIS: asText(data.horas_mensais),
   }
 }
 
