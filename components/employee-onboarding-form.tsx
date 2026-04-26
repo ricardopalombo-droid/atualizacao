@@ -153,8 +153,34 @@ function hasFilledValue(value: string | boolean | undefined) {
 
 function getMissingRequiredFieldLabels(formData: FormState) {
   return requiredExportFields
-    .filter((field) => !hasFilledValue(formData[field.key]))
+    .filter((field) => {
+      if (field.key === "ctps_uf" && formData.ctps_digital) {
+        return false
+      }
+
+      return !hasFilledValue(formData[field.key])
+    })
     .map((field) => field.label)
+}
+
+function normalizeCpfDigits(value: string | boolean | undefined) {
+  return String(value ?? "").replace(/\D/g, "")
+}
+
+function buildDigitalCtpsFields(cpfValue: string | boolean | undefined) {
+  const cpfDigits = normalizeCpfDigits(cpfValue)
+
+  if (cpfDigits.length < 11) {
+    return {
+      ctps_numero: "",
+      ctps_serie: "",
+    }
+  }
+
+  return {
+    ctps_numero: cpfDigits.slice(0, 7),
+    ctps_serie: cpfDigits.slice(-4),
+  }
 }
 
 export function EmployeeOnboardingForm({
@@ -307,6 +333,32 @@ export function EmployeeOnboardingForm({
     }
 
     if (key === "horas_mensais") {
+      return
+    }
+
+    if (key === "ctps_digital") {
+      const digitalEnabled = Boolean(value)
+
+      setFormData((previous) => ({
+        ...previous,
+        ctps_digital: digitalEnabled,
+        ...(digitalEnabled
+          ? {
+              ...buildDigitalCtpsFields(previous.cpf),
+              ctps_uf: "",
+            }
+          : {}),
+      }))
+      return
+    }
+
+    if (key === "cpf" && formData.ctps_digital && typeof value === "string") {
+      setFormData((previous) => ({
+        ...previous,
+        cpf: value,
+        ...buildDigitalCtpsFields(value),
+        ctps_uf: "",
+      }))
       return
     }
 
@@ -687,7 +739,12 @@ export function EmployeeOnboardingForm({
                   field={field}
                   value={formData[field.key]}
                   optionsOverride={lookupOptionsByKey[field.key as "cargo" | "horario" | "sindicato"]}
-                  readOnly={variant === "employee" ? field.audience === "client" : false}
+                  readOnly={
+                    (variant === "employee" ? field.audience === "client" : false) ||
+                    (field.key === "ctps_numero" && Boolean(formData.ctps_digital)) ||
+                    (field.key === "ctps_serie" && Boolean(formData.ctps_digital)) ||
+                    (field.key === "ctps_uf" && Boolean(formData.ctps_digital))
+                  }
                   onChange={(value) => updateField(field.key, value)}
                 />
               ))}

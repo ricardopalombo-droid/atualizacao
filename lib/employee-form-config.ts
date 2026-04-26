@@ -280,8 +280,8 @@ const grauRiscoOptions = [
   { label: "7 - Exposicao a agente nocivo (Aposent. Exp. 20 anos) (Mais de um vinculo)", value: "7 - Exposicao a agente nocivo (Aposent. Exp. 20 anos) (Mais de um vinculo)" },
   { label: "8 - Exposicao a agente nocivo (Aposent. Exp. 25 anos) (Mais de um vinculo)", value: "8 - Exposicao a agente nocivo (Aposent. Exp. 25 anos) (Mais de um vinculo)" },
   {
-    label: "99 - Empregadores cuja atividade nao exponha seus trabalhadores a agentes nocivos",
-    value: "99 - Empregadores cuja atividade nao exponha seus trabalhadores a agentes nocivos",
+    label: "9 - Empregadores cuja atividade nao exponha seus trabalhadores a agentes nocivos",
+    value: "9 - Empregadores cuja atividade nao exponha seus trabalhadores a agentes nocivos",
   },
 ]
 
@@ -306,6 +306,25 @@ const regimeJornadaOptions = [
   { label: "2 - Atividade externa especificada no inciso I do Art. 62 da CLT", value: "2 - Atividade externa especificada no inciso I do Art. 62 da CLT" },
   { label: "3 - Funcoes especificadas no inciso II do Art. 62 da CLT", value: "3 - Funcoes especificadas no inciso II do Art. 62 da CLT" },
   { label: "4 - Teletrabalho, previsto no Inciso III do Art. 62 da CLT", value: "4 - Teletrabalho, previsto no Inciso III do Art. 62 da CLT" },
+]
+
+const vinculoEmpregaticioOptions = [
+  { label: "Selecione", value: "" },
+  { label: "10 - Trab. urbano vinc. empregador pessoa juridica por contr. de trab. regido pela CLT, por prazo indeter.", value: "10 - Trab. urbano vinc. empregador pessoa juridica por contr. de trab. regido pela CLT, por prazo indeter." },
+  { label: "15 - Trab. urbano vinc. empregador pessoa fisica por contr. de trab. regido pela CLT, por prazo indeter.", value: "15 - Trab. urbano vinc. empregador pessoa fisica por contr. de trab. regido pela CLT, por prazo indeter." },
+  { label: "20 - Trab. rural vinc. empregador pessoa juridica por contr. de trab. regido pela CLT, por prazo indeter.", value: "20 - Trab. rural vinc. empregador pessoa juridica por contr. de trab. regido pela CLT, por prazo indeter." },
+  { label: "25 - Trab. rural vinc. empregador pessoa fisica por contr. de trab. regido pela CLT, por prazo indeter.", value: "25 - Trab. rural vinc. empregador pessoa fisica por contr. de trab. regido pela CLT, por prazo indeter." },
+  { label: "30 - Servidor regido pelo Regime Juridico Unico (Federal, estadual e municipal) e militar", value: "30 - Servidor regido pelo Regime Juridico Unico (Federal, estadual e municipal) e militar" },
+  { label: "35 - Serv. publico nao-efetivo vinculado por contrato de trabalho (servidor regido pela CLT)", value: "35 - Serv. publico nao-efetivo vinculado por contrato de trabalho (servidor regido pela CLT)" },
+  { label: "40 - Trab. avulso (Trab. Adm. pelo sind. da categ.) p / o qual dev. depos. de fgts, lei n. 5480 10.08.68", value: "40 - Trab. avulso (Trab. Adm. pelo sind. da categ.) p / o qual dev. depos. de fgts, lei n. 5480 10.08.68" },
+  { label: "50 - Trabalhador temporario, regido pela lei 6.019, de 03.01.74", value: "50 - Trabalhador temporario, regido pela lei 6.019, de 03.01.74" },
+  { label: "55 - Jovem Aprendiz", value: "55 - Jovem Aprendiz" },
+  { label: "60 - Trab. urbano vinc. a empreg. pessoa juridica por contr. de trab regido pela CLT, por tempo deter. ou obra", value: "60 - Trab. urbano vinc. a empreg. pessoa juridica por contr. de trab regido pela CLT, por tempo deter. ou obra" },
+  { label: "65 - Trab. urbano vinc. a empreg pessoa fisica por contr. de trab. regido pela CLT, por tempo deter. ou obra", value: "65 - Trab. urbano vinc. a empreg pessoa fisica por contr. de trab. regido pela CLT, por tempo deter. ou obra" },
+  { label: "70 - Trab. rural vinc. a empreg. pessoa juridica por contr. de trab. regido pela CLT, por tempo deter. ou obra", value: "70 - Trab. rural vinc. a empreg. pessoa juridica por contr. de trab. regido pela CLT, por tempo deter. ou obra" },
+  { label: "75 - Trab. rural vinc. a empreg. pessoa fisica por contr. de trab. regido pela CLT, por tempo deter. ou obra", value: "75 - Trab. rural vinc. a empreg. pessoa fisica por contr. de trab. regido pela CLT, por tempo deter. ou obra" },
+  { label: "80 - Diretor sem vinculo empreg. para o qual a empresa/entidade nao optado por recolhimento do FGTS", value: "80 - Diretor sem vinculo empreg. para o qual a empresa/entidade nao optado por recolhimento do FGTS" },
+  { label: "90 - Contrato de trabalho por prazo determinado, regido pela lei 9601/98 de 21.01.98", value: "90 - Contrato de trabalho por prazo determinado, regido pela lei 9601/98 de 21.01.98" },
 ]
 
 export const workflowStatusOrder: WorkflowStatus[] = [
@@ -396,13 +415,14 @@ export const formSections: FormSection[] = [
     title: "Documentos oficiais",
     description: "Documentos que o proprio funcionario costuma informar no cadastro inicial.",
     audience: "employee",
-    fields: [
-      { key: "cpf", label: "CPF", type: "text", audience: "employee", requiredForExport: true },
-      { key: "pis", label: "PIS", type: "text", audience: "employee", requiredForExport: true },
-      { key: "titulo_eleitor", label: "Titulo de eleitor", type: "text", audience: "employee" },
-      { key: "ctps_numero", label: "Numero CTPS", type: "text", audience: "employee", requiredForExport: true },
-      { key: "ctps_serie", label: "Serie CTPS", type: "text", audience: "employee", requiredForExport: true },
-      { key: "ctps_uf", label: "UF CTPS", type: "select", audience: "employee", options: stateOptions, requiredForExport: true },
+      fields: [
+        { key: "cpf", label: "CPF", type: "text", audience: "employee", requiredForExport: true },
+        { key: "pis", label: "PIS", type: "text", audience: "employee", requiredForExport: true },
+        { key: "titulo_eleitor", label: "Titulo de eleitor", type: "text", audience: "employee" },
+        { key: "ctps_digital", label: "CTPS digital", type: "checkbox", audience: "employee" },
+        { key: "ctps_numero", label: "Numero CTPS", type: "text", audience: "employee", requiredForExport: true },
+        { key: "ctps_serie", label: "Serie CTPS", type: "text", audience: "employee", requiredForExport: true },
+        { key: "ctps_uf", label: "UF CTPS", type: "select", audience: "employee", options: stateOptions, requiredForExport: true },
       { key: "rg_numero", label: "RG", type: "text", audience: "employee", requiredForExport: true },
       { key: "rg_orgao_emissor", label: "Orgao emissor RG", type: "text", audience: "employee" },
       { key: "uf_rg", label: "UF do RG", type: "select", audience: "employee", options: stateOptions },
@@ -447,13 +467,14 @@ export const formSections: FormSection[] = [
       { key: "tipo_tributacao_sindical", label: "Tipo tributacao sindical", type: "select", audience: "client", options: tipoTributacaoSindicalOptions, requiredForExport: true },
       { key: "categoria_normativa", label: "Categoria normativa vinculada", type: "text", audience: "client" },
       { key: "tipo_contrato", label: "Tipo de contrato", type: "select", audience: "client", options: tipoContratoOptions, requiredForExport: true },
+      { key: "caged", label: "Situacao Caged entrada", type: "select", audience: "client", options: cagedOptions, requiredForExport: true },
       { key: "salario", label: "Salario", type: "number", audience: "client", requiredForExport: true },
       { key: "cargo", label: "Cargo", type: "select", audience: "client", requiredForExport: true },
       { key: "regime_jornada", label: "Regime de jornada", type: "select", audience: "client", options: regimeJornadaOptions, requiredForExport: true },
       { key: "horas_semanais", label: "Horas semanais", type: "text", audience: "client", placeholder: "44.00" },
       { key: "horas_mensais", label: "Horas mensais", type: "text", audience: "client", placeholder: "220.00" },
       { key: "horario", label: "Horario", type: "select", audience: "client" },
-      { key: "vinculo_empregaticio", label: "Vinculo empregaticio", type: "text", audience: "client", placeholder: "Informe o codigo ou descricao", requiredForExport: true },
+      { key: "vinculo_empregaticio", label: "Vinculo empregaticio", type: "select", audience: "client", options: vinculoEmpregaticioOptions, requiredForExport: true },
       { key: "data_alteracao_cargo", label: "Data alteracao do cargo", type: "date", audience: "client" },
     ],
   },
@@ -473,7 +494,6 @@ export const formSections: FormSection[] = [
       { key: "registro_funcionario", label: "Registro de funcionario", type: "text", audience: "client" },
       { key: "folha_ficha", label: "Folha/Ficha", type: "text", audience: "client" },
       { key: "grau_risco", label: "Grau de risco", type: "select", audience: "client", options: grauRiscoOptions },
-      { key: "caged", label: "Situacao Caged entrada", type: "select", audience: "client", options: cagedOptions, requiredForExport: true },
     ],
   },
   {
