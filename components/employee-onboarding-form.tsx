@@ -151,7 +151,7 @@ function hasFilledValue(value: string | boolean | undefined) {
   return typeof value === "string" ? value.trim().length > 0 : false
 }
 
-function getMissingRequiredFieldLabels(formData: FormState) {
+function getMissingRequiredFields(formData: FormState) {
   return requiredExportFields
     .filter((field) => {
       if (field.key === "ctps_uf" && formData.ctps_digital) {
@@ -160,7 +160,6 @@ function getMissingRequiredFieldLabels(formData: FormState) {
 
       return !hasFilledValue(formData[field.key])
     })
-    .map((field) => field.label)
 }
 
 function normalizeCpfDigits(value: string | boolean | undefined) {
@@ -223,7 +222,7 @@ export function EmployeeOnboardingForm({
     }),
     [lookupCatalog]
   )
-  const missingRequiredFieldLabels = useMemo(() => getMissingRequiredFieldLabels(formData), [formData])
+  const missingRequiredFields = useMemo(() => getMissingRequiredFields(formData), [formData])
 
   useEffect(() => {
     if (!editRecordId && !publicToken) {
@@ -602,11 +601,11 @@ export function EmployeeOnboardingForm({
       return
     }
 
-    if (missingRequiredFieldLabels.length > 0) {
-      const preview = missingRequiredFieldLabels.slice(0, 6).join(", ")
+    if (missingRequiredFields.length > 0) {
+      const preview = missingRequiredFields.slice(0, 6).map((field) => field.label).join(", ")
       const suffix =
-        missingRequiredFieldLabels.length > 6
-          ? ` e mais ${missingRequiredFieldLabels.length - 6} campo(s).`
+        missingRequiredFields.length > 6
+          ? ` e mais ${missingRequiredFields.length - 6} campo(s).`
           : "."
 
       setStatusMessage(`Preencha os campos obrigatorios antes de exportar: ${preview}${suffix}`)
@@ -660,7 +659,7 @@ export function EmployeeOnboardingForm({
         </div>
 
         {variant === "client" ? (
-          <RequiredFieldsNotice missingRequiredFieldLabels={missingRequiredFieldLabels} />
+          <RequiredFieldsNotice missingRequiredFields={missingRequiredFields} />
         ) : null}
 
         {canSwitchViewer ? (
@@ -768,7 +767,7 @@ export function EmployeeOnboardingForm({
           status={status}
           isSaving={isSaving}
           currentStatusIndex={currentStatusIndex}
-          missingRequiredFieldCount={missingRequiredFieldLabels.length}
+          missingRequiredFieldCount={missingRequiredFields.length}
           onSaveDraft={saveDraft}
           onSendInvite={sendInvite}
           onSubmitEmployeeData={submitEmployeeData}
@@ -869,11 +868,26 @@ function WorkflowCard({
 }
 
 function RequiredFieldsNotice({
-  missingRequiredFieldLabels,
+  missingRequiredFields,
 }: {
-  missingRequiredFieldLabels: string[]
+  missingRequiredFields: Array<{ key: string; label: string }>
 }) {
-  if (missingRequiredFieldLabels.length === 0) {
+  function focusRequiredField(fieldKey: string) {
+    setTimeout(() => {
+      const target = document.getElementById(fieldKey)
+
+      if (!target) {
+        return
+      }
+
+      target.scrollIntoView({ behavior: "smooth", block: "center" })
+      if ("focus" in target && typeof target.focus === "function") {
+        target.focus()
+      }
+    }, 0)
+  }
+
+  if (missingRequiredFields.length === 0) {
     return (
       <section className="mt-6 rounded-3xl border border-green-200 bg-green-50 p-6">
         <strong className="text-green-800">Checklist de exportacao concluido</strong>
@@ -887,19 +901,21 @@ function RequiredFieldsNotice({
   return (
     <section className="mt-6 rounded-3xl border border-amber-200 bg-amber-50 p-6">
       <strong className="text-amber-900">
-        Ainda faltam {missingRequiredFieldLabels.length} campo(s) obrigatorio(s) para exportar
+        Ainda faltam {missingRequiredFields.length} campo(s) obrigatorio(s) para exportar
       </strong>
       <p className="mt-2 text-amber-800">
-        Corrija os itens abaixo antes de gerar a planilha final.
+        Corrija os itens abaixo antes de gerar a planilha final. Clique em qualquer item para ir direto ao campo.
       </p>
       <div className="mt-4 flex flex-wrap gap-2">
-        {missingRequiredFieldLabels.map((label) => (
-          <span
-            key={label}
-            className="inline-flex rounded-full border border-amber-300 bg-white px-3 py-1 text-sm font-medium text-amber-900"
+        {missingRequiredFields.map((field) => (
+          <button
+            key={field.key}
+            type="button"
+            onClick={() => focusRequiredField(field.key)}
+            className="inline-flex rounded-full border border-amber-300 bg-white px-3 py-1 text-sm font-medium text-amber-900 hover:bg-amber-100"
           >
-            {label}
-          </span>
+            {field.label}
+          </button>
         ))}
       </div>
     </section>
