@@ -90,12 +90,11 @@ const sexoOptions = [
 
 const racaCorOptions = [
   { label: "Selecione", value: "" },
-  { label: "1 - Branca", value: "1 - Branca" },
-  { label: "2 - Preta", value: "2 - Preta" },
-  { label: "3 - Parda", value: "3 - Parda" },
-  { label: "4 - Amarela", value: "4 - Amarela" },
-  { label: "5 - Indigena", value: "5 - Indigena" },
-  { label: "6 - Nao informado", value: "6 - Nao informado" },
+  { label: "2 - Branca", value: "2 - Branca" },
+  { label: "4 - Preta / Negra", value: "4 - Preta / Negra" },
+  { label: "6 - Amarela", value: "6 - Amarela" },
+  { label: "8 - Parda", value: "8 - Parda" },
+  { label: "0 - Indigena", value: "0 - Indigena" },
 ]
 
 const estadoCivilOptions = [

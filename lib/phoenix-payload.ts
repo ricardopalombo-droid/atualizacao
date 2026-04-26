@@ -28,6 +28,28 @@ function buildTituloEleitorComposite(data: Record<string, unknown>) {
   return parts.join("/")
 }
 
+function normalizeSexoForLegacy(value: unknown) {
+  const text = asText(value).trim()
+  if (!text) return ""
+  if (text.startsWith("1")) return "Masculino"
+  if (text.startsWith("2")) return "Feminino"
+  return text
+}
+
+function normalizeRacaCorForLegacy(value: unknown) {
+  const text = asText(value).trim()
+  if (!text) return ""
+
+  if (text.startsWith("1")) return "2 - Branca"
+  if (text.startsWith("2")) return "4 - Preta / Negra"
+  if (text.startsWith("3")) return "8 - Parda"
+  if (text.startsWith("4")) return "6 - Amarela"
+  if (text.startsWith("5")) return "0 - Indigena"
+  if (text.startsWith("6")) return ""
+
+  return text
+}
+
 export function buildPhoenixLegacyColumns(record: EmployeeRecordDetail): PhoenixLegacyColumns {
   const data = record.full_payload
 
@@ -45,8 +67,8 @@ export function buildPhoenixLegacyColumns(record: EmployeeRecordDetail): Phoenix
     J: asText(data.pais_origem),
     K: asText(data.naturalidade),
     L: asText(data.deficiencia_tipo),
-    M: asText(data.raca_cor),
-    N: asText(data.sexo),
+    M: normalizeRacaCorForLegacy(data.raca_cor),
+    N: normalizeSexoForLegacy(data.sexo),
     O: asText(data.estado_civil),
     P: asText(data.tipo_sanguineo),
     Q: asText(data.local),
