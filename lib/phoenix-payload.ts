@@ -50,6 +50,19 @@ function normalizeRacaCorForLegacy(value: unknown) {
   return text
 }
 
+function normalizeGrauInstrucaoForLegacy(value: unknown) {
+  const text = asText(value).trim()
+  if (!text) return ""
+
+  const match = text.match(/^0([1-9])(?:\b|[^0-9].*)?$/)
+  if (match) return match[1]
+
+  const prefixedMatch = text.match(/^([1-9]|10|11|12)(?:\b|[^0-9].*)?$/)
+  if (prefixedMatch) return prefixedMatch[1]
+
+  return text
+}
+
 export function buildPhoenixLegacyColumns(record: EmployeeRecordDetail): PhoenixLegacyColumns {
   const data = record.full_payload
 
@@ -92,7 +105,7 @@ export function buildPhoenixLegacyColumns(record: EmployeeRecordDetail): Phoenix
     AI: asText(data.tipo_conta),
     AJ: asText(data.numero_conta),
     AK: asText(data.nacionalidade),
-    AL: asText(data.grau_instrucao),
+    AL: normalizeGrauInstrucaoForLegacy(data.grau_instrucao),
     AM: buildCtpsComposite(data),
     AN: buildTituloEleitorComposite(data),
     AO: asText(data.pis),
