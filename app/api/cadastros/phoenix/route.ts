@@ -70,6 +70,46 @@ async function listClientScopesForSubscriber(subscriberId: string) {
   return Array.from(map.values())
 }
 
+async function listEmployeeIdsForSubscriber(subscriberId: string) {
+  const supabase = getSupabaseServerClient()
+  const clientScopes = await listClientScopesForSubscriber(subscriberId)
+  const clientIds = clientScopes.map((item) => item.id)
+
+  if (clientIds.length === 0) {
+    return []
+  }
+
+  const { data, error } = await supabase
+    .from("employees")
+    .select("id, client_id, employee_name, employee_email, invite_email, workflow_status, updated_at, full_payload")
+    .in("client_id", clientIds)
+    .order("updated_at", { ascending: false })
+
+  if (error) {
+    throw error
+  }
+
+  const clientNameById = new Map(clientScopes.map((item) => [item.id, item.name]))
+
+  return (data ?? []).map((item) => {
+    const payload = (item.full_payload ?? {}) as Record<string, unknown>
+
+    return {
+      id: item.id,
+      client_id: item.client_id as string | null,
+      employee_name: item.employee_name as string | null,
+      employee_email: item.employee_email as string | null,
+      invite_email: item.invite_email as string | null,
+      workflow_status: item.workflow_status as string,
+      updated_at: item.updated_at as string,
+      phoenix_status: typeof payload.phoenix_status === "string" ? payload.phoenix_status : null,
+      phoenix_status_updated_at:
+        typeof payload.phoenix_status_updated_at === "string" ? payload.phoenix_status_updated_at : null,
+      client_name: item.client_id ? clientNameById.get(item.client_id as string) ?? null : null,
+    }
+  })
+}
+
 async function getSubscriberRunnerEmail(subscriberId: string) {
   const supabase = getSupabaseServerClient()
   const { data, error } = await supabase
@@ -127,28 +167,7 @@ async function listPendingPhoenixQueue(session: Session) {
   }
 
   if (session.role === "subscriber_admin" && session.subscriberId) {
-    const clientScopes = await listClientScopesForSubscriber(session.subscriberId)
-    const merged = new Map<string, { client_name: string | null } & Awaited<ReturnType<typeof listEmployeeRecords>>[number]>()
-
-    for (const client of clientScopes) {
-      const records = await listEmployeeRecords(200, {
-        subscriberId: session.subscriberId,
-        clientId: client.id,
-      })
-
-      for (const item of records) {
-        if (!merged.has(item.id)) {
-          merged.set(item.id, {
-            ...item,
-            client_name: client.name,
-          })
-        }
-      }
-    }
-
-    return Array.from(merged.values()).sort(
-      (a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
-    )
+    return listEmployeeIdsForSubscriber(session.subscriberId)
   }
 
   return []
