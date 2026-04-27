@@ -1707,10 +1707,8 @@ def preencher_sistema(dados: dict, empresa_habilitada: str, empresa_rateio: str)
     selecionar_caged(col_dq)
     dormir_controlado(0.35)
 
-    if primeiros_numeros(col_dq) == "20":
-        pyautogui.press("tab")
-        dormir_controlado(0.25)
-        if col_extra_percepcao_seguro_desemprego.upper() in {"TRUE", "1", "SIM", "S"}:
+    if primeiros_numeros(col_dq) == "25":
+        if str(col_extra_percepcao_seguro_desemprego).strip().upper() in {"TRUE", "1", "SIM", "S", "YES", "ON"}:
             pyautogui.press("space")
             dormir_controlado(0.15)
         pyautogui.press("tab")

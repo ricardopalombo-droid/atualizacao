@@ -128,6 +128,22 @@ const nacionalidadeOptions = [
   { label: "70 - Outros Africanos", value: "70 - Outros Africanos" },
 ]
 
+const orgaoEmissorRgOptions = [
+  { label: "Selecione", value: "" },
+  { label: "1 - Ministerio da Aeronautica", value: "1 - Ministerio da Aeronautica" },
+  { label: "2 - Ministerio do Exercito", value: "2 - Ministerio do Exercito" },
+  { label: "3 - Ministerio da Marinha", value: "3 - Ministerio da Marinha" },
+  { label: "4 - Secretaria de Seguranca Publica", value: "4 - Secretaria de Seguranca Publica" },
+  { label: "5 - Carteira Modelo 19 (Estrangeira)", value: "5 - Carteira Modelo 19 (Estrangeira)" },
+  { label: "6 - Outros Emissores", value: "6 - Outros Emissores" },
+]
+
+const orgaoEmissorCnhOptions = [
+  { label: "Selecione", value: "" },
+  { label: "1 - DETRAN (Departamento Estadual de Transito do Estado de Sao Paulo)", value: "1 - DETRAN (Departamento Estadual de Transito do Estado de Sao Paulo)" },
+  { label: "2 - CIRETRAN (Circunscricao Regional de Transito)", value: "2 - CIRETRAN (Circunscricao Regional de Transito)" },
+]
+
 const racaCorOptions = [
   { label: "Selecione", value: "" },
   { label: "2 - Branca", value: "2 - Branca" },
@@ -364,7 +380,7 @@ export const formSections: FormSection[] = [
         { key: "ctps_serie", label: "Serie CTPS", type: "text", audience: "employee", requiredForExport: true },
         { key: "ctps_uf", label: "UF CTPS", type: "select", audience: "employee", options: stateOptions, requiredForExport: true },
       { key: "rg_numero", label: "RG", type: "text", audience: "employee", requiredForExport: true },
-      { key: "rg_orgao_emissor", label: "Orgao emissor RG", type: "text", audience: "employee" },
+      { key: "rg_orgao_emissor", label: "Orgao emissor RG", type: "select", audience: "employee", options: orgaoEmissorRgOptions },
       { key: "uf_rg", label: "UF do RG", type: "select", audience: "employee", options: stateOptions },
       { key: "rg_data_expedicao", label: "Data expedicao RG", type: "date", audience: "employee" },
       { key: "cnh_numero", label: "Numero CNH", type: "text", audience: "employee" },
@@ -375,6 +391,7 @@ export const formSections: FormSection[] = [
         audience: "employee",
         options: buildOptions(["A", "B", "C", "D", "E", "AB", "AC", "AD", "AE"]),
       },
+      { key: "orgao_emissor_cnh", label: "Orgao emissor CNH", type: "select", audience: "employee", options: orgaoEmissorCnhOptions },
       { key: "validade_cnh", label: "Validade CNH", type: "date", audience: "employee" },
     ],
   },
