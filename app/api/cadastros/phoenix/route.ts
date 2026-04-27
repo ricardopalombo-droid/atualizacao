@@ -43,6 +43,35 @@ export async function GET(request: Request) {
     }
 
     const url = new URL(request.url)
+    const queueMode = url.searchParams.get("queue")
+
+    if (queueMode === "pending") {
+      const { listEmployeeRecords } = await import("@/lib/cadastro-repository")
+      const records = await listEmployeeRecords(200, {
+        subscriberId: session.subscriberId,
+        clientId: session.clientId,
+      })
+
+      const pending = records.filter(
+        (item) =>
+          ["finalizado", "exportado"].includes(item.workflow_status) &&
+          (item.phoenix_status ?? "pronto_para_phoenix") === "enviado_ao_phoenix"
+      )
+
+      return Response.json({
+        ok: true,
+        records: pending.map((item) => ({
+          id: item.id,
+          employeeName: item.employee_name,
+          employeeEmail: item.employee_email ?? item.invite_email,
+          workflowStatus: item.workflow_status,
+          phoenixStatus: item.phoenix_status ?? "pronto_para_phoenix",
+          updatedAt: item.updated_at,
+          phoenixStatusUpdatedAt: item.phoenix_status_updated_at,
+        })),
+      })
+    }
+
     const recordId = url.searchParams.get("id")
 
     if (!recordId) {
