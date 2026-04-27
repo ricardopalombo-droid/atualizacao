@@ -1,6 +1,7 @@
 ﻿import { buildPhoenixStructuredPayload } from "@/lib/phoenix-payload"
 import { getCurrentSession } from "@/lib/auth-session"
-import { getEmployeeRecordById, updateEmployeePhoenixStatus } from "@/lib/cadastro-repository"
+import { getEmployeeRecordById, listEmployeeRecords, updateEmployeePhoenixStatus } from "@/lib/cadastro-repository"
+import { listClientRecords } from "@/lib/client-repository"
 import { z } from "zod"
 
 const phoenixStatusPayloadSchema = z.object({
@@ -23,8 +24,77 @@ function buildPhoenixRunnerCommand(params: {
     `  --employee-id "${params.employeeId}" ` + "`",
     '  --legacy-script ".\\cadastros_final_adaptado.py" `',
     '  --empresa-habilitada N `',
-    "  --empresa-rateio N",
+    '  --empresa-rateio N',
   ].join("\n")
+}
+
+type Session = NonNullable<Awaited<ReturnType<typeof getCurrentSession>>>
+
+async function getEmployeeRecordForPhoenixScope(session: Session, recordId: string) {
+  if (session.role === "client_user") {
+    return getEmployeeRecordById(recordId, {
+      subscriberId: session.subscriberId,
+      clientId: session.clientId,
+    })
+  }
+
+  if (session.role === "subscriber_admin" && session.subscriberId) {
+    const clients = await listClientRecords(session.subscriberId, 1000)
+
+    for (const client of clients) {
+      const record = await getEmployeeRecordById(recordId, {
+        subscriberId: session.subscriberId,
+        clientId: client.id,
+      })
+
+      if (record) {
+        return record
+      }
+    }
+  }
+
+  return null
+}
+
+async function listPendingPhoenixQueue(session: Session) {
+  if (session.role === "client_user") {
+    const records = await listEmployeeRecords(200, {
+      subscriberId: session.subscriberId,
+      clientId: session.clientId,
+    })
+
+    return records.map((item) => ({
+      ...item,
+      client_name: null,
+    }))
+  }
+
+  if (session.role === "subscriber_admin" && session.subscriberId) {
+    const clients = await listClientRecords(session.subscriberId, 1000)
+    const merged = new Map<string, { client_name: string | null } & Awaited<ReturnType<typeof listEmployeeRecords>>[number]>()
+
+    for (const client of clients) {
+      const records = await listEmployeeRecords(200, {
+        subscriberId: session.subscriberId,
+        clientId: client.id,
+      })
+
+      for (const item of records) {
+        if (!merged.has(item.id)) {
+          merged.set(item.id, {
+            ...item,
+            client_name: client.name,
+          })
+        }
+      }
+    }
+
+    return Array.from(merged.values()).sort(
+      (a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
+    )
+  }
+
+  return []
 }
 
 export async function GET(request: Request) {
@@ -32,7 +102,7 @@ export async function GET(request: Request) {
     const session = await getCurrentSession()
 
     if (!session) {
-      return Response.json({ ok: false, error: "NÃ£o autenticado." }, { status: 401 })
+      return Response.json({ ok: false, error: "Não autenticado." }, { status: 401 })
     }
 
     if (!["client_user", "subscriber_admin"].includes(session.role)) {
@@ -46,11 +116,7 @@ export async function GET(request: Request) {
     const queueMode = url.searchParams.get("queue")
 
     if (queueMode === "pending") {
-      const { listEmployeeRecords } = await import("@/lib/cadastro-repository")
-      const records = await listEmployeeRecords(200, {
-        subscriberId: session.subscriberId,
-        clientId: session.clientId,
-      })
+      const records = await listPendingPhoenixQueue(session)
 
       const pending = records.filter(
         (item) =>
@@ -64,6 +130,7 @@ export async function GET(request: Request) {
           id: item.id,
           employeeName: item.employee_name,
           employeeEmail: item.employee_email ?? item.invite_email,
+          clientName: item.client_name,
           workflowStatus: item.workflow_status,
           phoenixStatus: item.phoenix_status ?? "pronto_para_phoenix",
           updatedAt: item.updated_at,
@@ -78,13 +145,10 @@ export async function GET(request: Request) {
       return Response.json({ ok: false, error: "Informe o id do cadastro." }, { status: 400 })
     }
 
-    const record = await getEmployeeRecordById(recordId, {
-      subscriberId: session.subscriberId,
-      clientId: session.clientId,
-    })
+    const record = await getEmployeeRecordForPhoenixScope(session, recordId)
 
     if (!record) {
-      return Response.json({ ok: false, error: "Cadastro nÃ£o encontrado." }, { status: 404 })
+      return Response.json({ ok: false, error: "Cadastro não encontrado." }, { status: 404 })
     }
 
     if (!["finalizado", "exportado"].includes(record.workflow_status)) {
@@ -119,7 +183,7 @@ export async function POST(request: Request) {
     const session = await getCurrentSession()
 
     if (!session) {
-      return Response.json({ ok: false, error: "NÃ£o autenticado." }, { status: 401 })
+      return Response.json({ ok: false, error: "Não autenticado." }, { status: 401 })
     }
 
     if (!["client_user", "subscriber_admin"].includes(session.role)) {
@@ -130,13 +194,10 @@ export async function POST(request: Request) {
     }
 
     const payload = phoenixStatusPayloadSchema.parse(await request.json())
-    const record = await getEmployeeRecordById(payload.id, {
-      subscriberId: session.subscriberId,
-      clientId: session.clientId,
-    })
+    const record = await getEmployeeRecordForPhoenixScope(session, payload.id)
 
     if (!record) {
-      return Response.json({ ok: false, error: "Cadastro nÃ£o encontrado." }, { status: 404 })
+      return Response.json({ ok: false, error: "Cadastro não encontrado." }, { status: 404 })
     }
 
     if (!["finalizado", "exportado"].includes(record.workflow_status)) {
@@ -197,4 +258,3 @@ export async function POST(request: Request) {
     )
   }
 }
-
