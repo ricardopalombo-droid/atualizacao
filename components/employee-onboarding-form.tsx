@@ -262,8 +262,8 @@ export function EmployeeOnboardingForm({
   const [isSaving, setIsSaving] = useState(false)
   const [statusMessage, setStatusMessage] = useState(
     variant === "employee"
-      ? "Preencha os dados básicos e envie para revisão do cliente."
-      : "Monte o cadastro, envie o link ao funcionário e finalize após a revisão."
+      ? "Preencha suas informacoes iniciais e envie para a empresa revisar."
+      : "Envie o convite, acompanhe o preenchimento e conclua o cadastro da empresa."
   )
 
   const currentSections = useMemo(() => getSectionsForAudience(viewer), [viewer])
@@ -377,7 +377,7 @@ export function EmployeeOnboardingForm({
             notes: String(dependent.full_payload?.notes ?? ""),
           }))
         )
-        setStatusMessage("Cadastro carregado para continuar a edição.")
+        setStatusMessage("Cadastro carregado para continuar o preenchimento.")
       } catch (error) {
         if (isMounted) {
           setStatusMessage(error instanceof Error ? error.message : "Erro ao carregar cadastro salvo.")
@@ -507,7 +507,7 @@ export function EmployeeOnboardingForm({
       setDependents((previous) =>
         previous.map((item) => (item.id === dependentForm.id ? dependentForm : item))
       )
-      setStatusMessage("Dependente atualizado na sessão atual.")
+      setStatusMessage("Dependente atualizado neste cadastro.")
     } else {
       setDependents((previous) => [
         ...previous,
@@ -516,7 +516,7 @@ export function EmployeeOnboardingForm({
           id: crypto.randomUUID(),
         },
       ])
-      setStatusMessage("Dependente adicionado na sessão atual.")
+      setStatusMessage("Dependente adicionado neste cadastro.")
     }
 
     resetDependentForm()
@@ -543,7 +543,7 @@ export function EmployeeOnboardingForm({
       resetDependentForm()
     }
 
-    setStatusMessage("Dependente removido da sessão atual.")
+    setStatusMessage("Dependente removido deste cadastro.")
   }
 
   function changeViewer(nextViewer: FieldAudience) {
@@ -601,7 +601,7 @@ export function EmployeeOnboardingForm({
     const email = String(formData.convite_email ?? formData.email ?? "")
 
     if (!email) {
-      setStatusMessage("Informe o e-mail do funcionário para disparar o link de cadastro.")
+      setStatusMessage("Informe o e-mail do funcionario para enviar o link de acesso ao cadastro.")
       return
     }
 
@@ -612,7 +612,7 @@ export function EmployeeOnboardingForm({
     if (!currentRecordId) {
       const savedId = await persist(
         "rascunho_interno",
-        "Cadastro salvo antes do disparo do link. Agora estamos enviando o convite."
+        "Cadastro salvo. Agora o convite sera enviado para o funcionario."
       )
 
       if (!savedId) {
@@ -648,7 +648,7 @@ export function EmployeeOnboardingForm({
         return
       }
 
-      setWorkflow("convite_enviado", `Link enviado com sucesso para ${email}.`)
+      setWorkflow("convite_enviado", `Convite enviado com sucesso para ${email}.`)
     } catch (error) {
       setStatusMessage(error instanceof Error ? error.message : "Erro ao enviar convite.")
     } finally {
@@ -917,38 +917,37 @@ function WorkflowOverview({
             <Link2 size={22} />
           </div>
           <div>
-            <h2 className="text-2xl font-bold text-slate-900">Fluxo em duas etapas</h2>
+            <h2 className="text-2xl font-bold text-slate-900">Como funciona o cadastro</h2>
             <p className="mt-2 max-w-3xl leading-7 text-slate-600">
-              O funcionário recebe um link e preenche apenas os dados básicos. Depois o cliente
-              entra para revisar, completar os campos internos e liberar a geração da planilha.
+              O cadastro comeca com o funcionario, que preenche as informacoes iniciais pelo link recebido. Depois, a empresa revisa os dados, completa as informacoes internas e conclui o processo.
             </p>
           </div>
         </div>
 
         <div className="mt-6 grid gap-4 md:grid-cols-3">
           <WorkflowCard
-            title="1. Convite"
-            description="O cliente informa o e-mail e dispara o link seguro para o funcionário."
+            title="1. Envio do convite"
+            description="A empresa informa o e-mail do funcionario para enviar o link de acesso ao cadastro."
             highlighted={status === "convite_enviado"}
           />
           <WorkflowCard
-            title="2. Cadastro básico"
-            description="O funcionário informa documentos, endereço, dados pessoais e dependentes."
+            title="2. Preenchimento inicial"
+            description="O funcionario preenche seus dados pessoais, endereco, documentos e dependentes."
             highlighted={status === "preenchido_funcionario"}
           />
           <WorkflowCard
-            title="3. Revisão e finalização"
-            description="O cliente complementa salário, sindicato, horas, eSocial e fecha o cadastro."
+            title="3. Revisao da empresa"
+            description="A empresa confere as informacoes, completa os dados internos e conclui o cadastro."
             highlighted={status === "em_revisao_cliente" || status === "finalizado" || status === "exportado"}
           />
         </div>
       </div>
 
       <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-        <h3 className="text-xl font-semibold text-slate-900">Convite do funcionário</h3>
-        <p className="mt-2 text-slate-600">Informe o e-mail que receberá o link de preenchimento.</p>
+        <h3 className="text-xl font-semibold text-slate-900">Convite do funcionario</h3>
+        <p className="mt-2 text-slate-600">Digite o e-mail do funcionario para enviar o link de acesso ao cadastro.</p>
         <label className="mt-6 block text-sm font-semibold text-slate-700" htmlFor="convite_email">
-          E-mail do funcionário
+          E-mail do funcionario
         </label>
         <input
           id="convite_email"
@@ -959,7 +958,7 @@ function WorkflowOverview({
           className="mt-2 w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-slate-900 outline-none transition focus:border-yellow-400 focus:ring-2 focus:ring-yellow-200"
         />
         <div className="mt-6 rounded-2xl bg-slate-50 p-4 text-sm text-slate-600">
-          Link sugerido para a experiência pública: <strong>/cadastro/funcionario</strong>
+          Link da area do funcionario: <strong>/cadastro/funcionario</strong>
         </div>
       </div>
     </section>
@@ -1219,11 +1218,11 @@ function ActionPanel({
   return (
     <section className="mt-6 flex flex-col gap-4 rounded-3xl border border-slate-200 bg-white p-6 md:flex-row md:items-center md:justify-between">
       <div>
-        <strong className="text-slate-900">Ações da etapa</strong>
+        <strong className="text-slate-900">Acoes da etapa</strong>
         <p className="mt-2 text-slate-600">
           {variant === "employee"
-            ? "O funcionário só envia os dados básicos. A finalização fica com o cliente."
-            : "O cliente conduz o fluxo, aprova a revisão e libera a exportação apenas no fim."}
+            ? "Nesta etapa, voce preenche as informacoes iniciais. A revisao e a conclusao do cadastro ficam com a empresa."
+            : "Nesta etapa, a empresa acompanha o preenchimento, revisa as informacoes e conclui o cadastro antes da exportacao."}
         </p>
       </div>
 
