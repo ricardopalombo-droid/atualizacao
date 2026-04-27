@@ -34,7 +34,7 @@ export function LoginForm() {
 
       if (!response.ok) {
         const data = (await response.json()) as { error?: string }
-        setErrorMessage(data.error ?? "Não foi possível entrar.")
+        setErrorMessage(data.error ?? "Nao foi possivel entrar.")
         return
       }
 
@@ -47,7 +47,7 @@ export function LoginForm() {
     <form onSubmit={handleSubmit} className="rounded-3xl border border-slate-200 bg-white p-8 shadow-sm">
       <h2 className="text-2xl font-bold text-slate-900">Entrar</h2>
       <p className="mt-2 text-slate-600">
-        Use o login do assinante ou o login do cliente para acessar a área interna.
+        Use o login da PalSys, do assinante ou do cliente para acessar a area correspondente.
       </p>
 
       <div className="mt-8 grid gap-5">

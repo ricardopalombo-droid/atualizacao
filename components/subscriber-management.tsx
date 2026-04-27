@@ -39,7 +39,7 @@ const initialForm: FormState = {
 export function SubscriberManagement() {
   const [form, setForm] = useState<FormState>(initialForm)
   const [records, setRecords] = useState<SubscriberRecord[]>([])
-  const [statusMessage, setStatusMessage] = useState("Cadastre os assinantes que contratarão a plataforma.")
+  const [statusMessage, setStatusMessage] = useState("Cadastre os assinantes que vao operar a plataforma.")
   const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
   const [isDeletingId, setIsDeletingId] = useState<string | null>(null)
@@ -63,7 +63,7 @@ export function SubscriberManagement() {
       }
 
       if (!response.ok || !result.ok) {
-        setStatusMessage(result.error ?? "Não foi possível carregar os assinantes.")
+        setStatusMessage(result.error ?? "Nao foi possivel carregar os assinantes.")
         return
       }
 
@@ -99,12 +99,12 @@ export function SubscriberManagement() {
 
   function cancelEditing() {
     setForm(initialForm)
-    setStatusMessage("Edição cancelada.")
+    setStatusMessage("Edicao cancelada.")
   }
 
   async function handleDelete(record: SubscriberRecord) {
     const confirmed = window.confirm(
-      `Excluir o assinante ${record.name}? Isso também remove clientes, usuários e funcionários vinculados.`
+      `Excluir o assinante ${record.name}? Isso tambem remove clientes, usuarios e funcionarios vinculados.`
     )
 
     if (!confirmed) {
@@ -127,7 +127,7 @@ export function SubscriberManagement() {
       const result = (await response.json()) as { ok: boolean; error?: string }
 
       if (!response.ok || !result.ok) {
-        setStatusMessage(result.error ?? "Não foi possível excluir o assinante.")
+        setStatusMessage(result.error ?? "Nao foi possivel excluir o assinante.")
         return
       }
 
@@ -137,7 +137,7 @@ export function SubscriberManagement() {
         setForm(initialForm)
       }
 
-      setStatusMessage("Assinante excluído com sucesso.")
+      setStatusMessage("Assinante excluido com sucesso.")
     } catch (error) {
       setStatusMessage(error instanceof Error ? error.message : "Erro ao excluir assinante.")
     } finally {
@@ -175,7 +175,7 @@ export function SubscriberManagement() {
       }
 
       if (!response.ok || !result.ok || !result.record) {
-        setStatusMessage(result.error ?? "Não foi possível salvar o assinante.")
+        setStatusMessage(result.error ?? "Nao foi possivel salvar o assinante.")
         return
       }
 
@@ -208,20 +208,19 @@ export function SubscriberManagement() {
             <div>
               <h2 className="text-2xl font-bold text-slate-900">Cadastro de assinantes</h2>
               <p className="mt-2 leading-7 text-slate-600">
-                Crie os escritórios ou empresas que contratarão a plataforma e já defina o login
-                administrativo de cada um.
+                Esta area pertence a equipe PalSys para criar escritorios assinantes, definir limites e organizar o acesso administrativo de cada conta.
               </p>
             </div>
           </div>
 
           <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
-            <Field label="Nome do assinante" value={form.name} onChange={(value) => updateField("name", value)} placeholder="Ex.: Escritório X" />
+            <Field label="Nome do assinante" value={form.name} onChange={(value) => updateField("name", value)} placeholder="Ex.: Escritorio X" />
             <Field label="E-mail comercial" type="email" value={form.email} onChange={(value) => updateField("email", value)} placeholder="contato@escritorio.com.br" />
             <Field label="Limite de clientes" type="number" value={form.maxClients} onChange={(value) => updateField("maxClients", value)} placeholder="10" />
-            <Field label="Limite de funcionários" type="number" value={form.maxEmployees} onChange={(value) => updateField("maxEmployees", value)} placeholder="1000" />
-            <Field label="Responsável pelo assinante" value={form.adminName} onChange={(value) => updateField("adminName", value)} placeholder="Ex.: Maria Oliveira" />
+            <Field label="Limite de funcionarios" type="number" value={form.maxEmployees} onChange={(value) => updateField("maxEmployees", value)} placeholder="1000" />
+            <Field label="Responsavel pelo assinante" value={form.adminName} onChange={(value) => updateField("adminName", value)} placeholder="Ex.: Maria Oliveira" />
             <Field label="E-mail de acesso do assinante" type="email" value={form.accessEmail} onChange={(value) => updateField("accessEmail", value)} placeholder="admin@escritorio.com.br" />
-            <Field label={form.id ? "Nova senha do assinante" : "Senha provisória"} type="password" value={form.temporaryPassword} onChange={(value) => updateField("temporaryPassword", value)} placeholder={form.id ? "Informe a nova senha" : "Defina a senha inicial"} />
+            <Field label={form.id ? "Nova senha do assinante" : "Senha provisoria"} type="password" value={form.temporaryPassword} onChange={(value) => updateField("temporaryPassword", value)} placeholder={form.id ? "Informe a nova senha" : "Defina a senha inicial"} />
 
             <div className="flex flex-wrap items-center gap-3 pt-2">
               <button
@@ -230,7 +229,7 @@ export function SubscriberManagement() {
                 className="inline-flex items-center gap-2 rounded-xl bg-slate-900 px-5 py-3 font-semibold text-white hover:bg-slate-800"
               >
                 <Plus size={18} />
-                {isSaving ? "Salvando..." : form.id ? "Salvar alterações" : "Cadastrar assinante"}
+                {isSaving ? "Salvando..." : form.id ? "Salvar alteracoes" : "Cadastrar assinante"}
               </button>
               {form.id ? (
                 <button
@@ -238,7 +237,7 @@ export function SubscriberManagement() {
                   onClick={cancelEditing}
                   className="inline-flex items-center gap-2 rounded-xl border border-slate-300 px-5 py-3 font-semibold text-slate-700 hover:bg-slate-100"
                 >
-                  Cancelar edição
+                  Cancelar edicao
                 </button>
               ) : null}
               <p className="text-sm text-slate-600">{statusMessage}</p>
@@ -251,7 +250,7 @@ export function SubscriberManagement() {
             <div>
               <h2 className="text-2xl font-bold text-slate-900">Assinantes cadastrados</h2>
               <p className="mt-2 text-slate-600">
-                A PalSys gerencia o acesso macro. Cada assinante depois controla os próprios clientes.
+                Esta visao pertence a PalSys e reune os assinantes que vao operar o sistema com as proprias carteiras.
               </p>
             </div>
             <div className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-4 py-2 text-sm font-semibold text-slate-700">
@@ -266,7 +265,7 @@ export function SubscriberManagement() {
             </div>
           ) : records.length === 0 ? (
             <div className="mt-6 rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-6 text-slate-600">
-              Ainda não há assinantes cadastrados.
+              Ainda nao ha assinantes cadastrados.
             </div>
           ) : (
             <div className="mt-6 overflow-hidden rounded-2xl border border-slate-200">
@@ -276,9 +275,9 @@ export function SubscriberManagement() {
                     <th className="px-4 py-3">Assinante</th>
                     <th className="px-4 py-3">Login</th>
                     <th className="px-4 py-3">Limite de clientes</th>
-                    <th className="px-4 py-3">Limite de funcionários</th>
+                    <th className="px-4 py-3">Limite de funcionarios</th>
                     <th className="px-4 py-3">Atualizado</th>
-                    <th className="px-4 py-3">Ação</th>
+                    <th className="px-4 py-3">Acao</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-200 bg-white">
@@ -286,7 +285,7 @@ export function SubscriberManagement() {
                     <tr key={record.id} className="text-sm text-slate-700">
                       <td className="px-4 py-3 font-medium text-slate-900">
                         <div>{record.name}</div>
-                        <div className="text-xs text-slate-500">{record.admin_name || "Sem responsável"}</div>
+                        <div className="text-xs text-slate-500">{record.admin_name || "Sem responsavel"}</div>
                       </td>
                       <td className="px-4 py-3">{record.access_email || record.email || "Sem e-mail"}</td>
                       <td className="px-4 py-3">{record.max_clients}</td>

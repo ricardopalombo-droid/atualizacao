@@ -26,7 +26,7 @@ export default async function PainelPage() {
       ? [
           {
             titulo: "Assinantes da plataforma",
-            descricao: "Cadastre e administre os escritórios e empresas que contratam a PalSys.",
+            descricao: "Administre a base de escritorios e empresas assinantes da PalSys.",
             href: "/painel/assinantes",
             icone: Shield,
             acao: "Gerenciar assinantes",
@@ -35,8 +35,8 @@ export default async function PainelPage() {
       : session.role === "subscriber_admin"
         ? [
             {
-              titulo: "Clientes do assinante",
-              descricao: "Cadastre as empresas que usarão o sistema abaixo do assinante atual.",
+              titulo: "Carteira de clientes",
+              descricao: "Cadastre e mantenha as empresas atendidas por este escritorio.",
               href: "/painel/clientes",
               icone: Building2,
               acao: "Gerenciar clientes",
@@ -44,41 +44,55 @@ export default async function PainelPage() {
           ]
         : [
             {
-              titulo: "Cadastro de funcionários",
-              descricao: "Preencha os dados cadastrais em abas e organize o envio para integração.",
+              titulo: "Cadastro de funcionarios",
+              descricao: "Acompanhe convites, revise dados e finalize os cadastros da empresa.",
               href: "/painel/cadastros",
               icone: ClipboardList,
-              acao: "Abrir módulo",
+              acao: "Abrir modulo",
             },
             {
-              titulo: "Exportação de planilha",
-              descricao: "Gere um arquivo com os dados preenchidos para revisão ou importação.",
+              titulo: "Exportacao de planilha",
+              descricao: "Gere arquivos para conferencia interna ou para processos externos da empresa.",
               href: "/painel/cadastros",
               icone: FileSpreadsheet,
-              acao: "Ir para exportação",
+              acao: "Ir para exportacao",
             },
             {
-              titulo: "Conferência interna",
-              descricao: "Finalize o fluxo do cadastro dentro da própria área interna do cliente.",
+              titulo: "Conferencia interna",
+              descricao: "Valide o que foi preenchido pelo funcionario antes do envio ao escritorio.",
               href: "/painel/cadastros",
               icone: CheckCircle2,
               acao: "Concluir no painel",
             },
             {
               titulo: "Bases importadas",
-              descricao: "Importe cargos, horários e sindicatos da sua empresa para alimentar as listas do cadastro.",
+              descricao: "Mantenha cargos, horarios e sindicatos da empresa alinhados ao cadastro.",
               href: "/painel/referencias",
               icone: Database,
               acao: "Gerenciar bases",
             },
           ]
 
+  const badgeByRole =
+    session.role === "palsys_admin"
+      ? "Painel PalSys"
+      : session.role === "subscriber_admin"
+        ? "Painel do assinante"
+        : "Painel do cliente"
+
+  const titleByRole =
+    session.role === "palsys_admin"
+      ? "Operacao administrativa da plataforma"
+      : session.role === "subscriber_admin"
+        ? "Operacao da carteira do escritorio"
+        : "Operacao de cadastros da empresa"
+
   const descriptionByRole =
     session.role === "palsys_admin"
-      ? "Este acesso administra a plataforma, os assinantes e os limites contratados, sem operar cadastros de funcionários por padrão."
+      ? "Este acesso administra a plataforma, os assinantes e os limites contratados."
       : session.role === "subscriber_admin"
-        ? "Este acesso administra a carteira de clientes do assinante e prepara os logins de cada empresa."
-        : "Este acesso pertence a um cliente e permite cadastrar apenas os funcionários da própria empresa."
+        ? "Este acesso administra clientes, acompanha a fila do Phoenix e opera a carteira do escritorio."
+        : "Este acesso administra os funcionarios da empresa, revisa os dados recebidos e prepara o envio ao escritorio."
 
   return (
     <main className="min-h-screen bg-slate-50">
@@ -86,12 +100,12 @@ export default async function PainelPage() {
         <div className="mx-auto flex max-w-6xl flex-col gap-4 px-6 py-6 md:flex-row md:items-end md:justify-between">
           <div>
             <span className="inline-flex rounded-full bg-yellow-100 px-4 py-1 text-sm font-bold text-yellow-800">
-              Painel interno
+              {badgeByRole}
             </span>
-            <h1 className="mt-4 text-4xl font-bold text-slate-900">Funções liberadas após o login</h1>
+            <h1 className="mt-4 text-4xl font-bold text-slate-900">{titleByRole}</h1>
             <p className="mt-3 max-w-3xl text-slate-600">{descriptionByRole}</p>
             <p className="mt-2 text-sm font-semibold text-slate-500">
-              Usuário logado: {session.displayName} ({session.email})
+              Usuario logado: {session.displayName} ({session.email})
             </p>
           </div>
 
@@ -138,12 +152,12 @@ export default async function PainelPage() {
             <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
               <div>
                 <h2 className="text-2xl font-bold text-slate-900">
-                  {session.role === "subscriber_admin" ? "Funcionários da carteira" : "Funcionários do cliente"}
+                  {session.role === "subscriber_admin" ? "Cadastros da carteira" : "Cadastros da empresa"}
                 </h2>
                 <p className="mt-2 text-slate-600">
                   {session.role === "subscriber_admin"
-                    ? "Visão agregada dos registros vinculados ao assinante."
-                    : "Aqui você acompanha apenas os registros gravados para o seu cliente."}
+                    ? "Visao resumida dos registros vinculados aos clientes do assinante."
+                    : "Visao resumida dos registros vinculados a empresa logada."}
                 </p>
               </div>
               {session.role === "client_user" ? (
@@ -158,14 +172,14 @@ export default async function PainelPage() {
 
             {records.length === 0 ? (
               <div className="mt-6 rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-6 text-slate-600">
-                Ainda não há cadastros salvos neste escopo.
+                Ainda nao ha cadastros salvos neste escopo.
               </div>
             ) : (
               <div className="mt-6 overflow-hidden rounded-2xl border border-slate-200">
                 <table className="min-w-full divide-y divide-slate-200">
                   <thead className="bg-slate-50">
                     <tr className="text-left text-sm font-semibold text-slate-700">
-                      <th className="px-4 py-3">Funcionário</th>
+                      <th className="px-4 py-3">Funcionario</th>
                       <th className="px-4 py-3">E-mail</th>
                       <th className="px-4 py-3">Status</th>
                       <th className="px-4 py-3">Atualizado</th>

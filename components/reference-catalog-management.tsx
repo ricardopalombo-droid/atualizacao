@@ -27,12 +27,9 @@ const helpByType: Record<ReferenceType, string> = {
 }
 
 const replaceWarningByType: Record<ReferenceType, string> = {
-  cargo:
-    "Esta importacao vai substituir toda a base atual de cargos desta empresa pelo conteudo do novo PDF.",
-  horario:
-    "Esta importacao vai substituir toda a base atual de horarios desta empresa pelo conteudo do novo PDF.",
-  sindicato:
-    "Esta importacao vai substituir toda a base atual de sindicatos desta empresa pelo conteudo do novo PDF.",
+  cargo: "Esta importacao vai substituir toda a base atual de cargos desta empresa pelo conteudo do novo PDF.",
+  horario: "Esta importacao vai substituir toda a base atual de horarios desta empresa pelo conteudo do novo PDF.",
+  sindicato: "Esta importacao vai substituir toda a base atual de sindicatos desta empresa pelo conteudo do novo PDF.",
 }
 
 export function ReferenceCatalogManagement() {
@@ -194,7 +191,7 @@ export function ReferenceCatalogManagement() {
           <div>
             <h2 className="text-2xl font-bold text-slate-900">Resumo das bases importadas</h2>
             <p className="mt-2 text-slate-600">
-            Confira as primeiras entradas carregadas para validar se o parser leu os PDFs da sua empresa corretamente.
+              Esta conferencia pertence a empresa e ajuda a validar se os PDFs da propria base foram lidos corretamente.
             </p>
           </div>
           <div className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-4 py-2 text-sm font-semibold text-slate-700">

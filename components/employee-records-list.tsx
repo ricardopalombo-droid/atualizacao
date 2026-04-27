@@ -1,4 +1,4 @@
-﻿"use client"
+"use client"
 
 import Link from "next/link"
 import { useEffect, useState } from "react"
@@ -19,8 +19,8 @@ type EmployeeRecord = {
 const statusLabels: Record<string, string> = {
   rascunho_interno: "Rascunho interno",
   convite_enviado: "Convite enviado",
-  preenchido_funcionario: "Preenchido pelo funcionário",
-  em_revisao_cliente: "Em revisão do cliente",
+  preenchido_funcionario: "Preenchido pelo funcionario",
+  em_revisao_cliente: "Em revisao do cliente",
   finalizado: "Finalizado",
   exportado: "Exportado",
 }
@@ -28,13 +28,13 @@ const statusLabels: Record<string, string> = {
 const phoenixStatusLabels: Record<string, string> = {
   pronto_para_phoenix: "Pronto para Phoenix",
   enviado_ao_phoenix: "Enviado ao Phoenix",
-  concluido_no_phoenix: "Concluído no Phoenix",
+  concluido_no_phoenix: "Concluido no Phoenix",
   falha_no_phoenix: "Falha no Phoenix",
 }
 
 export function EmployeeRecordsList() {
   const [records, setRecords] = useState<EmployeeRecord[]>([])
-  const [statusMessage, setStatusMessage] = useState("Carregando funcionários do cliente.")
+  const [statusMessage, setStatusMessage] = useState("Carregando funcionarios da empresa.")
   const [isLoading, setIsLoading] = useState(true)
   const [isDeletingId, setIsDeletingId] = useState<string | null>(null)
   const [isUpdatingPhoenixId, setIsUpdatingPhoenixId] = useState<string | null>(null)
@@ -58,14 +58,14 @@ export function EmployeeRecordsList() {
       }
 
       if (!response.ok || !result.ok) {
-        setStatusMessage(result.error ?? "Não foi possível carregar os funcionários.")
+        setStatusMessage(result.error ?? "Nao foi possivel carregar os funcionarios.")
         return
       }
 
       setRecords(result.records ?? [])
-      setStatusMessage("Funcionários carregados com sucesso.")
+      setStatusMessage("Funcionarios carregados com sucesso.")
     } catch (error) {
-      setStatusMessage(error instanceof Error ? error.message : "Erro ao carregar funcionários.")
+      setStatusMessage(error instanceof Error ? error.message : "Erro ao carregar funcionarios.")
     } finally {
       setIsLoading(false)
     }
@@ -117,7 +117,7 @@ export function EmployeeRecordsList() {
       }
 
       if (!response.ok || !result.ok) {
-        setStatusMessage(result.error ?? "Não foi possível atualizar o status do Phoenix.")
+        setStatusMessage(result.error ?? "Nao foi possivel atualizar o status do Phoenix.")
         return
       }
 
@@ -139,7 +139,7 @@ export function EmployeeRecordsList() {
         action === "start"
           ? "Cadastro marcado como enviado ao Phoenix."
           : action === "complete"
-            ? "Cadastro marcado como concluído no Phoenix."
+            ? "Cadastro marcado como concluido no Phoenix."
             : action === "fail"
               ? "Cadastro marcado com falha no Phoenix."
               : "Cadastro voltou para pronto para Phoenix."
@@ -154,7 +154,7 @@ export function EmployeeRecordsList() {
 
   async function handleDelete(record: EmployeeRecord) {
     const confirmed = window.confirm(
-      `Excluir o funcionário ${record.employee_name || "sem nome informado"}? Essa ação remove o cadastro salvo.`
+      `Excluir o funcionario ${record.employee_name || "sem nome informado"}? Essa acao remove o cadastro salvo.`
     )
 
     if (!confirmed) {
@@ -177,14 +177,14 @@ export function EmployeeRecordsList() {
       const result = (await response.json()) as { ok: boolean; error?: string }
 
       if (!response.ok || !result.ok) {
-        setStatusMessage(result.error ?? "Não foi possível excluir o funcionário.")
+        setStatusMessage(result.error ?? "Nao foi possivel excluir o funcionario.")
         return
       }
 
       setRecords((previous) => previous.filter((item) => item.id !== record.id))
-      setStatusMessage("Funcionário excluído com sucesso.")
+      setStatusMessage("Funcionario excluido com sucesso.")
     } catch (error) {
-      setStatusMessage(error instanceof Error ? error.message : "Erro ao excluir funcionário.")
+      setStatusMessage(error instanceof Error ? error.message : "Erro ao excluir funcionario.")
     } finally {
       setIsDeletingId(null)
     }
@@ -194,38 +194,38 @@ export function EmployeeRecordsList() {
     <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
       <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-slate-900">Funcionários deste cliente</h2>
+          <h2 className="text-2xl font-bold text-slate-900">Funcionarios desta empresa</h2>
           <p className="mt-2 text-slate-600">
-            Continue a edição de um cadastro salvo sem perder o vínculo com a empresa logada.
+            Esta area pertence ao cliente e ajuda a acompanhar convites, revisoes e envios dos funcionarios da propria empresa.
           </p>
         </div>
         <Link
           href="/painel/cadastros"
           className="inline-flex items-center justify-center rounded-xl border border-slate-300 px-5 py-3 font-semibold text-slate-700 hover:bg-slate-100"
         >
-          Novo funcionário
+          Novo funcionario
         </Link>
       </div>
 
       {isLoading ? (
         <div className="mt-6 rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-6 text-slate-600">
-          Carregando funcionários...
+          Carregando funcionarios...
         </div>
       ) : records.length === 0 ? (
         <div className="mt-6 rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-6 text-slate-600">
-          Ainda não há funcionários cadastrados para este cliente.
+          Ainda nao ha funcionarios cadastrados para esta empresa.
         </div>
       ) : (
         <div className="mt-6 overflow-hidden rounded-2xl border border-slate-200">
           <table className="min-w-full divide-y divide-slate-200">
             <thead className="bg-slate-50">
               <tr className="text-left text-sm font-semibold text-slate-700">
-                <th className="px-4 py-3">Funcionário</th>
+                <th className="px-4 py-3">Funcionario</th>
                 <th className="px-4 py-3">E-mail</th>
                 <th className="px-4 py-3">Status</th>
                 <th className="px-4 py-3">Phoenix</th>
                 <th className="px-4 py-3">Atualizado</th>
-                <th className="px-4 py-3">Ação</th>
+                <th className="px-4 py-3">Acao</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-200 bg-white">
@@ -251,7 +251,7 @@ export function EmployeeRecordsList() {
                         ) : null}
                       </div>
                     ) : (
-                      <span className="text-slate-400">Aguardando finalização</span>
+                      <span className="text-slate-400">Aguardando finalizacao</span>
                     )}
                   </td>
                   <td className="px-4 py-3">{formatDateTime(record.updated_at)}</td>
@@ -261,7 +261,7 @@ export function EmployeeRecordsList() {
                         href={`/painel/cadastros?id=${record.id}`}
                         className="inline-flex items-center justify-center rounded-lg bg-slate-900 px-4 py-2 font-semibold text-white hover:bg-slate-800"
                       >
-                        Continuar edição
+                        Continuar edicao
                       </Link>
                       {["finalizado", "exportado"].includes(record.workflow_status) && (
                         <>
@@ -285,7 +285,7 @@ export function EmployeeRecordsList() {
                                 disabled={isUpdatingPhoenixId === record.id}
                                 className="inline-flex items-center justify-center rounded-lg border border-emerald-200 px-4 py-2 font-semibold text-emerald-700 hover:bg-emerald-50 disabled:opacity-60"
                               >
-                                {isUpdatingPhoenixId === record.id ? "Atualizando..." : "Marcar concluído"}
+                                {isUpdatingPhoenixId === record.id ? "Atualizando..." : "Marcar concluido"}
                               </button>
                               <button
                                 type="button"

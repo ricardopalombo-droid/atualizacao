@@ -7,14 +7,13 @@ export default function AcessoPage() {
       <div className="mx-auto grid max-w-5xl gap-6 md:grid-cols-[1.1fr_0.9fr]">
         <section className="rounded-3xl bg-slate-900 p-8 text-white shadow-sm">
           <span className="inline-flex rounded-full bg-yellow-400 px-4 py-1 text-sm font-bold text-slate-900">
-            Área restrita PalSys
+            Area restrita PalSys
           </span>
           <h1 className="mt-6 text-4xl font-bold leading-tight">
-            Faça login para acessar as funções do sistema
+            Acesse a area correspondente ao seu perfil
           </h1>
           <p className="mt-4 max-w-xl text-lg leading-8 text-slate-300">
-            O assinante administra os próprios clientes. Cada cliente tem login separado e só pode
-            cadastrar funcionários vinculados à sua própria empresa.
+            A PalSys administra os assinantes. O assinante administra a propria carteira de clientes. Cada cliente acessa apenas a sua empresa e organiza os cadastros dos proprios funcionarios.
           </p>
           <div className="mt-8">
             <Link
