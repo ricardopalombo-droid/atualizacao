@@ -408,6 +408,7 @@ export const formSections: FormSection[] = [
       { key: "categoria_normativa", label: "Categoria normativa vinculada", type: "text", audience: "client" },
       { key: "tipo_contrato", label: "Tipo de contrato", type: "select", audience: "client", options: tipoContratoOptions, requiredForExport: true },
       { key: "caged", label: "Situacao Caged entrada", type: "select", audience: "client", options: cagedOptions, requiredForExport: true },
+      { key: "percepcao_seguro_desemprego", label: "Percepcao seguro desemprego / requerimento em tramitacao", type: "checkbox", audience: "client" },
       { key: "forma_pagamento", label: "Forma de pagamento", type: "select", audience: "client", options: formaPagamentoOptions },
       { key: "tipo_pagamento", label: "Tipo de pagamento", type: "select", audience: "client", options: tipoPagamentoOptions },
       { key: "salario", label: "Salario", type: "number", audience: "client", requiredForExport: true },

@@ -148,6 +148,7 @@ def main():
             "EXTRA_DEFICIENCIA_INTELECTUAL": "" if form_data.get("deficiencia_intelectual") is None else str(form_data.get("deficiencia_intelectual")),
             "EXTRA_PREENCHE_COTA_PCD": "" if form_data.get("preenche_cota_pcd") is None else str(form_data.get("preenche_cota_pcd")),
             "EXTRA_OBSERVACAO_DEFICIENCIA": "" if form_data.get("observacao_deficiencia") is None else str(form_data.get("observacao_deficiencia")),
+            "EXTRA_PERCEPCAO_SEGURO_DESEMPREGO": "" if form_data.get("percepcao_seguro_desemprego") is None else str(form_data.get("percepcao_seguro_desemprego")),
         }
     )
     legacy_columns.update(load_overrides(args.overrides_file))

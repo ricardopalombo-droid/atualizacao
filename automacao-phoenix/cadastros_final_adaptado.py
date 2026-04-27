@@ -1294,6 +1294,7 @@ def preencher_sistema(dados: dict, empresa_habilitada: str, empresa_rateio: str)
     col_extra_horario_codigo = limpar_texto(dados.get("EXTRA_HORARIO_CODIGO", ""))
     col_extra_horario_descricao = limpar_texto(dados.get("EXTRA_HORARIO_DESCRICAO", ""))
     col_extra_observacao_deficiencia = limpar_texto(dados.get("EXTRA_OBSERVACAO_DEFICIENCIA", ""))
+    col_extra_percepcao_seguro_desemprego = limpar_texto(dados.get("EXTRA_PERCEPCAO_SEGURO_DESEMPREGO", ""))
     flag_deficiencia_fisica = extra_bool(dados.get("EXTRA_DEFICIENCIA_FISICA", ""))
     flag_deficiencia_visual = extra_bool(dados.get("EXTRA_DEFICIENCIA_VISUAL", ""))
     flag_deficiencia_auditiva = extra_bool(dados.get("EXTRA_DEFICIENCIA_AUDITIVA", ""))
@@ -1702,15 +1703,26 @@ def preencher_sistema(dados: dict, empresa_habilitada: str, empresa_rateio: str)
     pyautogui.hotkey("alt", "f4")
     dormir_controlado(0.4)
 
+    pressionar_tab(1, pausa=0.25)
     selecionar_caged(col_dq)
+    dormir_controlado(0.35)
 
-    escrever(col_aq)
+    if primeiros_numeros(col_dq) == "20":
+        pyautogui.press("tab")
+        dormir_controlado(0.25)
+        if col_extra_percepcao_seguro_desemprego.upper() in {"TRUE", "1", "SIM", "S"}:
+            pyautogui.press("space")
+            dormir_controlado(0.15)
+        pyautogui.press("tab")
+        dormir_controlado(0.25)
+
+    limpar_e_digitar(col_aq, intervalo=0.05)
     dormir_controlado(0.2)
     pyautogui.press("enter")
-    dormir_controlado(0.3)
+    dormir_controlado(0.25)
 
-    escrever(col_ao)
-    dormir_controlado(0.2)
+    limpar_e_digitar(col_ao, intervalo=0.05)
+    dormir_controlado(0.25)
     pressionar_enter(2, pausa=0.25)
 
     limpar_e_digitar(an_parte1, intervalo=0.05)
