@@ -114,6 +114,10 @@ async function listClientIdsForSubscriber(subscriberId: string) {
   return (data ?? []).map((item) => item.id as string)
 }
 
+function dedupeEmployeeList<T extends { id: string }>(items: T[]) {
+  return Array.from(new Map(items.map((item) => [item.id, item])).values())
+}
+
 export async function upsertEmployeeRecord(payload: CadastroPayload) {
   const supabase = getSupabaseServerClient()
   const data = payload.data
@@ -159,6 +163,62 @@ export async function listEmployeeRecords(
 ): Promise<EmployeeRecordListItem[]> {
   const supabase = getSupabaseServerClient()
 
+  if (scope?.subscriberId && !scope?.clientId) {
+    const clientIds = await listClientIdsForSubscriber(scope.subscriberId)
+
+    const { data: bySubscriber, error: bySubscriberError } = await supabase
+      .from("employees")
+      .select("id, employee_name, employee_email, invite_email, workflow_status, client_id, created_at, updated_at, full_payload")
+      .eq("subscriber_id", scope.subscriberId)
+      .order("updated_at", { ascending: false })
+      .limit(limit)
+
+    if (bySubscriberError) {
+      throw bySubscriberError
+    }
+
+    let byClient: typeof bySubscriber = []
+
+    if (clientIds.length > 0) {
+      const { data: clientData, error: byClientError } = await supabase
+        .from("employees")
+        .select(
+          "id, employee_name, employee_email, invite_email, workflow_status, client_id, created_at, updated_at, full_payload"
+        )
+        .in("client_id", clientIds)
+        .order("updated_at", { ascending: false })
+        .limit(limit)
+
+      if (byClientError) {
+        throw byClientError
+      }
+
+      byClient = clientData ?? []
+    }
+
+    const merged = dedupeEmployeeList([...(bySubscriber ?? []), ...(byClient ?? [])])
+      .sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime())
+      .slice(0, limit)
+
+    return merged.map((item) => {
+      const payload = (item.full_payload ?? {}) as Record<string, unknown>
+
+      return {
+        id: item.id,
+        employee_name: item.employee_name,
+        employee_email: item.employee_email,
+        invite_email: item.invite_email,
+        workflow_status: item.workflow_status,
+        phoenix_status: typeof payload.phoenix_status === "string" ? payload.phoenix_status : null,
+        phoenix_status_updated_at:
+          typeof payload.phoenix_status_updated_at === "string" ? payload.phoenix_status_updated_at : null,
+        client_id: item.client_id,
+        created_at: item.created_at,
+        updated_at: item.updated_at,
+      } satisfies EmployeeRecordListItem
+    })
+  }
+
   let query = supabase
     .from("employees")
     .select("id, employee_name, employee_email, invite_email, workflow_status, client_id, created_at, updated_at, full_payload")
@@ -167,15 +227,6 @@ export async function listEmployeeRecords(
 
   if (scope?.clientId) {
     query = query.eq("client_id", scope.clientId)
-  } else if (scope?.subscriberId) {
-    const clientIds = await listClientIdsForSubscriber(scope.subscriberId)
-    const orParts = [`subscriber_id.eq.${scope.subscriberId}`]
-
-    if (clientIds.length > 0) {
-      orParts.push(`client_id.in.(${clientIds.join(",")})`)
-    }
-
-    query = query.or(orParts.join(","))
   }
 
   const { data, error } = await query
@@ -250,25 +301,11 @@ export async function getEmployeeRecordById(
 ): Promise<EmployeeRecordDetail | null> {
   const supabase = getSupabaseServerClient()
 
-  let query = supabase
+  const { data, error } = await supabase
     .from("employees")
     .select("id, subscriber_id, client_id, workflow_status, invite_email, full_payload, updated_at")
     .eq("id", id)
-
-  if (scope?.clientId) {
-    query = query.eq("client_id", scope.clientId)
-  } else if (scope?.subscriberId) {
-    const clientIds = await listClientIdsForSubscriber(scope.subscriberId)
-    const orParts = [`subscriber_id.eq.${scope.subscriberId}`]
-
-    if (clientIds.length > 0) {
-      orParts.push(`client_id.in.(${clientIds.join(",")})`)
-    }
-
-    query = query.or(orParts.join(","))
-  }
-
-  const { data, error } = await query.maybeSingle()
+    .maybeSingle()
 
   if (error) {
     throw error
@@ -276,6 +313,21 @@ export async function getEmployeeRecordById(
 
   if (!data) {
     return null
+  }
+
+  if (scope?.clientId && data.client_id !== scope.clientId) {
+    return null
+  }
+
+  if (scope?.subscriberId && !scope?.clientId) {
+    const clientIds = await listClientIdsForSubscriber(scope.subscriberId)
+    const belongsToSubscriber =
+      data.subscriber_id === scope.subscriberId ||
+      (data.client_id !== null && clientIds.includes(data.client_id))
+
+    if (!belongsToSubscriber) {
+      return null
+    }
   }
 
   const { data: dependents, error: dependentsError } = await supabase
@@ -411,23 +463,13 @@ export async function deleteEmployeeRecord(
   scope?: { subscriberId?: string | null; clientId?: string | null }
 ) {
   const supabase = getSupabaseServerClient()
+  const record = await getEmployeeRecordById(id, scope)
 
-  let query = supabase.from("employees").delete().eq("id", id)
-
-  if (scope?.clientId) {
-    query = query.eq("client_id", scope.clientId)
-  } else if (scope?.subscriberId) {
-    const clientIds = await listClientIdsForSubscriber(scope.subscriberId)
-    const orParts = [`subscriber_id.eq.${scope.subscriberId}`]
-
-    if (clientIds.length > 0) {
-      orParts.push(`client_id.in.(${clientIds.join(",")})`)
-    }
-
-    query = query.or(orParts.join(","))
+  if (!record) {
+    throw new Error("Cadastro do funcionário não encontrado.")
   }
 
-  const { error } = await query
+  const { error } = await supabase.from("employees").delete().eq("id", id)
 
   if (error) {
     throw error
