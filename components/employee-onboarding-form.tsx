@@ -200,6 +200,10 @@ function getMissingRequiredFields(formData: FormState) {
         return false
       }
 
+      if (field.key === "ctps_data_expedicao" && formData.ctps_digital) {
+        return false
+      }
+
       return !hasFilledValue(formData[field.key])
     })
 }
@@ -435,6 +439,7 @@ export function EmployeeOnboardingForm({
           ? {
               ...buildDigitalCtpsFields(previous.cpf),
               ctps_uf: "",
+              ctps_data_expedicao: "",
             }
           : {}),
       }))
@@ -447,6 +452,7 @@ export function EmployeeOnboardingForm({
         cpf: value,
         ...buildDigitalCtpsFields(value),
         ctps_uf: "",
+        ctps_data_expedicao: "",
       }))
       return
     }
@@ -855,7 +861,8 @@ export function EmployeeOnboardingForm({
                     (variant === "employee" ? field.audience === "client" : false) ||
                     (field.key === "ctps_numero" && Boolean(formData.ctps_digital)) ||
                     (field.key === "ctps_serie" && Boolean(formData.ctps_digital)) ||
-                    (field.key === "ctps_uf" && Boolean(formData.ctps_digital))
+                    (field.key === "ctps_uf" && Boolean(formData.ctps_digital)) ||
+                    (field.key === "ctps_data_expedicao" && Boolean(formData.ctps_digital))
                   }
                   onChange={(value) => updateField(field.key, value)}
                 />

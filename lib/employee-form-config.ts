@@ -381,6 +381,7 @@ export const formSections: FormSection[] = [
         { key: "ctps_numero", label: "Numero CTPS", type: "text", audience: "employee", requiredForExport: true },
         { key: "ctps_serie", label: "Serie CTPS", type: "text", audience: "employee", requiredForExport: true },
         { key: "ctps_uf", label: "UF CTPS", type: "select", audience: "employee", options: stateOptions, requiredForExport: true },
+        { key: "ctps_data_expedicao", label: "Data expedicao CTPS", type: "date", audience: "employee" },
       { key: "rg_numero", label: "RG", type: "text", audience: "employee", requiredForExport: true },
       { key: "rg_orgao_emissor", label: "Orgao emissor RG", type: "select", audience: "employee", options: orgaoEmissorRgOptions },
       { key: "uf_rg", label: "UF do RG", type: "select", audience: "employee", options: stateOptions },

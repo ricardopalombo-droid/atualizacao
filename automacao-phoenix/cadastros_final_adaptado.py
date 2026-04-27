@@ -1289,6 +1289,11 @@ def preencher_sistema(dados: dict, empresa_habilitada: str, empresa_rateio: str)
     col_extra_tipo_pagamento = limpar_texto(dados.get("EXTRA_TIPO_PAGAMENTO", ""))
     col_extra_regime_jornada = limpar_texto(dados.get("EXTRA_REGIME_JORNADA", ""))
     col_extra_tipo_tributacao_sindical = limpar_texto(dados.get("EXTRA_TIPO_TRIBUTACAO_SINDICAL", ""))
+    flag_ctps_digital = extra_bool(dados.get("EXTRA_CTPS_DIGITAL", ""))
+    col_extra_ctps_numero = limpar_texto(dados.get("EXTRA_CTPS_NUMERO", ""))
+    col_extra_ctps_serie = limpar_texto(dados.get("EXTRA_CTPS_SERIE", ""))
+    col_extra_ctps_uf = limpar_texto(dados.get("EXTRA_CTPS_UF", ""))
+    col_extra_ctps_data_expedicao = formatar_data_sem_barras(dados.get("EXTRA_CTPS_DATA_EXPEDICAO", ""))
     col_extra_cargo_codigo = limpar_texto(dados.get("EXTRA_CARGO_CODIGO", ""))
     col_extra_cargo_descricao = limpar_texto(dados.get("EXTRA_CARGO_DESCRICAO", ""))
     col_extra_horario_codigo = limpar_texto(dados.get("EXTRA_HORARIO_CODIGO", ""))
@@ -1601,6 +1606,25 @@ def preencher_sistema(dados: dict, empresa_habilitada: str, empresa_rateio: str)
         dormir_controlado(0.2)
         pyautogui.press("enter")
         dormir_controlado(0.25)
+
+
+def selecionar_sigla_uf(valor):
+    texto = limpar_texto(valor).strip().upper()
+    if not texto:
+        pyautogui.press("tab")
+        dormir_controlado(0.25)
+        return
+
+    sigla = texto[:2]
+    verificar_controle()
+    pyautogui.hotkey("ctrl", "a")
+    dormir_controlado(0.1)
+    pyautogui.press("backspace")
+    dormir_controlado(0.1)
+    digitar_lento(sigla, intervalo=0.05)
+    dormir_controlado(0.2)
+    pyautogui.press("enter")
+    dormir_controlado(0.25)
         pressionar_tab(7, pausa=0.15)
 
     selecionar_combo_por_codigo_sem_tab(col_dp)
@@ -1737,10 +1761,25 @@ def preencher_sistema(dados: dict, empresa_habilitada: str, empresa_rateio: str)
     dormir_controlado(0.2)
 
     pressionar_tab(1)
-    pyautogui.press("space")
-    dormir_controlado(0.2)
-
-    pressionar_tab(1)
+    if flag_ctps_digital:
+        pyautogui.press("space")
+        dormir_controlado(0.2)
+        pressionar_tab(2)
+    else:
+        pressionar_tab(1)
+        limpar_e_digitar(col_extra_ctps_numero, intervalo=0.05)
+        dormir_controlado(0.2)
+        pyautogui.press("tab")
+        dormir_controlado(0.25)
+        limpar_e_digitar(col_extra_ctps_serie, intervalo=0.05)
+        dormir_controlado(0.2)
+        pyautogui.press("tab")
+        dormir_controlado(0.25)
+        selecionar_sigla_uf(col_extra_ctps_uf)
+        limpar_e_digitar(col_extra_ctps_data_expedicao, intervalo=0.05)
+        dormir_controlado(0.2)
+        pyautogui.press("tab")
+        dormir_controlado(0.25)
 
     if valor_vazio(col_ar):
 
