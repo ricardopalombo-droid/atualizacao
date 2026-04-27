@@ -8,6 +8,25 @@ const phoenixStatusPayloadSchema = z.object({
   action: z.enum(["start", "complete", "fail", "reset"]),
 })
 
+function buildPhoenixRunnerCommand(params: {
+  baseUrl: string
+  email: string
+  employeeId: string
+}) {
+  const baseUrl = params.baseUrl.replace(/\/$/, "")
+
+  return [
+    'python .\\phoenix_legacy_site_runner.py `',
+    `  --base-url "${baseUrl}" ` + "`",
+    `  --email "${params.email}" ` + "`",
+    '  --password "SUA_SENHA_AQUI" `',
+    `  --employee-id "${params.employeeId}" ` + "`",
+    '  --legacy-script ".\\cadastros_final_adaptado.py" `',
+    '  --empresa-habilitada N `',
+    "  --empresa-rateio N",
+  ].join("\n")
+}
+
 export async function GET(request: Request) {
   try {
     const session = await getCurrentSession()
@@ -110,10 +129,32 @@ export async function POST(request: Request) {
       clientId: session.clientId,
     })
 
+    const requestUrl = new URL(request.url)
+    const runnerCommand =
+      payload.action === "start"
+        ? buildPhoenixRunnerCommand({
+            baseUrl: requestUrl.origin,
+            email: session.email,
+            employeeId: payload.id,
+          })
+        : null
+
     return Response.json({
       ok: true,
       phoenixStatus: result.phoenixStatus,
       phoenixStatusUpdatedAt: result.phoenixStatusUpdatedAt,
+      runnerCommand,
+      runnerData:
+        payload.action === "start"
+          ? {
+              baseUrl: requestUrl.origin,
+              email: session.email,
+              employeeId: payload.id,
+              legacyScript: ".\\cadastros_final_adaptado.py",
+              empresaHabilitada: "N",
+              empresaRateio: "N",
+            }
+          : null,
     })
   } catch (error) {
     console.error(error)

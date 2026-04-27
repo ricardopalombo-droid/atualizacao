@@ -15,6 +15,15 @@ type EmployeeRecord = {
   updated_at: string
 }
 
+type PhoenixRunnerData = {
+  baseUrl: string
+  email: string
+  employeeId: string
+  legacyScript: string
+  empresaHabilitada: string
+  empresaRateio: string
+}
+
 const statusLabels: Record<string, string> = {
   rascunho_interno: "Rascunho interno",
   convite_enviado: "Convite enviado",
@@ -37,6 +46,8 @@ export function EmployeeRecordsList() {
   const [isLoading, setIsLoading] = useState(true)
   const [isDeletingId, setIsDeletingId] = useState<string | null>(null)
   const [isUpdatingPhoenixId, setIsUpdatingPhoenixId] = useState<string | null>(null)
+  const [runnerCommand, setRunnerCommand] = useState<string | null>(null)
+  const [runnerData, setRunnerData] = useState<PhoenixRunnerData | null>(null)
 
   useEffect(() => {
     void loadRecords()
@@ -101,6 +112,8 @@ export function EmployeeRecordsList() {
         ok: boolean
         phoenixStatus?: string
         phoenixStatusUpdatedAt?: string | null
+        runnerCommand?: string | null
+        runnerData?: PhoenixRunnerData | null
         error?: string
       }
 
@@ -131,10 +144,25 @@ export function EmployeeRecordsList() {
               : "Cadastro voltou para pronto para Phoenix."
 
       setStatusMessage(actionMessage)
+      setRunnerCommand(action === "start" ? result.runnerCommand ?? null : null)
+      setRunnerData(action === "start" ? result.runnerData ?? null : null)
     } catch (error) {
       setStatusMessage(error instanceof Error ? error.message : "Erro ao atualizar status do Phoenix.")
     } finally {
       setIsUpdatingPhoenixId(null)
+    }
+  }
+
+  async function handleCopyRunnerCommand() {
+    if (!runnerCommand) {
+      return
+    }
+
+    try {
+      await navigator.clipboard.writeText(runnerCommand)
+      setStatusMessage("Comando do runner copiado. Agora Ã© sÃ³ colar no PowerShell dentro da pasta automacao-phoenix.")
+    } catch (error) {
+      setStatusMessage(error instanceof Error ? error.message : "NÃ£o foi possÃ­vel copiar o comando.")
     }
   }
 
@@ -312,6 +340,48 @@ export function EmployeeRecordsList() {
       )}
 
       <p className="mt-4 text-sm text-slate-500">{statusMessage}</p>
+
+      {runnerCommand && runnerData ? (
+        <div className="mt-6 rounded-2xl border border-sky-200 bg-sky-50 p-5">
+          <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+            <div>
+              <h3 className="text-lg font-bold text-sky-950">Runner pronto para o Phoenix</h3>
+              <p className="mt-1 text-sm text-sky-900">
+                O contador pode abrir a pasta <code>automacao-phoenix</code>, colar o comando abaixo no PowerShell
+                e trocar apenas a senha.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => void handleCopyRunnerCommand()}
+              className="inline-flex items-center justify-center rounded-lg bg-sky-700 px-4 py-2 font-semibold text-white hover:bg-sky-800"
+            >
+              Copiar comando
+            </button>
+          </div>
+
+          <div className="mt-4 grid gap-2 text-sm text-sky-950 md:grid-cols-2">
+            <p>
+              <span className="font-semibold">Base URL:</span> {runnerData.baseUrl}
+            </p>
+            <p>
+              <span className="font-semibold">Login do cliente:</span> {runnerData.email}
+            </p>
+            <p>
+              <span className="font-semibold">Employee ID:</span> {runnerData.employeeId}
+            </p>
+            <p>
+              <span className="font-semibold">Script legado:</span> {runnerData.legacyScript}
+            </p>
+          </div>
+
+          <textarea
+            readOnly
+            value={runnerCommand}
+            className="mt-4 min-h-52 w-full rounded-2xl border border-sky-200 bg-white p-4 font-mono text-sm text-slate-900"
+          />
+        </div>
+      ) : null}
     </section>
   )
 }
