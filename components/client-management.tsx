@@ -8,6 +8,7 @@ type ClientRecord = {
   name: string
   email: string | null
   cnpj: string | null
+  contmatic_nickname: string | null
   max_employees: number | null
   access_email: string | null
   contact_name: string | null
@@ -19,6 +20,7 @@ type FormState = {
   name: string
   email: string
   cnpj: string
+  contmaticNickname: string
   maxEmployees: string
   contactName: string
   accessEmail: string
@@ -30,6 +32,7 @@ const initialForm: FormState = {
   name: "",
   email: "",
   cnpj: "",
+  contmaticNickname: "",
   maxEmployees: "",
   contactName: "",
   accessEmail: "",
@@ -89,6 +92,7 @@ export function ClientManagement() {
       name: client.name,
       email: client.email ?? "",
       cnpj: client.cnpj ?? "",
+      contmaticNickname: client.contmatic_nickname ?? "",
       maxEmployees: client.max_employees ? String(client.max_employees) : "",
       contactName: client.contact_name ?? "",
       accessEmail: client.access_email ?? "",
@@ -161,6 +165,7 @@ export function ClientManagement() {
           name: form.name,
           email: form.email,
           cnpj: form.cnpj,
+          contmaticNickname: form.contmaticNickname,
           maxEmployees: form.maxEmployees ? Number(form.maxEmployees) : undefined,
           contactName: form.contactName,
           accessEmail: form.accessEmail,
@@ -233,6 +238,12 @@ export function ClientManagement() {
               value={form.cnpj}
               onChange={(value) => updateField("cnpj", value)}
               placeholder="00.000.000/0001-00"
+            />
+            <Field
+              label="Apelido Contmatic"
+              value={form.contmaticNickname}
+              onChange={(value) => updateField("contmaticNickname", value)}
+              placeholder="Ex.: SOFTMATIC"
             />
             <Field
               label="Responsável pelo cliente"
@@ -313,6 +324,7 @@ export function ClientManagement() {
                 <thead className="bg-slate-50">
                   <tr className="text-left text-sm font-semibold text-slate-700">
                     <th className="px-4 py-3">Cliente</th>
+                    <th className="px-4 py-3">Apelido Contmatic</th>
                     <th className="px-4 py-3">Login do cliente</th>
                     <th className="px-4 py-3">CNPJ</th>
                     <th className="px-4 py-3">Limite</th>
@@ -327,6 +339,7 @@ export function ClientManagement() {
                         <div>{client.name}</div>
                         <div className="text-xs text-slate-500">{client.contact_name || "Sem responsável"}</div>
                       </td>
+                      <td className="px-4 py-3">{client.contmatic_nickname || "Sem apelido"}</td>
                       <td className="px-4 py-3">{client.access_email || client.email || "Sem e-mail"}</td>
                       <td className="px-4 py-3">{client.cnpj || "Sem CNPJ"}</td>
                       <td className="px-4 py-3">{client.max_employees ?? "Não definido"}</td>

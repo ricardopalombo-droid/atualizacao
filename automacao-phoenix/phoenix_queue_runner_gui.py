@@ -33,7 +33,7 @@ class PhoenixQueueRunnerApp:
     def __init__(self):
         self.root = tk.Tk()
         self.root.title("Phoenix Runner")
-        self.root.geometry("980x640")
+        self.root.geometry("1180x640")
 
         self.base_url_var = tk.StringVar(value="https://www.palsys.com.br")
         self.email_var = tk.StringVar()
@@ -83,13 +83,17 @@ class PhoenixQueueRunnerApp:
         queue_frame = ttk.LabelFrame(container, text="Fila Enviado ao Phoenix", padding=12)
         queue_frame.pack(fill="both", expand=True, pady=(16, 0))
 
-        columns = ("employeeName", "employeeEmail", "workflowStatus", "updatedAt")
+        columns = ("clientName", "clientContmaticNickname", "employeeName", "employeeEmail", "workflowStatus", "updatedAt")
         self.tree = ttk.Treeview(queue_frame, columns=columns, show="headings", height=16)
+        self.tree.heading("clientName", text="Empresa")
+        self.tree.heading("clientContmaticNickname", text="Apelido Contmatic")
         self.tree.heading("employeeName", text="Funcionário")
         self.tree.heading("employeeEmail", text="E-mail")
         self.tree.heading("workflowStatus", text="Status")
         self.tree.heading("updatedAt", text="Atualizado")
-        self.tree.column("employeeName", width=260)
+        self.tree.column("clientName", width=180)
+        self.tree.column("clientContmaticNickname", width=170)
+        self.tree.column("employeeName", width=220)
         self.tree.column("employeeEmail", width=220)
         self.tree.column("workflowStatus", width=140)
         self.tree.column("updatedAt", width=180)
@@ -101,7 +105,7 @@ class PhoenixQueueRunnerApp:
         ttk.Button(actions, text="Executar selecionado", command=self.execute_selected).pack(side="left")
         ttk.Button(actions, text="Atualizar fila", command=self.load_queue).pack(side="left", padx=(8, 0))
 
-        ttk.Label(container, textvariable=self.status_var, wraplength=920, foreground="#334155").pack(fill="x", pady=(14, 0))
+        ttk.Label(container, textvariable=self.status_var, wraplength=1120, foreground="#334155").pack(fill="x", pady=(14, 0))
 
     def load_settings(self):
         if not SETTINGS_PATH.exists():
@@ -166,6 +170,8 @@ class PhoenixQueueRunnerApp:
                 "end",
                 iid=record["id"],
                 values=(
+                    record.get("clientName") or "Sem empresa",
+                    record.get("clientContmaticNickname") or "Sem apelido",
                     record.get("employeeName") or "Sem nome",
                     record.get("employeeEmail") or "Sem e-mail",
                     record.get("workflowStatus") or "",
@@ -177,9 +183,16 @@ class PhoenixQueueRunnerApp:
         first = self.records[0] if self.records else None
         if not first:
             return
+
+        summary = (
+            f"Empresa: {first.get('clientName') or 'Sem empresa'}\n"
+            f"Apelido Contmatic: {first.get('clientContmaticNickname') or 'Sem apelido'}\n"
+            f"Funcionário: {first.get('employeeName') or 'Sem nome'}"
+        )
+
         wants_run = messagebox.askyesno(
             "Phoenix Runner",
-            f"Há {len(self.records)} cadastro(s) enviado(s) ao Phoenix.\n\nDeseja rodar agora o primeiro da fila?\n\n{first.get('employeeName') or 'Sem nome'}",
+            f"Há {len(self.records)} cadastro(s) enviado(s) ao Phoenix.\n\nDeseja rodar agora o primeiro da fila?\n\n{summary}",
         )
         if wants_run:
             self.tree.selection_set(first["id"])
@@ -197,9 +210,14 @@ class PhoenixQueueRunnerApp:
             messagebox.showerror("Phoenix Runner", "Cadastro selecionado não encontrado na fila.")
             return
 
+        summary = (
+            f"Empresa: {record.get('clientName') or 'Sem empresa'}\n"
+            f"Apelido Contmatic: {record.get('clientContmaticNickname') or 'Sem apelido'}"
+        )
+
         confirmed = messagebox.askyesno(
             "Phoenix Runner",
-            f"Deseja rodar agora o cadastro de {record.get('employeeName') or 'Sem nome'} no Phoenix?",
+            f"Deseja rodar agora o cadastro de {record.get('employeeName') or 'Sem nome'} no Phoenix?\n\n{summary}",
         )
         if not confirmed:
             return

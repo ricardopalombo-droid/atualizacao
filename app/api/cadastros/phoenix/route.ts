@@ -34,7 +34,7 @@ async function listClientScopesForSubscriber(subscriberId: string) {
   const supabase = getSupabaseServerClient()
 
   const [{ data: clients, error: clientsError }, { data: users, error: usersError }] = await Promise.all([
-    supabase.from("clients").select("id, name").eq("subscriber_id", subscriberId),
+    supabase.from("clients").select("id, name, contmatic_nickname").eq("subscriber_id", subscriberId),
     supabase
       .from("app_users")
       .select("client_id")
@@ -51,19 +51,20 @@ async function listClientScopesForSubscriber(subscriberId: string) {
     throw usersError
   }
 
-  const map = new Map<string, { id: string; name: string | null }>()
+  const map = new Map<string, { id: string; name: string | null; contmaticNickname: string | null }>()
 
   for (const client of clients ?? []) {
     map.set(client.id, {
       id: client.id,
       name: typeof client.name === "string" ? client.name : null,
+      contmaticNickname: typeof client.contmatic_nickname === "string" ? client.contmatic_nickname : null,
     })
   }
 
   for (const user of users ?? []) {
     const clientId = typeof user.client_id === "string" ? user.client_id : null
     if (clientId && !map.has(clientId)) {
-      map.set(clientId, { id: clientId, name: null })
+      map.set(clientId, { id: clientId, name: null, contmaticNickname: null })
     }
   }
 
@@ -89,7 +90,7 @@ async function listEmployeeIdsForSubscriber(subscriberId: string) {
     throw error
   }
 
-  const clientNameById = new Map(clientScopes.map((item) => [item.id, item.name]))
+  const clientMetaById = new Map(clientScopes.map((item) => [item.id, item]))
 
   return (data ?? []).map((item) => {
     const payload = (item.full_payload ?? {}) as Record<string, unknown>
@@ -105,9 +106,34 @@ async function listEmployeeIdsForSubscriber(subscriberId: string) {
       phoenix_status: typeof payload.phoenix_status === "string" ? payload.phoenix_status : null,
       phoenix_status_updated_at:
         typeof payload.phoenix_status_updated_at === "string" ? payload.phoenix_status_updated_at : null,
-      client_name: item.client_id ? clientNameById.get(item.client_id as string) ?? null : null,
+      client_name: item.client_id ? clientMetaById.get(item.client_id as string)?.name ?? null : null,
+      client_contmatic_nickname: item.client_id
+        ? clientMetaById.get(item.client_id as string)?.contmaticNickname ?? null
+        : null,
     }
   })
+}
+
+async function getClientInfoById(clientId: string | null) {
+  if (!clientId) {
+    return { name: null, contmaticNickname: null }
+  }
+
+  const supabase = getSupabaseServerClient()
+  const { data, error } = await supabase
+    .from("clients")
+    .select("name, contmatic_nickname")
+    .eq("id", clientId)
+    .maybeSingle()
+
+  if (error) {
+    throw error
+  }
+
+  return {
+    name: typeof data?.name === "string" ? data.name : null,
+    contmaticNickname: typeof data?.contmatic_nickname === "string" ? data.contmatic_nickname : null,
+  }
 }
 
 async function getSubscriberRunnerEmail(subscriberId: string) {
@@ -163,6 +189,7 @@ async function listPendingPhoenixQueue(session: Session) {
     return records.map((item) => ({
       ...item,
       client_name: null,
+      client_contmatic_nickname: null,
     }))
   }
 
@@ -207,6 +234,7 @@ export async function GET(request: Request) {
           employeeName: item.employee_name,
           employeeEmail: item.employee_email ?? item.invite_email,
           clientName: item.client_name,
+          clientContmaticNickname: item.client_contmatic_nickname,
           workflowStatus: item.workflow_status,
           phoenixStatus: item.phoenix_status ?? "pronto_para_phoenix",
           updatedAt: item.updated_at,
@@ -237,9 +265,15 @@ export async function GET(request: Request) {
       )
     }
 
+    const clientInfo = await getClientInfoById(record.client_id)
+
     return Response.json({
       ok: true,
-      payload: buildPhoenixStructuredPayload(record),
+      payload: {
+        ...buildPhoenixStructuredPayload(record),
+        clientName: clientInfo.name,
+        clientContmaticNickname: clientInfo.contmaticNickname,
+      },
     })
   } catch (error) {
     console.error(error)

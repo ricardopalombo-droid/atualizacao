@@ -27,6 +27,7 @@ PRIMEIRO_ITEM_LISTA_Y = None
 
 TEMPO_INICIAL = 5
 NOME_JANELA_CONTMATIC = "Contmatic Folha Phoenix"
+APELIDO_CONTMATIC_ATUAL = ""
 
 pyautogui.PAUSE = 0.25
 pyautogui.FAILSAFE = True
@@ -83,6 +84,58 @@ def esperar_janela_conter(trecho_titulo: str, timeout: float = 8.0, intervalo: f
         time.sleep(intervalo)
 
     return False
+
+
+def obter_titulo_janela_ativa() -> str:
+    try:
+        janela = gw.getActiveWindow()
+        if janela and janela.title:
+            return str(janela.title).strip()
+    except Exception:
+        pass
+    return ""
+
+
+def esperar_janela_sumir_por_titulo(titulo: str, timeout: float = 8.0, intervalo: float = 0.2) -> bool:
+    titulo_normalizado = (titulo or "").strip().lower()
+    if not titulo_normalizado:
+        return False
+
+    limite = time.time() + timeout
+    while time.time() < limite:
+        try:
+            titulos = [str(item or "").strip().lower() for item in gw.getAllTitles()]
+            if titulo_normalizado not in titulos:
+                return True
+        except Exception:
+            pass
+        time.sleep(intervalo)
+
+    return False
+
+
+def selecionar_empresa_por_apelido_contmatic():
+    apelido = limpar_texto(APELIDO_CONTMATIC_ATUAL)
+    if not apelido:
+        return
+
+    verificar_controle()
+    pyautogui.hotkey("ctrl", "a")
+    dormir_controlado(0.3)
+    pyautogui.press("enter")
+    dormir_controlado(0.8)
+
+    titulo_selecao = obter_titulo_janela_ativa()
+
+    digitar_lento(apelido, intervalo=0.05)
+    dormir_controlado(0.2)
+    pyautogui.hotkey("alt", "a")
+
+    if titulo_selecao and titulo_selecao.lower() != NOME_JANELA_CONTMATIC.lower():
+        if not esperar_janela_sumir_por_titulo(titulo_selecao, timeout=8.0, intervalo=0.2):
+            dormir_controlado(1.0)
+    else:
+        dormir_controlado(1.2)
 
 
 def clicar_campo_matricula_esocial() -> bool:
@@ -1245,6 +1298,8 @@ def ativar_janela_contmatic():
 def abrir_rotina_uma_vez():
     log(f"Iniciando em {TEMPO_INICIAL} segundos...")
     dormir_controlado(TEMPO_INICIAL)
+
+    selecionar_empresa_por_apelido_contmatic()
 
     verificar_controle()
     pyautogui.hotkey("alt", "q")

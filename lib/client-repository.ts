@@ -6,6 +6,7 @@ export const clientPayloadSchema = z.object({
   name: z.string().trim().min(2, "Informe o nome do cliente."),
   email: z.string().trim().email("Informe um e-mail válido.").optional().or(z.literal("")),
   cnpj: z.string().trim().optional().or(z.literal("")),
+  contmaticNickname: z.string().trim().optional().or(z.literal("")),
   maxEmployees: z.coerce.number().int().positive().max(100000).optional(),
   contactName: z.string().trim().min(2, "Informe o nome do responsável."),
   accessEmail: z.string().trim().email("Informe um e-mail de acesso válido."),
@@ -19,6 +20,7 @@ export type ClientRecordListItem = {
   name: string
   email: string | null
   cnpj: string | null
+  contmatic_nickname: string | null
   max_employees: number | null
   access_email: string | null
   contact_name: string | null
@@ -83,9 +85,10 @@ export async function createClientRecord(subscriberId: string, payload: ClientPa
       name: payload.name,
       email: payload.email || null,
       cnpj: payload.cnpj || null,
+      contmatic_nickname: payload.contmaticNickname || null,
       max_employees: payload.maxEmployees ?? null,
     })
-    .select("id, name, email, cnpj, max_employees, created_at, updated_at")
+    .select("id, name, email, cnpj, contmatic_nickname, max_employees, created_at, updated_at")
     .single()
 
   if (error) {
@@ -146,6 +149,7 @@ export async function updateClientRecord(
       name: payload.name,
       email: payload.email || null,
       cnpj: payload.cnpj || null,
+      contmatic_nickname: payload.contmaticNickname || null,
       max_employees: payload.maxEmployees ?? null,
     })
     .eq("id", id)
@@ -215,7 +219,7 @@ export async function updateClientRecord(
 
   const { data, error } = await supabase
     .from("clients")
-    .select("id, name, email, cnpj, max_employees, created_at, updated_at")
+    .select("id, name, email, cnpj, contmatic_nickname, max_employees, created_at, updated_at")
     .eq("id", id)
     .single()
 
@@ -235,7 +239,7 @@ export async function listClientRecords(subscriberId: string, limit = 100): Prom
 
   const { data, error } = await supabase
     .from("clients")
-    .select("id, name, email, cnpj, max_employees, created_at, updated_at")
+    .select("id, name, email, cnpj, contmatic_nickname, max_employees, created_at, updated_at")
     .eq("subscriber_id", subscriberId)
     .order("updated_at", { ascending: false })
     .limit(limit)

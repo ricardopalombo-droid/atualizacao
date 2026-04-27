@@ -79,6 +79,7 @@ def build_legacy_columns(payload: dict, overrides_file: str | None = None):
     form_data = payload.get("formData", {})
     legacy_columns.update(
         {
+            "EXTRA_CLIENT_CONTMATIC_NICKNAME": "" if payload.get("clientContmaticNickname") is None else str(payload.get("clientContmaticNickname")),
             "EXTRA_HORAS_SEMANAIS": "" if form_data.get("horas_semanais") is None else str(form_data.get("horas_semanais")),
             "EXTRA_HORAS_MENSAIS": "" if form_data.get("horas_mensais") is None else str(form_data.get("horas_mensais")),
             "EXTRA_EXPERIENCIA_QTDE_DIAS": "" if form_data.get("experiencia_qtde_dias") is None else str(form_data.get("experiencia_qtde_dias")),
@@ -193,6 +194,7 @@ def run_employee(
     legacy.PARAR_PROCESSO = False
     legacy.PAUSADO = False
     legacy.EM_EXECUCAO = True
+    legacy.APELIDO_CONTMATIC_ATUAL = legacy_columns.get("EXTRA_CLIENT_CONTMATIC_NICKNAME", "")
 
     try:
         legacy.ativar_janela_contmatic()
