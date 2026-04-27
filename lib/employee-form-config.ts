@@ -169,6 +169,23 @@ const tipoContaOptions = [
   { label: "3 - Salario", value: "3 - Salario" },
 ]
 
+const formaPagamentoOptions = [
+  { label: "Selecione", value: "" },
+  { label: "1 - Mensalista", value: "1 - Mensalista" },
+  { label: "2 - Horista", value: "2 - Horista" },
+  { label: "3 - Comissionado", value: "3 - Comissionado" },
+  { label: "4 - Tarefeiro", value: "4 - Tarefeiro" },
+  { label: "5 - Docente Mensalista", value: "5 - Docente Mensalista" },
+  { label: "6 - Docente Aulista", value: "6 - Docente Aulista" },
+]
+
+const tipoPagamentoOptions = [
+  { label: "Selecione", value: "" },
+  { label: "1 - Fixo", value: "1 - Fixo" },
+  { label: "2 - Variavel", value: "2 - Variavel" },
+  { label: "3 - Fixo + variavel", value: "3 - Fixo + variavel" },
+]
+
 const tipoContratoOptions = [
   { label: "Selecione", value: "" },
   { label: "1 - CLT Indeterminado", value: "1 - CLT Indeterminado" },
@@ -397,6 +414,8 @@ export const formSections: FormSection[] = [
       { key: "categoria_normativa", label: "Categoria normativa vinculada", type: "text", audience: "client" },
       { key: "tipo_contrato", label: "Tipo de contrato", type: "select", audience: "client", options: tipoContratoOptions, requiredForExport: true },
       { key: "caged", label: "Situacao Caged entrada", type: "select", audience: "client", options: cagedOptions, requiredForExport: true },
+      { key: "forma_pagamento", label: "Forma de pagamento", type: "select", audience: "client", options: formaPagamentoOptions },
+      { key: "tipo_pagamento", label: "Tipo de pagamento", type: "select", audience: "client", options: tipoPagamentoOptions },
       { key: "salario", label: "Salario", type: "number", audience: "client", requiredForExport: true },
       { key: "cargo", label: "Cargo", type: "select", audience: "client", requiredForExport: true },
       { key: "regime_jornada", label: "Regime de jornada", type: "select", audience: "client", options: regimeJornadaOptions, requiredForExport: true },

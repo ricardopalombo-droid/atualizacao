@@ -82,6 +82,8 @@ def print_preview(payload: dict, legacy_columns: dict):
         ("AB", "Salario", legacy_columns.get("AB", "")),
         ("EXTRA_HORAS_SEMANAIS", "Horas semanais", legacy_columns.get("EXTRA_HORAS_SEMANAIS", "")),
         ("EXTRA_HORAS_MENSAIS", "Horas mensais", legacy_columns.get("EXTRA_HORAS_MENSAIS", "")),
+        ("EXTRA_FORMA_PAGAMENTO", "Forma pagamento", legacy_columns.get("EXTRA_FORMA_PAGAMENTO", "")),
+        ("EXTRA_TIPO_PAGAMENTO", "Tipo pagamento", legacy_columns.get("EXTRA_TIPO_PAGAMENTO", "")),
         ("AC", "Funcao/Cargo", legacy_columns.get("AC", "")),
         ("AD", "CBO", legacy_columns.get("AD", "")),
         ("AF", "Horario", legacy_columns.get("AF", "")),
@@ -125,6 +127,21 @@ def main():
         {
             "EXTRA_HORAS_SEMANAIS": "" if form_data.get("horas_semanais") is None else str(form_data.get("horas_semanais")),
             "EXTRA_HORAS_MENSAIS": "" if form_data.get("horas_mensais") is None else str(form_data.get("horas_mensais")),
+            "EXTRA_REGISTRO_FUNCIONARIO": "" if form_data.get("registro_funcionario") is None else str(form_data.get("registro_funcionario")),
+            "EXTRA_FOLHA_FICHA": "" if form_data.get("folha_ficha") is None else str(form_data.get("folha_ficha")),
+            "EXTRA_CHAPA": "" if form_data.get("chapa") is None else str(form_data.get("chapa")),
+            "EXTRA_FORMA_PAGAMENTO": "" if form_data.get("forma_pagamento") is None else str(form_data.get("forma_pagamento")),
+            "EXTRA_TIPO_PAGAMENTO": "" if form_data.get("tipo_pagamento") is None else str(form_data.get("tipo_pagamento")),
+            "EXTRA_CARGO_DESCRICAO": "" if form_data.get("cargo_descricao") is None else str(form_data.get("cargo_descricao")),
+            "EXTRA_HORARIO_DESCRICAO": "" if form_data.get("horario_descricao") is None else str(form_data.get("horario_descricao")),
+            "EXTRA_DEFICIENCIA_FISICA": "" if form_data.get("deficiencia_fisica") is None else str(form_data.get("deficiencia_fisica")),
+            "EXTRA_DEFICIENCIA_VISUAL": "" if form_data.get("deficiencia_visual") is None else str(form_data.get("deficiencia_visual")),
+            "EXTRA_DEFICIENCIA_AUDITIVA": "" if form_data.get("deficiencia_auditiva") is None else str(form_data.get("deficiencia_auditiva")),
+            "EXTRA_DEFICIENCIA_MENTAL": "" if form_data.get("deficiencia_mental") is None else str(form_data.get("deficiencia_mental")),
+            "EXTRA_DEFICIENCIA_INTELECTUAL": "" if form_data.get("deficiencia_intelectual") is None else str(form_data.get("deficiencia_intelectual")),
+            "EXTRA_REABILITADO": "" if form_data.get("reabilitado") is None else str(form_data.get("reabilitado")),
+            "EXTRA_PREENCHE_COTA_PCD": "" if form_data.get("preenche_cota_pcd") is None else str(form_data.get("preenche_cota_pcd")),
+            "EXTRA_OBSERVACAO_DEFICIENCIA": "" if form_data.get("observacao_deficiencia") is None else str(form_data.get("observacao_deficiencia")),
         }
     )
     legacy_columns.update(load_overrides(args.overrides_file))
