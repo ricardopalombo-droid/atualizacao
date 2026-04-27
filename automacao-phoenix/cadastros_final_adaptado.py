@@ -457,11 +457,8 @@ def processar_bloco_deficiencia(
     observacao: str,
     mental: bool,
     intelectual: bool,
-    reabilitado: bool,
     preenche_cota: bool,
 ):
-    pressionar_tab(1, pausa=0.2)
-
     for marcado in (fisica, visual, auditiva):
         if marcado:
             pyautogui.press("space")
@@ -474,12 +471,15 @@ def processar_bloco_deficiencia(
     pyautogui.press("tab")
     dormir_controlado(0.2)
 
-    for marcado in (mental, intelectual, reabilitado):
+    for marcado in (mental, intelectual):
         if marcado:
             pyautogui.press("space")
             dormir_controlado(0.15)
         pyautogui.press("tab")
         dormir_controlado(0.2)
+
+    pyautogui.press("tab")
+    dormir_controlado(0.2)
 
     if preenche_cota:
         pyautogui.press("space")
@@ -1246,7 +1246,6 @@ def preencher_sistema(dados: dict, empresa_habilitada: str, empresa_rateio: str)
     flag_deficiencia_auditiva = extra_bool(dados.get("EXTRA_DEFICIENCIA_AUDITIVA", ""))
     flag_deficiencia_mental = extra_bool(dados.get("EXTRA_DEFICIENCIA_MENTAL", ""))
     flag_deficiencia_intelectual = extra_bool(dados.get("EXTRA_DEFICIENCIA_INTELECTUAL", ""))
-    flag_reabilitado = extra_bool(dados.get("EXTRA_REABILITADO", ""))
     flag_preenche_cota_pcd = extra_bool(dados.get("EXTRA_PREENCHE_COTA_PCD", ""))
     col_ac = limpar_texto(dados["AC"])
     col_af_numerico = numeros_antes_do_traco(dados["AF"])
@@ -1395,7 +1394,6 @@ def preencher_sistema(dados: dict, empresa_habilitada: str, empresa_rateio: str)
             observacao=col_extra_observacao_deficiencia,
             mental=flag_deficiencia_mental,
             intelectual=flag_deficiencia_intelectual,
-            reabilitado=flag_reabilitado,
             preenche_cota=flag_preenche_cota_pcd,
         )
     else:
@@ -1410,7 +1408,6 @@ def preencher_sistema(dados: dict, empresa_habilitada: str, empresa_rateio: str)
             observacao=col_extra_observacao_deficiencia,
             mental=flag_deficiencia_mental,
             intelectual=flag_deficiencia_intelectual,
-            reabilitado=flag_reabilitado,
             preenche_cota=flag_preenche_cota_pcd,
         )
 

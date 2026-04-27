@@ -201,12 +201,6 @@ const tipoContratoOptions = [
   { label: "11 - Verde e Amarelo", value: "11 - Verde e Amarelo" },
 ]
 
-const possuiDeficienciaOptions = [
-  { label: "Selecione", value: "" },
-  { label: "Nao", value: "nao" },
-  { label: "Sim", value: "sim" },
-]
-
 const cagedOptions = [
   { label: "Selecione", value: "" },
   { label: "10 - Admissao de empregado no 1o emprego", value: "10 - Admissao de empregado no 1o emprego" },
@@ -319,23 +313,14 @@ export const formSections: FormSection[] = [
   {
     id: "deficiencia-acessibilidade-funcionario",
     title: "Deficiencia e acessibilidade",
-    description: "Dados estruturados para PCD, reabilitacao e observacoes do cadastro.",
+    description: "Marque as deficiencias aplicaveis e registre observacoes relevantes do cadastro.",
     audience: "employee",
     fields: [
-      {
-        key: "possui_deficiencia",
-        label: "Possui deficiencia?",
-        type: "select",
-        audience: "employee",
-        options: possuiDeficienciaOptions,
-      },
       { key: "deficiencia_fisica", label: "Deficiencia fisica", type: "checkbox", audience: "employee" },
-      { key: "deficiencia_auditiva", label: "Deficiencia auditiva", type: "checkbox", audience: "employee" },
       { key: "deficiencia_visual", label: "Deficiencia visual", type: "checkbox", audience: "employee" },
+      { key: "deficiencia_auditiva", label: "Deficiencia auditiva", type: "checkbox", audience: "employee" },
+      { key: "deficiencia_mental", label: "Deficiencia mental", type: "checkbox", audience: "employee" },
       { key: "deficiencia_intelectual", label: "Deficiencia intelectual", type: "checkbox", audience: "employee" },
-      { key: "deficiencia_mental", label: "Deficiencia mental/psicossocial", type: "checkbox", audience: "employee" },
-      { key: "deficiencia_multipla", label: "Deficiencia multipla", type: "checkbox", audience: "employee" },
-      { key: "reabilitado", label: "Profissional reabilitado", type: "checkbox", audience: "employee" },
       { key: "preenche_cota_pcd", label: "Preenche cota de pessoas com deficiencia", type: "checkbox", audience: "employee" },
       { key: "observacao_deficiencia", label: "Observacoes sobre deficiencia e adaptacoes", type: "textarea", audience: "employee" },
     ],

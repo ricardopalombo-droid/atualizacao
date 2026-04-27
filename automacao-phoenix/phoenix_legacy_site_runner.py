@@ -139,7 +139,6 @@ def main():
             "EXTRA_DEFICIENCIA_AUDITIVA": "" if form_data.get("deficiencia_auditiva") is None else str(form_data.get("deficiencia_auditiva")),
             "EXTRA_DEFICIENCIA_MENTAL": "" if form_data.get("deficiencia_mental") is None else str(form_data.get("deficiencia_mental")),
             "EXTRA_DEFICIENCIA_INTELECTUAL": "" if form_data.get("deficiencia_intelectual") is None else str(form_data.get("deficiencia_intelectual")),
-            "EXTRA_REABILITADO": "" if form_data.get("reabilitado") is None else str(form_data.get("reabilitado")),
             "EXTRA_PREENCHE_COTA_PCD": "" if form_data.get("preenche_cota_pcd") is None else str(form_data.get("preenche_cota_pcd")),
             "EXTRA_OBSERVACAO_DEFICIENCIA": "" if form_data.get("observacao_deficiencia") is None else str(form_data.get("observacao_deficiencia")),
         }
