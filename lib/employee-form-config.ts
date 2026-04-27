@@ -421,6 +421,7 @@ export const formSections: FormSection[] = [
     description: "Campos preenchidos pelo cliente apos o retorno do funcionario.",
     audience: "client",
     fields: [
+      { key: "matricula_esocial", label: "Matricula eSocial", type: "text", audience: "client" },
       { key: "data_admissao", label: "Data admissao", type: "date", audience: "client", requiredForExport: true },
       { key: "indicativo_admissao", label: "Indicativo admissao", type: "select", audience: "client", options: indicativoAdmissaoOptions, requiredForExport: true },
       { key: "sindicato", label: "Sindicato representante", type: "select", audience: "client", requiredForExport: true },

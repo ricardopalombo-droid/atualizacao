@@ -20,6 +20,7 @@ NOME_ABA = None
 
 CAMPO_ESOCIAL_X = 1094
 CAMPO_ESOCIAL_Y = 515
+IMAGEM_LABEL_MATRICULA_ESOCIAL = os.path.join(os.path.dirname(__file__), "matricula_esocial_label.png")
 
 PRIMEIRO_ITEM_LISTA_X = None
 PRIMEIRO_ITEM_LISTA_Y = None
@@ -82,6 +83,24 @@ def esperar_janela_conter(trecho_titulo: str, timeout: float = 8.0, intervalo: f
         time.sleep(intervalo)
 
     return False
+
+
+def clicar_campo_matricula_esocial() -> bool:
+    try:
+        if os.path.exists(IMAGEM_LABEL_MATRICULA_ESOCIAL):
+            local = pyautogui.locateOnScreen(IMAGEM_LABEL_MATRICULA_ESOCIAL, grayscale=True)
+            if local:
+                x = int(local.left + local.width + 90)
+                y = int(local.top + (local.height / 2))
+                pyautogui.click(x, y)
+                dormir_controlado(0.25)
+                return True
+    except Exception:
+        pass
+
+    pyautogui.click(CAMPO_ESOCIAL_X, CAMPO_ESOCIAL_Y)
+    dormir_controlado(0.25)
+    return True
 
 
 def _append_log(mensagem: str):
@@ -1414,13 +1433,16 @@ def preencher_sistema(dados: dict, empresa_habilitada: str, empresa_rateio: str)
         dormir_controlado(0.2)
     preencher_ou_tab(col_extra_chapa)
 
-    pyautogui.click(CAMPO_ESOCIAL_X, CAMPO_ESOCIAL_Y)
-    dormir_controlado(0.3)
-    pyautogui.hotkey("ctrl", "a")
-    pyautogui.press("backspace")
-    escrever(col_dh)
-    pyautogui.press("tab")
-    dormir_controlado(0.2)
+    if valor_vazio(col_dh):
+        pyautogui.press("tab")
+        dormir_controlado(0.2)
+    else:
+        clicar_campo_matricula_esocial()
+        pyautogui.hotkey("ctrl", "a")
+        pyautogui.press("backspace")
+        escrever(col_dh)
+        pyautogui.press("tab")
+        dormir_controlado(0.2)
 
     escrever(col_h)
     dormir_controlado(0.3)
@@ -1606,25 +1628,6 @@ def preencher_sistema(dados: dict, empresa_habilitada: str, empresa_rateio: str)
         dormir_controlado(0.2)
         pyautogui.press("enter")
         dormir_controlado(0.25)
-
-
-def selecionar_sigla_uf(valor):
-    texto = limpar_texto(valor).strip().upper()
-    if not texto:
-        pyautogui.press("tab")
-        dormir_controlado(0.25)
-        return
-
-    sigla = texto[:2]
-    verificar_controle()
-    pyautogui.hotkey("ctrl", "a")
-    dormir_controlado(0.1)
-    pyautogui.press("backspace")
-    dormir_controlado(0.1)
-    digitar_lento(sigla, intervalo=0.05)
-    dormir_controlado(0.2)
-    pyautogui.press("enter")
-    dormir_controlado(0.25)
         pressionar_tab(7, pausa=0.15)
 
     selecionar_combo_por_codigo_sem_tab(col_dp)
@@ -1811,7 +1814,6 @@ def selecionar_sigla_uf(valor):
         pyautogui.press("tab")
         dormir_controlado(0.25)
 
-
     if valor_vazio(col_ap):
 
         pyautogui.hotkey("alt", "g")
@@ -1840,6 +1842,25 @@ def selecionar_sigla_uf(valor):
         dormir_controlado(0.3)
 
     log(f"Processo da linha {linha_excel} finalizado.")
+
+
+def selecionar_sigla_uf(valor):
+    texto = limpar_texto(valor).strip().upper()
+    if not texto:
+        pyautogui.press("tab")
+        dormir_controlado(0.25)
+        return
+
+    sigla = texto[:2]
+    verificar_controle()
+    pyautogui.hotkey("ctrl", "a")
+    dormir_controlado(0.1)
+    pyautogui.press("backspace")
+    dormir_controlado(0.1)
+    digitar_lento(sigla, intervalo=0.05)
+    dormir_controlado(0.2)
+    pyautogui.press("enter")
+    dormir_controlado(0.25)
 
 
 # =========================
