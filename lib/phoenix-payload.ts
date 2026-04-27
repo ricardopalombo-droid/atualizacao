@@ -40,12 +40,23 @@ function normalizeRacaCorForLegacy(value: unknown) {
   const text = asText(value).trim()
   if (!text) return ""
 
+  const normalized = text.toUpperCase()
+
+  if (normalized.includes("BRANCA")) return "2 - Branca"
+  if (normalized.includes("PRETA") || normalized.includes("NEGRA")) return "4 - Preta / Negra"
+  if (normalized.includes("AMARELA")) return "6 - Amarela"
+  if (normalized.includes("PARDA")) return "8 - Parda"
+  if (normalized.includes("INDIGENA")) return "0 - Indigena"
+
+  if (text.startsWith("2")) return "2 - Branca"
+  if (text.startsWith("4")) return "4 - Preta / Negra"
+  if (text.startsWith("6")) return "6 - Amarela"
+  if (text.startsWith("8")) return "8 - Parda"
+  if (text.startsWith("0")) return "0 - Indigena"
+
   if (text.startsWith("1")) return "2 - Branca"
-  if (text.startsWith("2")) return "4 - Preta / Negra"
   if (text.startsWith("3")) return "8 - Parda"
-  if (text.startsWith("4")) return "6 - Amarela"
   if (text.startsWith("5")) return "0 - Indigena"
-  if (text.startsWith("6")) return ""
 
   return text
 }

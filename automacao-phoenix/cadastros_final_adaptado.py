@@ -471,15 +471,12 @@ def processar_bloco_deficiencia(
     pyautogui.press("tab")
     dormir_controlado(0.2)
 
-    for marcado in (mental, intelectual):
+    for marcado in (mental, False, intelectual):
         if marcado:
             pyautogui.press("space")
             dormir_controlado(0.15)
         pyautogui.press("tab")
         dormir_controlado(0.2)
-
-    pyautogui.press("tab")
-    dormir_controlado(0.2)
 
     if preenche_cota:
         pyautogui.press("space")
@@ -1459,7 +1456,18 @@ def preencher_sistema(dados: dict, empresa_habilitada: str, empresa_rateio: str)
     pyautogui.press("enter")
     dormir_controlado(0.4)
 
-    pressionar_tab(4, pausa=0.25)
+    limpar_e_digitar(col_u, intervalo=0.05)
+    dormir_controlado(0.3)
+    pyautogui.press("tab")
+    dormir_controlado(0.25)
+    pyautogui.press("tab")
+    dormir_controlado(0.25)
+    pyautogui.press("tab")
+    dormir_controlado(0.25)
+    limpar_e_digitar(col_u, intervalo=0.05)
+    dormir_controlado(0.3)
+    pyautogui.press("tab")
+    dormir_controlado(0.25)
 
     limpar_e_digitar(col_extra_horas_semanais or "44", intervalo=0.05)
     dormir_controlado(0.4)
