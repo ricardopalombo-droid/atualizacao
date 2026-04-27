@@ -375,6 +375,8 @@ export const formSections: FormSection[] = [
         { key: "cpf", label: "CPF", type: "text", audience: "employee", requiredForExport: true },
         { key: "pis", label: "PIS", type: "text", audience: "employee", requiredForExport: true },
         { key: "titulo_eleitor", label: "Titulo de eleitor", type: "text", audience: "employee" },
+        { key: "zona_eleitoral", label: "Zona", type: "text", audience: "employee" },
+        { key: "secao_eleitoral", label: "Secao", type: "text", audience: "employee" },
         { key: "ctps_digital", label: "CTPS digital", type: "checkbox", audience: "employee" },
         { key: "ctps_numero", label: "Numero CTPS", type: "text", audience: "employee", requiredForExport: true },
         { key: "ctps_serie", label: "Serie CTPS", type: "text", audience: "employee", requiredForExport: true },
