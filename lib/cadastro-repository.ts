@@ -103,6 +103,17 @@ function buildDependentsForPayload(dependents: DependentPayload[]) {
   }))
 }
 
+async function listClientIdsForSubscriber(subscriberId: string) {
+  const supabase = getSupabaseServerClient()
+  const { data, error } = await supabase.from("clients").select("id").eq("subscriber_id", subscriberId)
+
+  if (error) {
+    throw error
+  }
+
+  return (data ?? []).map((item) => item.id as string)
+}
+
 export async function upsertEmployeeRecord(payload: CadastroPayload) {
   const supabase = getSupabaseServerClient()
   const data = payload.data
@@ -157,7 +168,14 @@ export async function listEmployeeRecords(
   if (scope?.clientId) {
     query = query.eq("client_id", scope.clientId)
   } else if (scope?.subscriberId) {
-    query = query.eq("subscriber_id", scope.subscriberId)
+    const clientIds = await listClientIdsForSubscriber(scope.subscriberId)
+    const orParts = [`subscriber_id.eq.${scope.subscriberId}`]
+
+    if (clientIds.length > 0) {
+      orParts.push(`client_id.in.(${clientIds.join(",")})`)
+    }
+
+    query = query.or(orParts.join(","))
   }
 
   const { data, error } = await query
@@ -240,7 +258,14 @@ export async function getEmployeeRecordById(
   if (scope?.clientId) {
     query = query.eq("client_id", scope.clientId)
   } else if (scope?.subscriberId) {
-    query = query.eq("subscriber_id", scope.subscriberId)
+    const clientIds = await listClientIdsForSubscriber(scope.subscriberId)
+    const orParts = [`subscriber_id.eq.${scope.subscriberId}`]
+
+    if (clientIds.length > 0) {
+      orParts.push(`client_id.in.(${clientIds.join(",")})`)
+    }
+
+    query = query.or(orParts.join(","))
   }
 
   const { data, error } = await query.maybeSingle()
@@ -392,7 +417,14 @@ export async function deleteEmployeeRecord(
   if (scope?.clientId) {
     query = query.eq("client_id", scope.clientId)
   } else if (scope?.subscriberId) {
-    query = query.eq("subscriber_id", scope.subscriberId)
+    const clientIds = await listClientIdsForSubscriber(scope.subscriberId)
+    const orParts = [`subscriber_id.eq.${scope.subscriberId}`]
+
+    if (clientIds.length > 0) {
+      orParts.push(`client_id.in.(${clientIds.join(",")})`)
+    }
+
+    query = query.or(orParts.join(","))
   }
 
   const { error } = await query
