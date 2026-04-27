@@ -149,7 +149,7 @@ export function buildPhoenixLegacyColumns(record: EmployeeRecordDetail): Phoenix
     DM: asText(data.antecipar_indenizacao_fgts),
     DN: asText(data.grau_risco),
     DO: asText(data.vinculo_empregaticio),
-    DP: asText(data.indicativo_admissao),
+    DP: asText(data.codigo_admissao || data.indicativo_admissao),
     DQ: asText(data.caged),
     EXTRA_HORAS_SEMANAIS: asText(data.horas_semanais),
     EXTRA_HORAS_MENSAIS: asText(data.horas_mensais),

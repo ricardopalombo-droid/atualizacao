@@ -232,6 +232,15 @@ const indicativoAdmissaoOptions = [
   { label: "3 - Decorrente de decisao judicial", value: "3 - Decorrente de decisao judicial" },
 ]
 
+const codigoAdmissaoOptions = [
+  { label: "Selecione", value: "" },
+  { label: "1 - Diretor Nao Empregado", value: "1 - Diretor Nao Empregado" },
+  { label: "2 - Trabalhador Rural", value: "2 - Trabalhador Rural" },
+  { label: "3 - Jovem Aprendiz", value: "3 - Jovem Aprendiz" },
+  { label: "9 - Outros", value: "9 - Outros" },
+  { label: "10 - Dirigente Sindical", value: "10 - Dirigente Sindical" },
+]
+
 const tipoTributacaoSindicalOptions = [
   { label: "Selecione", value: "" },
   { label: "1 - Ja contribui este ano", value: "1 - Ja contribui este ano" },
@@ -405,6 +414,7 @@ export const formSections: FormSection[] = [
       { key: "cargo", label: "Cargo", type: "select", audience: "client", requiredForExport: true },
       { key: "regime_jornada", label: "Regime de jornada", type: "select", audience: "client", options: regimeJornadaOptions, requiredForExport: true },
       { key: "grau_risco", label: "Grau de risco", type: "select", audience: "client", options: grauRiscoOptions, requiredForExport: true },
+      { key: "codigo_admissao", label: "Codigo admissao", type: "select", audience: "client", options: codigoAdmissaoOptions, requiredForExport: true },
       { key: "horas_semanais", label: "Horas semanais", type: "text", audience: "client", placeholder: "44.00" },
       { key: "horas_mensais", label: "Horas mensais", type: "text", audience: "client", placeholder: "220.00" },
       { key: "experiencia_qtde_dias", label: "Qtde. dias experiencia", type: "number", audience: "client" },

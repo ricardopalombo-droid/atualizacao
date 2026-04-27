@@ -66,6 +66,24 @@ def log(mensagem: str):
         txt_log.after(0, lambda: _append_log(mensagem))
 
 
+def esperar_janela_conter(trecho_titulo: str, timeout: float = 8.0, intervalo: float = 0.2) -> bool:
+    trecho = (trecho_titulo or "").strip().lower()
+    if not trecho:
+        return False
+
+    limite = time.time() + timeout
+    while time.time() < limite:
+        try:
+            for titulo in gw.getAllTitles():
+                if trecho in (titulo or "").strip().lower():
+                    return True
+        except Exception:
+            pass
+        time.sleep(intervalo)
+
+    return False
+
+
 def _append_log(mensagem: str):
     txt_log.insert(tk.END, mensagem + "\n")
     txt_log.see(tk.END)
@@ -442,6 +460,25 @@ def selecionar_combo_por_codigo_ou_descricao(valor):
     dormir_controlado(0.25)
 
 
+def selecionar_combo_por_codigo_sem_tab(valor):
+    texto = limpar_texto(valor).strip()
+
+    if texto == "":
+        return
+
+    codigo = primeiros_numeros(texto)
+
+    verificar_controle()
+    pyautogui.hotkey("ctrl", "a")
+    dormir_controlado(0.1)
+    pyautogui.press("backspace")
+    dormir_controlado(0.1)
+    digitar_lento(codigo or texto, intervalo=0.05)
+    dormir_controlado(0.2)
+    pyautogui.press("enter")
+    dormir_controlado(0.35)
+
+
 def preencher_ou_tab(texto: str):
     if valor_vazio(texto):
         pyautogui.press("tab")
@@ -459,22 +496,18 @@ def processar_bloco_deficiencia(
     intelectual: bool,
     preenche_cota: bool,
 ):
-    for marcado in (fisica, visual, auditiva):
+    marcou_alguma_deficiencia = any((fisica, visual, auditiva, mental, intelectual))
+
+    for marcado in (fisica, visual, auditiva, mental, intelectual):
         if marcado:
             pyautogui.press("space")
             dormir_controlado(0.15)
         pyautogui.press("tab")
         dormir_controlado(0.2)
 
-    if not valor_vazio(observacao):
-        escrever(observacao)
-    pyautogui.press("tab")
-    dormir_controlado(0.2)
-
-    for marcado in (mental, False, intelectual):
-        if marcado:
-            pyautogui.press("space")
-            dormir_controlado(0.15)
+    if marcou_alguma_deficiencia:
+        pyautogui.press("tab")
+        dormir_controlado(0.2)
         pyautogui.press("tab")
         dormir_controlado(0.2)
 
@@ -482,8 +515,22 @@ def processar_bloco_deficiencia(
         pyautogui.press("space")
         dormir_controlado(0.15)
 
-    pyautogui.press("tab")
-    dormir_controlado(0.25)
+    if marcou_alguma_deficiencia and not valor_vazio(observacao):
+        pyautogui.hotkey("shift", "tab")
+        dormir_controlado(0.2)
+        pyautogui.hotkey("ctrl", "enter")
+        dormir_controlado(0.3)
+        escrever(observacao)
+        dormir_controlado(0.2)
+        pyautogui.press("enter")
+        dormir_controlado(0.4)
+        pyautogui.press("tab")
+        dormir_controlado(0.25)
+        pyautogui.press("tab")
+        dormir_controlado(0.25)
+    else:
+        pyautogui.press("tab")
+        dormir_controlado(0.25)
 
 
 def duplo_clique_primeiro_item(x=None, y=None):
@@ -1188,7 +1235,10 @@ def abrir_rotina_uma_vez():
     pyautogui.press("f")
     dormir_controlado(0.2)
     pyautogui.press("a")
-    dormir_controlado(1.8)
+    if esperar_janela_conter("Pesquisar Funcionários", timeout=8.0, intervalo=0.2):
+        dormir_controlado(0.2)
+    else:
+        dormir_controlado(1.8)
 
 
 # =========================
@@ -1230,12 +1280,18 @@ def preencher_sistema(dados: dict, empresa_habilitada: str, empresa_rateio: str)
     col_ab = formatar_valor_ab(dados["AB"])
     col_extra_horas_semanais = formatar_horas_para_legacy(dados.get("EXTRA_HORAS_SEMANAIS", ""))
     col_extra_horas_mensais = formatar_horas_para_legacy(dados.get("EXTRA_HORAS_MENSAIS", ""))
-    col_extra_registro_funcionario = limpar_texto(dados.get("EXTRA_REGISTRO_FUNCIONARIO", ""))
-    col_extra_folha_ficha = limpar_texto(dados.get("EXTRA_FOLHA_FICHA", ""))
+    col_extra_experiencia_qtde_dias = limpar_texto(dados.get("EXTRA_EXPERIENCIA_QTDE_DIAS", ""))
+    col_extra_experiencia_qtde_dias_prorrogacao = limpar_texto(dados.get("EXTRA_EXPERIENCIA_QTDE_DIAS_PRORROGACAO", ""))
+    col_extra_registro_funcionario = limpar_texto(dados.get("EXTRA_REGISTRO_FUNCIONARIO", "")) or limpar_texto(dados.get("DA", ""))
+    col_extra_folha_ficha = limpar_texto(dados.get("EXTRA_FOLHA_FICHA", "")) or limpar_texto(dados.get("DB", ""))
     col_extra_chapa = limpar_texto(dados.get("EXTRA_CHAPA", ""))
     col_extra_forma_pagamento = limpar_texto(dados.get("EXTRA_FORMA_PAGAMENTO", ""))
     col_extra_tipo_pagamento = limpar_texto(dados.get("EXTRA_TIPO_PAGAMENTO", ""))
+    col_extra_regime_jornada = limpar_texto(dados.get("EXTRA_REGIME_JORNADA", ""))
+    col_extra_tipo_tributacao_sindical = limpar_texto(dados.get("EXTRA_TIPO_TRIBUTACAO_SINDICAL", ""))
+    col_extra_cargo_codigo = limpar_texto(dados.get("EXTRA_CARGO_CODIGO", ""))
     col_extra_cargo_descricao = limpar_texto(dados.get("EXTRA_CARGO_DESCRICAO", ""))
+    col_extra_horario_codigo = limpar_texto(dados.get("EXTRA_HORARIO_CODIGO", ""))
     col_extra_horario_descricao = limpar_texto(dados.get("EXTRA_HORARIO_DESCRICAO", ""))
     col_extra_observacao_deficiencia = limpar_texto(dados.get("EXTRA_OBSERVACAO_DEFICIENCIA", ""))
     flag_deficiencia_fisica = extra_bool(dados.get("EXTRA_DEFICIENCIA_FISICA", ""))
@@ -1342,7 +1398,14 @@ def preencher_sistema(dados: dict, empresa_habilitada: str, empresa_rateio: str)
     escrever_e_tab(col_g)
 
     preencher_ou_tab(col_extra_registro_funcionario)
-    preencher_ou_tab(col_extra_folha_ficha)
+    if valor_vazio(col_extra_folha_ficha):
+        pyautogui.press("tab")
+        dormir_controlado(0.2)
+    else:
+        limpar_e_digitar(col_extra_folha_ficha, intervalo=0.05)
+        dormir_controlado(0.2)
+        pyautogui.press("tab")
+        dormir_controlado(0.2)
     preencher_ou_tab(col_extra_chapa)
 
     pyautogui.click(CAMPO_ESOCIAL_X, CAMPO_ESOCIAL_Y)
@@ -1382,8 +1445,6 @@ def preencher_sistema(dados: dict, empresa_habilitada: str, empresa_rateio: str)
     dormir_controlado(0.2)
 
     if col_k == "":
-        pyautogui.press("tab")
-        dormir_controlado(0.2)
         processar_bloco_deficiencia(
             fisica=flag_deficiencia_fisica,
             visual=flag_deficiencia_visual,
@@ -1438,9 +1499,9 @@ def preencher_sistema(dados: dict, empresa_habilitada: str, empresa_rateio: str)
 
     pyautogui.press("tab")
     dormir_controlado(0.2)
-    pyautogui.press("down")
-    dormir_controlado(0.2)
-    pressionar_enter(2)
+    selecionar_combo_por_codigo_sem_tab(col_extra_tipo_tributacao_sindical)
+    pyautogui.press("enter")
+    dormir_controlado(0.25)
 
     pyautogui.hotkey("alt", "f4")
     dormir_controlado(0.3)
@@ -1482,25 +1543,19 @@ def preencher_sistema(dados: dict, empresa_habilitada: str, empresa_rateio: str)
     else:
         pressionar_tab(2, pausa=0.25)
 
-    selecionar_combo_por_codigo_ou_descricao(col_extra_forma_pagamento)
-    selecionar_combo_por_codigo_ou_descricao(col_extra_tipo_pagamento)
+    selecionar_combo_por_codigo_sem_tab(col_extra_forma_pagamento)
+    selecionar_combo_por_codigo_sem_tab(col_extra_tipo_pagamento)
 
     digitar_lento(col_ab, intervalo=0.04)
     dormir_controlado(0.5)
     pyautogui.press("tab")
     dormir_controlado(0.4)
 
-    limpar_e_digitar(col_aa_numerico, intervalo=0.04)
-    dormir_controlado(0.6)
-
-    pyautogui.press("tab")
-    dormir_controlado(0.4)
-
+    selecionar_combo_por_codigo_sem_tab(col_aa_numerico or dados["AA"])
     if col_aa_numerico.startswith("4") or col_aa_numerico.startswith("8"):
         pyautogui.press("tab")
         dormir_controlado(0.4)
-
-    selecionar_combo_por_codigo_ou_descricao(col_dp)
+    selecionar_combo_por_codigo_sem_tab(col_extra_regime_jornada)
 
     pyautogui.hotkey("alt", "g")
     dormir_controlado(1.0)
@@ -1510,11 +1565,11 @@ def preencher_sistema(dados: dict, empresa_habilitada: str, empresa_rateio: str)
 
     pressionar_tab(6)
 
-    limpar_e_digitar("45")
+    limpar_e_digitar(col_extra_experiencia_qtde_dias or "45")
     dormir_controlado(0.2)
     pressionar_enter(2, pausa=0.25)
 
-    limpar_e_digitar("45")
+    limpar_e_digitar(col_extra_experiencia_qtde_dias_prorrogacao or "45")
     dormir_controlado(0.2)
     pressionar_enter(2, pausa=0.25)
 
@@ -1547,10 +1602,7 @@ def preencher_sistema(dados: dict, empresa_habilitada: str, empresa_rateio: str)
         dormir_controlado(0.25)
         pressionar_tab(7, pausa=0.15)
 
-    pyautogui.press("down")
-    dormir_controlado(0.25)
-    pyautogui.press("tab")
-    dormir_controlado(0.25)
+    selecionar_combo_por_codigo_sem_tab(col_dp)
 
     pyautogui.hotkey("ctrl", "enter")
     dormir_controlado(0.3)
@@ -1563,9 +1615,10 @@ def preencher_sistema(dados: dict, empresa_habilitada: str, empresa_rateio: str)
     pyautogui.hotkey("ctrl", "enter")
     dormir_controlado(0.3)
 
-    pressionar_tab(7, pausa=0.15)
+    dormir_controlado(0.5)
+    pressionar_tab(9, pausa=0.15)
 
-    escrever(col_extra_cargo_descricao or col_ac)
+    limpar_e_digitar(col_extra_cargo_codigo or primeiros_numeros(col_extra_cargo_descricao or col_ac), intervalo=0.05)
     dormir_controlado(0.25)
 
     pyautogui.hotkey("alt", "p")
@@ -1593,13 +1646,14 @@ def preencher_sistema(dados: dict, empresa_habilitada: str, empresa_rateio: str)
     pyautogui.hotkey("ctrl", "enter")
     dormir_controlado(0.3)
 
+    dormir_controlado(0.5)
     pressionar_tab(7, pausa=0.15)
 
     pyautogui.hotkey("ctrl", "a")
     dormir_controlado(0.1)
     pyautogui.press("backspace")
     dormir_controlado(0.1)
-    digitar_lento(col_extra_horario_descricao or col_af_numerico, intervalo=0.08)
+    digitar_lento(col_extra_horario_codigo or primeiros_numeros(col_extra_horario_descricao) or col_af_numerico, intervalo=0.08)
     dormir_controlado(0.25)
 
     pyautogui.hotkey("alt", "p")
@@ -1648,9 +1702,7 @@ def preencher_sistema(dados: dict, empresa_habilitada: str, empresa_rateio: str)
     pyautogui.hotkey("alt", "f4")
     dormir_controlado(0.4)
 
-    pressionar_tab(1)
     selecionar_caged(col_dq)
-    pressionar_tab(1)
 
     escrever(col_aq)
     dormir_controlado(0.2)
