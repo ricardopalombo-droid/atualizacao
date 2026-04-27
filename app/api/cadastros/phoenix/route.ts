@@ -7,6 +7,7 @@ import { z } from "zod"
 const phoenixStatusPayloadSchema = z.object({
   id: z.string().uuid(),
   action: z.enum(["start", "complete", "fail", "reset"]),
+  note: z.string().trim().max(2000).optional().or(z.literal("")),
 })
 
 function buildPhoenixRunnerCommand(params: {
@@ -324,10 +325,18 @@ export async function POST(request: Request) {
       reset: "pronto_para_phoenix",
     } as const
 
-    const result = await updateEmployeePhoenixStatus(payload.id, statusByAction[payload.action], {
-      subscriberId: session.subscriberId,
-      clientId: record.client_id,
-    })
+    const result = await updateEmployeePhoenixStatus(
+      payload.id,
+      statusByAction[payload.action],
+      {
+        note: payload.note || null,
+        actor: session.email ?? session.role,
+      },
+      {
+        subscriberId: session.subscriberId,
+        clientId: record.client_id,
+      }
+    )
 
     let runnerCommand: string | null = null
     let runnerData: Record<string, string> | null = null
@@ -356,6 +365,7 @@ export async function POST(request: Request) {
       ok: true,
       phoenixStatus: result.phoenixStatus,
       phoenixStatusUpdatedAt: result.phoenixStatusUpdatedAt,
+      phoenixStatusNote: result.phoenixStatusNote,
       runnerCommand,
       runnerData,
     })

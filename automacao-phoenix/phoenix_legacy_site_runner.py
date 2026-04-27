@@ -45,10 +45,10 @@ def fetch_payload(session: requests.Session, base_url: str, employee_id: str):
     return data["payload"]
 
 
-def update_phoenix_status(session: requests.Session, base_url: str, employee_id: str, action: str):
+def update_phoenix_status(session: requests.Session, base_url: str, employee_id: str, action: str, note: str | None = None):
     response = session.post(
         f"{base_url.rstrip('/')}/api/cadastros/phoenix",
-        json={"id": employee_id, "action": action},
+        json={"id": employee_id, "action": action, "note": note or ""},
         timeout=30,
     )
 
@@ -200,14 +200,14 @@ def run_employee(
         legacy.ativar_janela_contmatic()
         legacy.abrir_rotina_uma_vez()
         legacy.preencher_sistema(legacy_columns, empresa_habilitada, empresa_rateio)
-        update_phoenix_status(session, base_url, payload["employeeId"], "complete")
+        update_phoenix_status(session, base_url, payload["employeeId"], "complete", "Execução concluída pelo runner Phoenix.")
         print(f"Preenchimento legado disparado com sucesso para o funcionario {payload['employeeId']}.")
         print("Status atualizado automaticamente para concluido no Phoenix.")
         return payload
     except Exception:
         if not preview_only:
             try:
-                update_phoenix_status(session, base_url, payload["employeeId"], "fail")
+                update_phoenix_status(session, base_url, payload["employeeId"], "fail", str(sys.exc_info()[1] or "Falha na execução do runner Phoenix."))
                 print("Status atualizado automaticamente para falha no Phoenix.")
             except Exception as status_error:
                 print(f"Falha ao atualizar status de falha no Phoenix: {status_error}", file=sys.stderr)

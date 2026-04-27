@@ -12,6 +12,7 @@ type EmployeeRecord = {
   workflow_status: string
   phoenix_status: string | null
   phoenix_status_updated_at: string | null
+  phoenix_status_note: string | null
   updated_at: string
 }
 
@@ -83,6 +84,15 @@ export function EmployeeRecordsList() {
   }
 
   async function handlePhoenixAction(record: EmployeeRecord, action: "start" | "complete" | "fail" | "reset") {
+    const note =
+      action === "fail"
+        ? window.prompt("Informe o motivo da falha no Phoenix:", record.phoenix_status_note ?? "") ?? null
+        : null
+
+    if (action === "fail" && note === null) {
+      return
+    }
+
     setIsUpdatingPhoenixId(record.id)
 
     try {
@@ -94,6 +104,7 @@ export function EmployeeRecordsList() {
         body: JSON.stringify({
           id: record.id,
           action,
+          note: note ?? undefined,
         }),
       })
 
@@ -101,6 +112,7 @@ export function EmployeeRecordsList() {
         ok: boolean
         phoenixStatus?: string
         phoenixStatusUpdatedAt?: string | null
+        phoenixStatusNote?: string | null
         error?: string
       }
 
@@ -116,6 +128,8 @@ export function EmployeeRecordsList() {
                 ...item,
                 phoenix_status: result.phoenixStatus ?? item.phoenix_status,
                 phoenix_status_updated_at: result.phoenixStatusUpdatedAt ?? item.phoenix_status_updated_at,
+                phoenix_status_note:
+                  result.phoenixStatusNote !== undefined ? result.phoenixStatusNote : item.phoenix_status_note,
               }
             : item
         )
@@ -228,9 +242,14 @@ export function EmployeeRecordsList() {
                   </td>
                   <td className="px-4 py-3">
                     {getPhoenixStatus(record) ? (
-                      <span className="inline-flex rounded-full bg-sky-100 px-3 py-1 text-xs font-bold text-sky-800">
-                        {phoenixStatusLabels[getPhoenixStatus(record) as string] ?? getPhoenixStatus(record)}
-                      </span>
+                      <div className="space-y-1">
+                        <span className="inline-flex rounded-full bg-sky-100 px-3 py-1 text-xs font-bold text-sky-800">
+                          {phoenixStatusLabels[getPhoenixStatus(record) as string] ?? getPhoenixStatus(record)}
+                        </span>
+                        {record.phoenix_status_note ? (
+                          <div className="max-w-xs text-xs text-slate-500">{record.phoenix_status_note}</div>
+                        ) : null}
+                      </div>
                     ) : (
                       <span className="text-slate-400">Aguardando finalização</span>
                     )}

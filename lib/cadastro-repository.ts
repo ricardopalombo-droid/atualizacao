@@ -10,6 +10,7 @@ export type EmployeeRecordListItem = {
   workflow_status: string
   phoenix_status: string | null
   phoenix_status_updated_at: string | null
+  phoenix_status_note: string | null
   client_id: string | null
   created_at: string
   updated_at: string
@@ -212,6 +213,7 @@ export async function listEmployeeRecords(
         phoenix_status: typeof payload.phoenix_status === "string" ? payload.phoenix_status : null,
         phoenix_status_updated_at:
           typeof payload.phoenix_status_updated_at === "string" ? payload.phoenix_status_updated_at : null,
+        phoenix_status_note: typeof payload.phoenix_status_note === "string" ? payload.phoenix_status_note : null,
         client_id: item.client_id,
         created_at: item.created_at,
         updated_at: item.updated_at,
@@ -247,6 +249,7 @@ export async function listEmployeeRecords(
       phoenix_status: typeof payload.phoenix_status === "string" ? payload.phoenix_status : null,
       phoenix_status_updated_at:
         typeof payload.phoenix_status_updated_at === "string" ? payload.phoenix_status_updated_at : null,
+      phoenix_status_note: typeof payload.phoenix_status_note === "string" ? payload.phoenix_status_note : null,
       client_id: item.client_id,
       created_at: item.created_at,
       updated_at: item.updated_at,
@@ -257,6 +260,7 @@ export async function listEmployeeRecords(
 export async function updateEmployeePhoenixStatus(
   id: string,
   phoenixStatus: string,
+  metadata?: { note?: string | null; actor?: string | null },
   scope?: { subscriberId?: string | null; clientId?: string | null }
 ) {
   const supabase = getSupabaseServerClient()
@@ -270,6 +274,8 @@ export async function updateEmployeePhoenixStatus(
     ...record.full_payload,
     phoenix_status: phoenixStatus,
     phoenix_status_updated_at: new Date().toISOString(),
+    phoenix_status_note: metadata?.note ?? null,
+    phoenix_status_actor: metadata?.actor ?? null,
   }
 
   const { data, error } = await supabase
@@ -292,6 +298,7 @@ export async function updateEmployeePhoenixStatus(
     phoenixStatus: typeof payload.phoenix_status === "string" ? payload.phoenix_status : phoenixStatus,
     phoenixStatusUpdatedAt:
       typeof payload.phoenix_status_updated_at === "string" ? payload.phoenix_status_updated_at : null,
+    phoenixStatusNote: typeof payload.phoenix_status_note === "string" ? payload.phoenix_status_note : null,
   }
 }
 
