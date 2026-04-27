@@ -1,7 +1,7 @@
 ﻿import { buildPhoenixStructuredPayload } from "@/lib/phoenix-payload"
 import { getCurrentSession } from "@/lib/auth-session"
 import { getEmployeeRecordById, listEmployeeRecords, updateEmployeePhoenixStatus } from "@/lib/cadastro-repository"
-import { listClientRecords } from "@/lib/client-repository"
+import { getSupabaseServerClient } from "@/lib/supabase-server"
 import { z } from "zod"
 
 const phoenixStatusPayloadSchema = z.object({
@@ -30,6 +30,63 @@ function buildPhoenixRunnerCommand(params: {
 
 type Session = NonNullable<Awaited<ReturnType<typeof getCurrentSession>>>
 
+async function listClientScopesForSubscriber(subscriberId: string) {
+  const supabase = getSupabaseServerClient()
+
+  const [{ data: clients, error: clientsError }, { data: users, error: usersError }] = await Promise.all([
+    supabase.from("clients").select("id, name").eq("subscriber_id", subscriberId),
+    supabase
+      .from("app_users")
+      .select("client_id")
+      .eq("subscriber_id", subscriberId)
+      .eq("role", "client_user")
+      .not("client_id", "is", null),
+  ])
+
+  if (clientsError) {
+    throw clientsError
+  }
+
+  if (usersError) {
+    throw usersError
+  }
+
+  const map = new Map<string, { id: string; name: string | null }>()
+
+  for (const client of clients ?? []) {
+    map.set(client.id, {
+      id: client.id,
+      name: typeof client.name === "string" ? client.name : null,
+    })
+  }
+
+  for (const user of users ?? []) {
+    const clientId = typeof user.client_id === "string" ? user.client_id : null
+    if (clientId && !map.has(clientId)) {
+      map.set(clientId, { id: clientId, name: null })
+    }
+  }
+
+  return Array.from(map.values())
+}
+
+async function getSubscriberRunnerEmail(subscriberId: string) {
+  const supabase = getSupabaseServerClient()
+  const { data, error } = await supabase
+    .from("app_users")
+    .select("email")
+    .eq("subscriber_id", subscriberId)
+    .eq("role", "subscriber_admin")
+    .is("client_id", null)
+    .maybeSingle()
+
+  if (error) {
+    throw error
+  }
+
+  return data?.email ?? null
+}
+
 async function getEmployeeRecordForPhoenixScope(session: Session, recordId: string) {
   if (session.role === "client_user") {
     return getEmployeeRecordById(recordId, {
@@ -39,9 +96,9 @@ async function getEmployeeRecordForPhoenixScope(session: Session, recordId: stri
   }
 
   if (session.role === "subscriber_admin" && session.subscriberId) {
-    const clients = await listClientRecords(session.subscriberId, 1000)
+    const clientScopes = await listClientScopesForSubscriber(session.subscriberId)
 
-    for (const client of clients) {
+    for (const client of clientScopes) {
       const record = await getEmployeeRecordById(recordId, {
         subscriberId: session.subscriberId,
         clientId: client.id,
@@ -70,10 +127,10 @@ async function listPendingPhoenixQueue(session: Session) {
   }
 
   if (session.role === "subscriber_admin" && session.subscriberId) {
-    const clients = await listClientRecords(session.subscriberId, 1000)
+    const clientScopes = await listClientScopesForSubscriber(session.subscriberId)
     const merged = new Map<string, { client_name: string | null } & Awaited<ReturnType<typeof listEmployeeRecords>>[number]>()
 
-    for (const client of clients) {
+    for (const client of clientScopes) {
       const records = await listEmployeeRecords(200, {
         subscriberId: session.subscriberId,
         clientId: client.id,
@@ -216,35 +273,38 @@ export async function POST(request: Request) {
 
     const result = await updateEmployeePhoenixStatus(payload.id, statusByAction[payload.action], {
       subscriberId: session.subscriberId,
-      clientId: session.clientId,
+      clientId: record.client_id,
     })
 
-    const requestUrl = new URL(request.url)
-    const runnerCommand =
-      payload.action === "start"
-        ? buildPhoenixRunnerCommand({
-            baseUrl: requestUrl.origin,
-            email: session.email,
-            employeeId: payload.id,
-          })
-        : null
+    let runnerCommand: string | null = null
+    let runnerData: Record<string, string> | null = null
+
+    if (payload.action === "start" && session.role === "subscriber_admin") {
+      const requestUrl = new URL(request.url)
+      const runnerEmail = (session.subscriberId && (await getSubscriberRunnerEmail(session.subscriberId))) || session.email
+
+      runnerCommand = buildPhoenixRunnerCommand({
+        baseUrl: requestUrl.origin,
+        email: runnerEmail,
+        employeeId: payload.id,
+      })
+
+      runnerData = {
+        baseUrl: requestUrl.origin,
+        email: runnerEmail,
+        employeeId: payload.id,
+        legacyScript: ".\\cadastros_final_adaptado.py",
+        empresaHabilitada: "N",
+        empresaRateio: "N",
+      }
+    }
 
     return Response.json({
       ok: true,
       phoenixStatus: result.phoenixStatus,
       phoenixStatusUpdatedAt: result.phoenixStatusUpdatedAt,
       runnerCommand,
-      runnerData:
-        payload.action === "start"
-          ? {
-              baseUrl: requestUrl.origin,
-              email: session.email,
-              employeeId: payload.id,
-              legacyScript: ".\\cadastros_final_adaptado.py",
-              empresaHabilitada: "N",
-              empresaRateio: "N",
-            }
-          : null,
+      runnerData,
     })
   } catch (error) {
     console.error(error)
