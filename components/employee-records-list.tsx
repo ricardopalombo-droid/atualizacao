@@ -10,6 +10,8 @@ type EmployeeRecord = {
   employee_email: string | null
   invite_email: string | null
   workflow_status: string
+  phoenix_status: string | null
+  phoenix_status_updated_at: string | null
   updated_at: string
 }
 
@@ -22,11 +24,19 @@ const statusLabels: Record<string, string> = {
   exportado: "Exportado",
 }
 
+const phoenixStatusLabels: Record<string, string> = {
+  pronto_para_phoenix: "Pronto para Phoenix",
+  enviado_ao_phoenix: "Enviado ao Phoenix",
+  concluido_no_phoenix: "Concluído no Phoenix",
+  falha_no_phoenix: "Falha no Phoenix",
+}
+
 export function EmployeeRecordsList() {
   const [records, setRecords] = useState<EmployeeRecord[]>([])
   const [statusMessage, setStatusMessage] = useState("Carregando funcionários do cliente.")
   const [isLoading, setIsLoading] = useState(true)
   const [isDeletingId, setIsDeletingId] = useState<string | null>(null)
+  const [isUpdatingPhoenixId, setIsUpdatingPhoenixId] = useState<string | null>(null)
 
   useEffect(() => {
     void loadRecords()
@@ -57,6 +67,74 @@ export function EmployeeRecordsList() {
       setStatusMessage(error instanceof Error ? error.message : "Erro ao carregar funcionários.")
     } finally {
       setIsLoading(false)
+    }
+  }
+
+  function getPhoenixStatus(record: EmployeeRecord) {
+    if (record.phoenix_status) {
+      return record.phoenix_status
+    }
+
+    if (["finalizado", "exportado"].includes(record.workflow_status)) {
+      return "pronto_para_phoenix"
+    }
+
+    return null
+  }
+
+  async function handlePhoenixAction(record: EmployeeRecord, action: "start" | "complete" | "fail" | "reset") {
+    setIsUpdatingPhoenixId(record.id)
+
+    try {
+      const response = await fetch("/api/cadastros/phoenix", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          id: record.id,
+          action,
+        }),
+      })
+
+      const result = (await response.json()) as {
+        ok: boolean
+        phoenixStatus?: string
+        phoenixStatusUpdatedAt?: string | null
+        error?: string
+      }
+
+      if (!response.ok || !result.ok) {
+        setStatusMessage(result.error ?? "Não foi possível atualizar o status do Phoenix.")
+        return
+      }
+
+      setRecords((previous) =>
+        previous.map((item) =>
+          item.id === record.id
+            ? {
+                ...item,
+                phoenix_status: result.phoenixStatus ?? item.phoenix_status,
+                phoenix_status_updated_at: result.phoenixStatusUpdatedAt ?? item.phoenix_status_updated_at,
+              }
+            : item
+        )
+      )
+
+      const actionMessage =
+        action === "start"
+          ? "Cadastro marcado como enviado ao Phoenix."
+          : action === "complete"
+            ? "Cadastro marcado como concluído no Phoenix."
+            : action === "fail"
+              ? "Cadastro marcado com falha no Phoenix."
+              : "Cadastro voltou para pronto para Phoenix."
+
+      setStatusMessage(actionMessage)
+    } catch (error) {
+      setStatusMessage(error instanceof Error ? error.message : "Erro ao atualizar status do Phoenix.")
+    } finally {
+      setIsUpdatingPhoenixId(null)
     }
   }
 
@@ -131,6 +209,7 @@ export function EmployeeRecordsList() {
                 <th className="px-4 py-3">Funcionário</th>
                 <th className="px-4 py-3">E-mail</th>
                 <th className="px-4 py-3">Status</th>
+                <th className="px-4 py-3">Phoenix</th>
                 <th className="px-4 py-3">Atualizado</th>
                 <th className="px-4 py-3">Ação</th>
               </tr>
@@ -149,6 +228,15 @@ export function EmployeeRecordsList() {
                       {statusLabels[record.workflow_status] ?? record.workflow_status}
                     </span>
                   </td>
+                  <td className="px-4 py-3">
+                    {getPhoenixStatus(record) ? (
+                      <span className="inline-flex rounded-full bg-sky-100 px-3 py-1 text-xs font-bold text-sky-800">
+                        {phoenixStatusLabels[getPhoenixStatus(record) as string] ?? getPhoenixStatus(record)}
+                      </span>
+                    ) : (
+                      <span className="text-slate-400">Aguardando finalização</span>
+                    )}
+                  </td>
                   <td className="px-4 py-3">{formatDateTime(record.updated_at)}</td>
                   <td className="px-4 py-3">
                     <div className="flex flex-wrap gap-2">
@@ -158,6 +246,53 @@ export function EmployeeRecordsList() {
                       >
                         Continuar edição
                       </Link>
+                      {["finalizado", "exportado"].includes(record.workflow_status) && (
+                        <>
+                          {(getPhoenixStatus(record) === "pronto_para_phoenix" ||
+                            getPhoenixStatus(record) === "falha_no_phoenix") && (
+                            <button
+                              type="button"
+                              onClick={() => void handlePhoenixAction(record, "start")}
+                              disabled={isUpdatingPhoenixId === record.id}
+                              className="inline-flex items-center justify-center rounded-lg border border-sky-200 px-4 py-2 font-semibold text-sky-700 hover:bg-sky-50 disabled:opacity-60"
+                            >
+                              {isUpdatingPhoenixId === record.id ? "Atualizando..." : "Enviar para Phoenix"}
+                            </button>
+                          )}
+
+                          {getPhoenixStatus(record) === "enviado_ao_phoenix" && (
+                            <>
+                              <button
+                                type="button"
+                                onClick={() => void handlePhoenixAction(record, "complete")}
+                                disabled={isUpdatingPhoenixId === record.id}
+                                className="inline-flex items-center justify-center rounded-lg border border-emerald-200 px-4 py-2 font-semibold text-emerald-700 hover:bg-emerald-50 disabled:opacity-60"
+                              >
+                                {isUpdatingPhoenixId === record.id ? "Atualizando..." : "Marcar concluído"}
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => void handlePhoenixAction(record, "fail")}
+                                disabled={isUpdatingPhoenixId === record.id}
+                                className="inline-flex items-center justify-center rounded-lg border border-amber-200 px-4 py-2 font-semibold text-amber-700 hover:bg-amber-50 disabled:opacity-60"
+                              >
+                                {isUpdatingPhoenixId === record.id ? "Atualizando..." : "Marcar falha"}
+                              </button>
+                            </>
+                          )}
+
+                          {getPhoenixStatus(record) === "concluido_no_phoenix" && (
+                            <button
+                              type="button"
+                              onClick={() => void handlePhoenixAction(record, "reset")}
+                              disabled={isUpdatingPhoenixId === record.id}
+                              className="inline-flex items-center justify-center rounded-lg border border-slate-300 px-4 py-2 font-semibold text-slate-700 hover:bg-slate-100 disabled:opacity-60"
+                            >
+                              {isUpdatingPhoenixId === record.id ? "Atualizando..." : "Voltar para pronto"}
+                            </button>
+                          )}
+                        </>
+                      )}
                       <button
                         type="button"
                         onClick={() => void handleDelete(record)}

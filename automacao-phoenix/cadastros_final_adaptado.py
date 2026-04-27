@@ -541,7 +541,7 @@ def processar_bloco_deficiencia(
         dormir_controlado(0.3)
         escrever(observacao)
         dormir_controlado(0.2)
-        pyautogui.press("enter")
+        pyautogui.hotkey("alt", "o")
         dormir_controlado(0.4)
         pyautogui.press("tab")
         dormir_controlado(0.25)
@@ -1434,7 +1434,6 @@ def preencher_sistema(dados: dict, empresa_habilitada: str, empresa_rateio: str)
     preencher_ou_tab(col_extra_chapa)
 
     if valor_vazio(col_dh):
-        pyautogui.press("tab")
         dormir_controlado(0.2)
     else:
         clicar_campo_matricula_esocial()

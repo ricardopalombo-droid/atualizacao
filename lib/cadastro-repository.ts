@@ -8,6 +8,8 @@ export type EmployeeRecordListItem = {
   employee_email: string | null
   invite_email: string | null
   workflow_status: string
+  phoenix_status: string | null
+  phoenix_status_updated_at: string | null
   client_id: string | null
   created_at: string
   updated_at: string
@@ -148,7 +150,7 @@ export async function listEmployeeRecords(
 
   let query = supabase
     .from("employees")
-    .select("id, employee_name, employee_email, invite_email, workflow_status, client_id, created_at, updated_at")
+    .select("id, employee_name, employee_email, invite_email, workflow_status, client_id, created_at, updated_at, full_payload")
     .order("updated_at", { ascending: false })
     .limit(limit)
 
@@ -164,7 +166,64 @@ export async function listEmployeeRecords(
     throw error
   }
 
-  return data ?? []
+  return (data ?? []).map((item) => {
+    const payload = (item.full_payload ?? {}) as Record<string, unknown>
+
+    return {
+      id: item.id,
+      employee_name: item.employee_name,
+      employee_email: item.employee_email,
+      invite_email: item.invite_email,
+      workflow_status: item.workflow_status,
+      phoenix_status: typeof payload.phoenix_status === "string" ? payload.phoenix_status : null,
+      phoenix_status_updated_at:
+        typeof payload.phoenix_status_updated_at === "string" ? payload.phoenix_status_updated_at : null,
+      client_id: item.client_id,
+      created_at: item.created_at,
+      updated_at: item.updated_at,
+    } satisfies EmployeeRecordListItem
+  })
+}
+
+export async function updateEmployeePhoenixStatus(
+  id: string,
+  phoenixStatus: string,
+  scope?: { subscriberId?: string | null; clientId?: string | null }
+) {
+  const supabase = getSupabaseServerClient()
+  const record = await getEmployeeRecordById(id, scope)
+
+  if (!record) {
+    throw new Error("Cadastro do funcionário não encontrado.")
+  }
+
+  const fullPayload = {
+    ...record.full_payload,
+    phoenix_status: phoenixStatus,
+    phoenix_status_updated_at: new Date().toISOString(),
+  }
+
+  const { data, error } = await supabase
+    .from("employees")
+    .update({
+      full_payload: fullPayload,
+    })
+    .eq("id", id)
+    .select("id, full_payload")
+    .single()
+
+  if (error) {
+    throw error
+  }
+
+  const payload = (data.full_payload ?? {}) as Record<string, unknown>
+
+  return {
+    id: data.id,
+    phoenixStatus: typeof payload.phoenix_status === "string" ? payload.phoenix_status : phoenixStatus,
+    phoenixStatusUpdatedAt:
+      typeof payload.phoenix_status_updated_at === "string" ? payload.phoenix_status_updated_at : null,
+  }
 }
 
 export async function getEmployeeRecordById(
