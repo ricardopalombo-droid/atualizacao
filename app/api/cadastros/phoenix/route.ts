@@ -1,4 +1,4 @@
-import { buildPhoenixStructuredPayload } from "@/lib/phoenix-payload"
+﻿import { buildPhoenixStructuredPayload } from "@/lib/phoenix-payload"
 import { getCurrentSession } from "@/lib/auth-session"
 import { getEmployeeRecordById, updateEmployeePhoenixStatus } from "@/lib/cadastro-repository"
 import { z } from "zod"
@@ -32,12 +32,12 @@ export async function GET(request: Request) {
     const session = await getCurrentSession()
 
     if (!session) {
-      return Response.json({ ok: false, error: "Não autenticado." }, { status: 401 })
+      return Response.json({ ok: false, error: "NÃ£o autenticado." }, { status: 401 })
     }
 
-    if (session.role !== "client_user") {
+    if (!["client_user", "subscriber_admin"].includes(session.role)) {
       return Response.json(
-        { ok: false, error: "Somente usuários de cliente podem preparar payload para o Phoenix." },
+        { ok: false, error: "Somente clientes autorizados ou assinantes podem preparar payload para o Phoenix." },
         { status: 403 }
       )
     }
@@ -84,7 +84,7 @@ export async function GET(request: Request) {
     })
 
     if (!record) {
-      return Response.json({ ok: false, error: "Cadastro não encontrado." }, { status: 404 })
+      return Response.json({ ok: false, error: "Cadastro nÃ£o encontrado." }, { status: 404 })
     }
 
     if (!["finalizado", "exportado"].includes(record.workflow_status)) {
@@ -119,12 +119,12 @@ export async function POST(request: Request) {
     const session = await getCurrentSession()
 
     if (!session) {
-      return Response.json({ ok: false, error: "Não autenticado." }, { status: 401 })
+      return Response.json({ ok: false, error: "NÃ£o autenticado." }, { status: 401 })
     }
 
-    if (session.role !== "client_user") {
+    if (!["client_user", "subscriber_admin"].includes(session.role)) {
       return Response.json(
-        { ok: false, error: "Somente usuários de cliente podem atualizar o status do Phoenix." },
+        { ok: false, error: "Somente clientes autorizados ou assinantes podem atualizar o status do Phoenix." },
         { status: 403 }
       )
     }
@@ -136,7 +136,7 @@ export async function POST(request: Request) {
     })
 
     if (!record) {
-      return Response.json({ ok: false, error: "Cadastro não encontrado." }, { status: 404 })
+      return Response.json({ ok: false, error: "Cadastro nÃ£o encontrado." }, { status: 404 })
     }
 
     if (!["finalizado", "exportado"].includes(record.workflow_status)) {
@@ -197,3 +197,4 @@ export async function POST(request: Request) {
     )
   }
 }
+

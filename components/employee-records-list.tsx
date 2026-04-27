@@ -365,7 +365,7 @@ export function EmployeeRecordsList() {
               <span className="font-semibold">Base URL:</span> {runnerData.baseUrl}
             </p>
             <p>
-              <span className="font-semibold">Login do cliente:</span> {runnerData.email}
+              <span className="font-semibold">Login do runner:</span> {runnerData.email}
             </p>
             <p>
               <span className="font-semibold">Employee ID:</span> {runnerData.employeeId}

@@ -41,7 +41,7 @@ class PhoenixQueueRunnerApp:
         self.legacy_script_var = tk.StringVar(value="cadastros_final_adaptado.py")
         self.empresa_habilitada_var = tk.StringVar(value="N")
         self.empresa_rateio_var = tk.StringVar(value="N")
-        self.status_var = tk.StringVar(value="Preencha o login e carregue a fila do Phoenix.")
+        self.status_var = tk.StringVar(value="Preencha o login do escritório e carregue a fila do Phoenix.")
 
         self.session: requests.Session | None = None
         self.records: list[dict] = []
@@ -59,7 +59,7 @@ class PhoenixQueueRunnerApp:
         ttk.Label(credentials, text="Base URL").grid(row=0, column=0, sticky="w")
         ttk.Entry(credentials, textvariable=self.base_url_var, width=40).grid(row=1, column=0, sticky="ew", padx=(0, 12))
 
-        ttk.Label(credentials, text="Login do cliente").grid(row=0, column=1, sticky="w")
+        ttk.Label(credentials, text="Login do escritório").grid(row=0, column=1, sticky="w")
         ttk.Entry(credentials, textvariable=self.email_var, width=28).grid(row=1, column=1, sticky="ew", padx=(0, 12))
 
         ttk.Label(credentials, text="Senha").grid(row=0, column=2, sticky="w")
