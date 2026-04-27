@@ -7,13 +7,13 @@ export default function AcessoPage() {
       <div className="mx-auto grid max-w-5xl gap-6 md:grid-cols-[1.1fr_0.9fr]">
         <section className="rounded-3xl bg-slate-900 p-8 text-white shadow-sm">
           <span className="inline-flex rounded-full bg-yellow-400 px-4 py-1 text-sm font-bold text-slate-900">
-            Area restrita PalSys
+            Area de acesso
           </span>
           <h1 className="mt-6 text-4xl font-bold leading-tight">
-            Acesse a area correspondente ao seu perfil
+            Entre na sua area de trabalho
           </h1>
           <p className="mt-4 max-w-xl text-lg leading-8 text-slate-300">
-            A PalSys administra os assinantes. O assinante administra a propria carteira de clientes. Cada cliente acessa apenas a sua empresa e organiza os cadastros dos proprios funcionarios.
+            Este acesso e usado pela equipe PalSys, pelos assinantes e pelas empresas clientes. Entre com seu login para continuar na area correspondente ao seu perfil.
           </p>
           <div className="mt-8">
             <Link
