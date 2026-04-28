@@ -26,7 +26,7 @@ const beneficios = [
 
 export default function HomePage() {
   return (
-    <div className="min-h-screen bg-white text-slate-800">
+    <div className="min-h-screen bg-slate-50 text-slate-800">
       <header className="sticky top-0 z-40 border-b bg-white/95 backdrop-blur">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
           <Link href="/">
@@ -62,95 +62,96 @@ export default function HomePage() {
         </div>
       </header>
 
-      <section className="border-b bg-gradient-to-b from-slate-50 to-white">
-        <div className="mx-auto max-w-6xl px-6 py-16 lg:py-24">
-          <div className="max-w-4xl">
-            <span className="inline-block rounded-full bg-yellow-100 px-4 py-1 text-sm font-semibold text-yellow-800">
-              Solucoes para escritorios contabeis
-            </span>
-
-            <h1 className="mt-6 text-4xl font-bold leading-tight text-slate-900 md:text-5xl">
-              Automatize processos e ganhe mais tempo na rotina do seu escritorio
-            </h1>
-
-            <p className="mt-6 text-lg leading-8 text-slate-600">
-              Na PalSys, desenvolvemos solucoes de automacao pensadas especialmente para a rotina de escritorios contabeis. Nosso objetivo e facilitar tarefas repetitivas, reduzir erros e ganhar tempo no dia a dia.
-            </p>
-
-            <div className="mt-8 flex flex-col gap-4 sm:flex-row">
-              <Link
-                href="/assinar"
-                className="inline-flex items-center justify-center rounded-xl bg-yellow-400 px-6 py-3 font-bold text-slate-900 hover:brightness-95"
-              >
-                Ver produtos
-              </Link>
-
-              <Link
-                href="/acesso"
-                className="inline-flex items-center justify-center gap-2 rounded-xl bg-slate-900 px-6 py-3 font-semibold text-white hover:bg-slate-800"
-              >
-                Acessar area do cliente
-                <ArrowRight size={18} />
-              </Link>
-
-              <a
-                href="#beneficios"
-                className="inline-flex items-center justify-center rounded-xl border border-slate-300 px-6 py-3 font-semibold text-slate-700 hover:bg-slate-50"
-              >
-                Conhecer beneficios
-              </a>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section className="mx-auto max-w-6xl px-6 py-16">
-        <div className="grid gap-8 lg:grid-cols-[1.05fr_0.95fr]">
-          <div className="rounded-3xl border border-slate-200 bg-white p-8 shadow-sm">
-            <span className="inline-flex rounded-full bg-slate-100 px-4 py-1 text-sm font-semibold text-slate-700">
+      <section className="border-b border-slate-200 bg-gradient-to-b from-white via-slate-50 to-slate-100">
+        <div className="mx-auto max-w-6xl px-6 py-16 lg:py-20">
+          <div className="grid gap-8 lg:grid-cols-[1.05fr_0.95fr]">
+            <div className="rounded-[2rem] border border-slate-200 bg-white p-10 shadow-[0_24px_70px_-40px_rgba(15,23,42,0.35)]">
+              <span className="inline-flex rounded-full bg-slate-100 px-5 py-2 text-sm font-semibold text-slate-700">
               Automacao personalizada
-            </span>
+              </span>
 
-            <h2 className="mt-5 text-3xl font-bold text-slate-900 md:text-4xl">
-              Solucoes criadas para a realidade do seu escritorio
-            </h2>
+              <h1 className="mt-6 text-4xl font-bold leading-tight text-slate-900 md:text-5xl">
+                Solucoes criadas para a realidade do seu escritorio
+              </h1>
 
-            <div className="mt-6 space-y-5 text-lg leading-8 text-slate-600">
-              <p>
-                Trabalhamos com personalizacoes sob medida nos sistemas da linha Contmatic, adaptando as automacoes conforme a necessidade de cada cliente. Isso inclui desde rotinas especificas ate processos mais complexos dentro dos sistemas.
-              </p>
-              <p>
-                Tambem realizamos alteracoes e cadastros em massa, agilizando atividades que normalmente levariam horas para serem feitas manualmente. Com isso, sua equipe pode focar no que realmente importa: analise, atendimento e crescimento do negocio.
-              </p>
-              <p>
-                Se voce busca mais produtividade, padronizacao e seguranca nos processos, a PalSys pode criar a solucao ideal para o seu escritorio.
-              </p>
+              <div className="mt-8 space-y-6 text-lg leading-8 text-slate-600">
+                <p>
+                  Na PalSys, desenvolvemos solucoes de automacao pensadas especialmente
+                  para a rotina de escritorios contabeis. Nosso objetivo e facilitar
+                  tarefas repetitivas, reduzir erros e ganhar tempo no dia a dia.
+                </p>
+                <p>
+                  Trabalhamos com personalizacoes sob medida nos sistemas da linha
+                  Contmatic, adaptando as automacoes conforme a necessidade de cada
+                  cliente. Isso inclui desde rotinas especificas ate processos mais
+                  complexos dentro dos sistemas.
+                </p>
+                <p>
+                  Tambem realizamos alteracoes e cadastros em massa, agilizando
+                  atividades que normalmente levariam horas para serem feitas
+                  manualmente. Com isso, sua equipe pode focar no que realmente
+                  importa: analise, atendimento e crescimento do negocio.
+                </p>
+                <p>
+                  Se voce busca mais produtividade, padronizacao e seguranca nos
+                  processos, a PalSys pode criar a solucao ideal para o seu escritorio.
+                </p>
+              </div>
+
+              <div className="mt-8 flex flex-col gap-4 sm:flex-row">
+                <Link
+                  href="/assinar"
+                  className="inline-flex items-center justify-center rounded-xl bg-yellow-400 px-6 py-3 font-bold text-slate-900 hover:brightness-95"
+                >
+                  Ver produtos
+                </Link>
+                <Link
+                  href="/acesso"
+                  className="inline-flex items-center justify-center gap-2 rounded-xl bg-slate-900 px-6 py-3 font-semibold text-white hover:bg-slate-800"
+                >
+                  Entrar na plataforma
+                  <ArrowRight size={18} />
+                </Link>
+              </div>
             </div>
-          </div>
 
-          <div className="rounded-3xl bg-slate-900 p-8 text-white shadow-sm">
-            <h3 className="text-2xl font-bold">Como a PalSys ajuda no dia a dia</h3>
+            <div className="rounded-[2rem] bg-slate-900 p-8 text-white shadow-[0_24px_70px_-40px_rgba(15,23,42,0.65)]">
+              <h2 className="text-3xl font-bold leading-tight md:text-4xl">
+                Como a PalSys ajuda no dia a dia
+              </h2>
 
-            <div className="mt-6 space-y-4">
-              <div className="rounded-2xl border border-white/10 bg-white/5 p-5">
-                <strong className="text-lg">Rotinas sob medida</strong>
-                <p className="mt-2 leading-7 text-slate-300">
-                  Automatizamos tarefas conforme a realidade operacional do escritorio e dos clientes atendidos.
-                </p>
-              </div>
+              <div className="mt-8 space-y-4">
+                <div className="rounded-2xl border border-white/10 bg-white/5 p-6">
+                  <strong className="text-xl">Rotinas sob medida</strong>
+                  <p className="mt-3 leading-7 text-slate-300">
+                    Automatizamos tarefas conforme a realidade operacional do
+                    escritorio e dos clientes atendidos.
+                  </p>
+                </div>
 
-              <div className="rounded-2xl border border-white/10 bg-white/5 p-5">
-                <strong className="text-lg">Alteracoes e cadastros em massa</strong>
-                <p className="mt-2 leading-7 text-slate-300">
-                  Reduza horas de digitacao manual em processos repetitivos dentro dos sistemas contabeis.
-                </p>
-              </div>
+                <div className="rounded-2xl border border-white/10 bg-white/5 p-6">
+                  <strong className="text-xl">Alteracoes e cadastros em massa</strong>
+                  <p className="mt-3 leading-7 text-slate-300">
+                    Reduza horas de digitacao manual em processos repetitivos dentro
+                    dos sistemas contabeis.
+                  </p>
+                </div>
 
-              <div className="rounded-2xl border border-white/10 bg-white/5 p-5">
-                <strong className="text-lg">Padronizacao e seguranca</strong>
-                <p className="mt-2 leading-7 text-slate-300">
-                  Mais consistencia nas entregas, menos retrabalho e menor risco de falhas humanas.
-                </p>
+                <div className="rounded-2xl border border-white/10 bg-white/5 p-6">
+                  <strong className="text-xl">Padronizacao e seguranca</strong>
+                  <p className="mt-3 leading-7 text-slate-300">
+                    Mais consistencia nas entregas, menos retrabalho e menor risco de
+                    falhas humanas.
+                  </p>
+                </div>
+
+                <div className="rounded-2xl border border-white/10 bg-white/5 p-6">
+                  <strong className="text-xl">Mais tempo para a equipe</strong>
+                  <p className="mt-3 leading-7 text-slate-300">
+                    Sua equipe ganha folego para focar em analise, atendimento e
+                    crescimento do negocio.
+                  </p>
+                </div>
               </div>
             </div>
           </div>
