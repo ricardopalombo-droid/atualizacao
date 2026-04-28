@@ -7,19 +7,19 @@ const beneficios = [
   {
     titulo: "Mais produtividade",
     descricao:
-      "Com as rotinas automatizadas, em horários alternativos as rotinas podem ser executadas.",
+      "Com as rotinas automatizadas, o escritorio ganha tempo para focar em analise, atendimento e crescimento.",
     icone: Zap,
   },
   {
     titulo: "Menos erros",
     descricao:
-      "A padronização dos processos reduz falhas manuais e aumenta a consistência das entregas.",
+      "A padronizacao dos processos reduz falhas manuais e aumenta a consistencia das entregas.",
     icone: ShieldCheck,
   },
   {
-    titulo: "Rotinas automatizadas",
+    titulo: "Automacao sob medida",
     descricao:
-      "Tarefas repetitivas passam a ser executadas de forma prática, rápida e organizada.",
+      "As solucoes sao adaptadas para a realidade operacional de cada escritorio e de cada cliente.",
     icone: Cog,
   },
 ]
@@ -35,10 +35,10 @@ export default function HomePage() {
 
           <nav className="hidden items-center gap-6 text-sm font-medium md:flex">
             <Link href="/" className="transition hover:text-yellow-600">
-              Início
+              Inicio
             </Link>
             <a href="#beneficios" className="transition hover:text-yellow-600">
-              Benefícios
+              Beneficios
             </a>
             <a href="#produtos" className="transition hover:text-yellow-600">
               Produtos
@@ -66,16 +66,15 @@ export default function HomePage() {
         <div className="mx-auto max-w-6xl px-6 py-16 lg:py-24">
           <div className="max-w-4xl">
             <span className="inline-block rounded-full bg-yellow-100 px-4 py-1 text-sm font-semibold text-yellow-800">
-              Soluções para escritórios contábeis
+              Solucoes para escritorios contabeis
             </span>
 
             <h1 className="mt-6 text-4xl font-bold leading-tight text-slate-900 md:text-5xl">
-              Automatize processos e ganhe mais tempo na rotina do seu escritório
+              Automatize processos e ganhe mais tempo na rotina do seu escritorio
             </h1>
 
             <p className="mt-6 text-lg leading-8 text-slate-600">
-              A PalSys oferece ferramentas práticas para automatizar rotinas fiscais, contábeis e
-              operacionais, reduzindo retrabalho e trazendo mais produtividade para o dia a dia.
+              Na PalSys, desenvolvemos solucoes de automacao pensadas especialmente para a rotina de escritorios contabeis. Nosso objetivo e facilitar tarefas repetitivas, reduzir erros e ganhar tempo no dia a dia.
             </p>
 
             <div className="mt-8 flex flex-col gap-4 sm:flex-row">
@@ -90,7 +89,7 @@ export default function HomePage() {
                 href="/acesso"
                 className="inline-flex items-center justify-center gap-2 rounded-xl bg-slate-900 px-6 py-3 font-semibold text-white hover:bg-slate-800"
               >
-                Acessar área do cliente
+                Acessar area do cliente
                 <ArrowRight size={18} />
               </Link>
 
@@ -98,8 +97,61 @@ export default function HomePage() {
                 href="#beneficios"
                 className="inline-flex items-center justify-center rounded-xl border border-slate-300 px-6 py-3 font-semibold text-slate-700 hover:bg-slate-50"
               >
-                Conhecer benefícios
+                Conhecer beneficios
               </a>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="mx-auto max-w-6xl px-6 py-16">
+        <div className="grid gap-8 lg:grid-cols-[1.05fr_0.95fr]">
+          <div className="rounded-3xl border border-slate-200 bg-white p-8 shadow-sm">
+            <span className="inline-flex rounded-full bg-slate-100 px-4 py-1 text-sm font-semibold text-slate-700">
+              Automacao personalizada
+            </span>
+
+            <h2 className="mt-5 text-3xl font-bold text-slate-900 md:text-4xl">
+              Solucoes criadas para a realidade do seu escritorio
+            </h2>
+
+            <div className="mt-6 space-y-5 text-lg leading-8 text-slate-600">
+              <p>
+                Trabalhamos com personalizacoes sob medida nos sistemas da linha Contmatic, adaptando as automacoes conforme a necessidade de cada cliente. Isso inclui desde rotinas especificas ate processos mais complexos dentro dos sistemas.
+              </p>
+              <p>
+                Tambem realizamos alteracoes e cadastros em massa, agilizando atividades que normalmente levariam horas para serem feitas manualmente. Com isso, sua equipe pode focar no que realmente importa: analise, atendimento e crescimento do negocio.
+              </p>
+              <p>
+                Se voce busca mais produtividade, padronizacao e seguranca nos processos, a PalSys pode criar a solucao ideal para o seu escritorio.
+              </p>
+            </div>
+          </div>
+
+          <div className="rounded-3xl bg-slate-900 p-8 text-white shadow-sm">
+            <h3 className="text-2xl font-bold">Como a PalSys ajuda no dia a dia</h3>
+
+            <div className="mt-6 space-y-4">
+              <div className="rounded-2xl border border-white/10 bg-white/5 p-5">
+                <strong className="text-lg">Rotinas sob medida</strong>
+                <p className="mt-2 leading-7 text-slate-300">
+                  Automatizamos tarefas conforme a realidade operacional do escritorio e dos clientes atendidos.
+                </p>
+              </div>
+
+              <div className="rounded-2xl border border-white/10 bg-white/5 p-5">
+                <strong className="text-lg">Alteracoes e cadastros em massa</strong>
+                <p className="mt-2 leading-7 text-slate-300">
+                  Reduza horas de digitacao manual em processos repetitivos dentro dos sistemas contabeis.
+                </p>
+              </div>
+
+              <div className="rounded-2xl border border-white/10 bg-white/5 p-5">
+                <strong className="text-lg">Padronizacao e seguranca</strong>
+                <p className="mt-2 leading-7 text-slate-300">
+                  Mais consistencia nas entregas, menos retrabalho e menor risco de falhas humanas.
+                </p>
+              </div>
             </div>
           </div>
         </div>
@@ -107,9 +159,9 @@ export default function HomePage() {
 
       <section id="beneficios" className="mx-auto max-w-6xl px-6 py-16">
         <div className="max-w-2xl">
-          <h2 className="text-3xl font-bold text-slate-900 md:text-4xl">Benefícios</h2>
+          <h2 className="text-3xl font-bold text-slate-900 md:text-4xl">Beneficios</h2>
           <p className="mt-4 text-lg text-slate-600">
-            Mais agilidade, mais organização e menos retrabalho nas rotinas do escritório.
+            Mais agilidade, mais organizacao e menos retrabalho nas rotinas do escritorio.
           </p>
         </div>
 
@@ -139,7 +191,7 @@ export default function HomePage() {
           <div className="max-w-2xl">
             <h2 className="text-3xl font-bold text-slate-900 md:text-4xl">Produtos</h2>
             <p className="mt-4 text-lg text-slate-600">
-              Escolha a automação ideal para a necessidade do seu escritório.
+              Escolha a automacao ideal para a necessidade do seu escritorio.
             </p>
           </div>
 
@@ -185,7 +237,7 @@ export default function HomePage() {
               href="/acesso"
               className="inline-flex items-center justify-center rounded-xl border border-slate-300 px-6 py-3 font-semibold text-slate-700 hover:bg-slate-100"
             >
-              Entrar para acessar funções
+              Entrar para acessar funcoes
             </Link>
           </div>
         </div>
@@ -195,7 +247,7 @@ export default function HomePage() {
         <div className="rounded-3xl bg-slate-900 px-8 py-12 text-white">
           <h2 className="text-3xl font-bold">Fale com a PalSys</h2>
 
-          <p className="mt-4 text-slate-300">Envie sua dúvida ou solicite mais informações.</p>
+          <p className="mt-4 text-slate-300">Envie sua duvida ou solicite mais informacoes.</p>
 
           <div className="mt-8 grid gap-10 md:grid-cols-2">
             <form action="https://api.web3forms.com/submit" method="POST" className="space-y-4">
