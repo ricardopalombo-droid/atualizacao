@@ -3,6 +3,7 @@ import { notFound, redirect } from "next/navigation"
 import { ClientDefaultsForm } from "@/components/client-defaults-form"
 import { getCurrentSession } from "@/lib/auth-session"
 import { getClientRecordById } from "@/lib/client-repository"
+import { getReferenceCatalogSummary } from "@/lib/reference-catalog"
 
 export default async function ClientePadroesPage({
   params,
@@ -26,6 +27,8 @@ export default async function ClientePadroesPage({
     notFound()
   }
 
+  const lookupCatalog = await getReferenceCatalogSummary(client.id)
+
   return (
     <main className="min-h-screen bg-slate-50 px-6 py-8">
       <div className="mx-auto max-w-7xl">
@@ -48,7 +51,7 @@ export default async function ClientePadroesPage({
           </Link>
         </div>
 
-        <ClientDefaultsForm client={client} />
+        <ClientDefaultsForm client={client} lookupCatalog={lookupCatalog} />
       </div>
     </main>
   )

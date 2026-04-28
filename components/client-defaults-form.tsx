@@ -13,6 +13,13 @@ type ClientDefaultsFormProps = {
     contmatic_nickname: string | null
     employee_defaults: Record<string, string | boolean | number | null>
   }
+  lookupCatalog?: Partial<Record<"cargo" | "horario" | "sindicato", LookupRecord[]>>
+}
+
+type LookupRecord = {
+  code: string
+  label: string
+  metadata?: Record<string, string | number | boolean | null>
 }
 
 type PresetFieldMeta = {
@@ -64,7 +71,7 @@ const initialValues = presetFieldMeta.reduce<Record<string, string | boolean>>((
   return accumulator
 }, {})
 
-export function ClientDefaultsForm({ client }: ClientDefaultsFormProps) {
+export function ClientDefaultsForm({ client, lookupCatalog = {} }: ClientDefaultsFormProps) {
   const [values, setValues] = useState<Record<string, string | boolean>>({
     ...initialValues,
     ...client.employee_defaults,
@@ -73,6 +80,22 @@ export function ClientDefaultsForm({ client }: ClientDefaultsFormProps) {
     "Defina os padroes internos que costumam se repetir nesta empresa."
   )
   const [isSaving, setIsSaving] = useState(false)
+
+  const dynamicOptionsByKey = useMemo(() => {
+    const buildOptions = (records: LookupRecord[] = []) => [
+      { label: "Selecione", value: "" },
+      ...records.map((record) => ({
+        label: `${record.code} - ${record.label}`,
+        value: record.code,
+      })),
+    ]
+
+    return {
+      cargo: buildOptions(lookupCatalog?.cargo ?? []),
+      horario: buildOptions(lookupCatalog?.horario ?? []),
+      sindicato: buildOptions(lookupCatalog?.sindicato ?? []),
+    }
+  }, [lookupCatalog])
 
   const groupedFields = useMemo(() => {
     return presetGroups.map((group) => ({
@@ -151,6 +174,11 @@ export function ClientDefaultsForm({ client }: ClientDefaultsFormProps) {
                 key={field.key}
                 field={field}
                 value={values[field.key]}
+                optionsOverride={
+                  field.key === "cargo" || field.key === "horario" || field.key === "sindicato"
+                    ? dynamicOptionsByKey[field.key]
+                    : undefined
+                }
                 onChange={(value) => updateValue(field.key, value)}
               />
             ))}
@@ -176,10 +204,12 @@ export function ClientDefaultsForm({ client }: ClientDefaultsFormProps) {
 function PresetField({
   field,
   value,
+  optionsOverride,
   onChange,
 }: {
   field: PresetFieldMeta
   value: string | boolean | undefined
+  optionsOverride?: FieldOption[]
   onChange: (value: string | boolean) => void
 }) {
   if (field.type === "checkbox") {
@@ -205,7 +235,7 @@ function PresetField({
           onChange={(event) => onChange(event.target.value)}
           className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-slate-900 outline-none transition focus:border-yellow-400 focus:ring-2 focus:ring-yellow-200"
         >
-          {(field.options ?? []).map((option) => (
+          {(optionsOverride ?? field.options ?? []).map((option) => (
             <option key={option.value} value={option.value}>
               {option.label}
             </option>
