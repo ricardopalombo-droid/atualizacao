@@ -38,6 +38,8 @@ export type ClientRecordListItem = {
 export type ClientDefaultsRecord = {
   id: string
   name: string
+  email: string | null
+  cnpj: string | null
   contmatic_nickname: string | null
   employee_defaults: Record<string, string | boolean | number | null>
 }
@@ -324,7 +326,7 @@ export async function getClientDefaultsForClientUser(
   const supabase = getSupabaseServerClient()
   let query = supabase
     .from("clients")
-    .select("id, name, contmatic_nickname, employee_defaults, subscriber_id")
+    .select("id, name, email, cnpj, contmatic_nickname, employee_defaults, subscriber_id")
     .eq("id", clientId)
 
   if (subscriberId) {
@@ -344,7 +346,80 @@ export async function getClientDefaultsForClientUser(
   return {
     id: data.id,
     name: data.name,
+    email: data.email ?? null,
+    cnpj: data.cnpj ?? null,
     contmatic_nickname: data.contmatic_nickname,
+    employee_defaults: normalizeEmployeeDefaults(
+      clientEmployeeDefaultsSchema.parse(data.employee_defaults ?? {})
+    ),
+  }
+}
+
+export async function getClientRecordById(subscriberId: string, clientId: string): Promise<ClientRecordListItem | null> {
+  const supabase = getSupabaseServerClient()
+  const { data, error } = await supabase
+    .from("clients")
+    .select("id, name, email, cnpj, contmatic_nickname, employee_defaults, max_employees, created_at, updated_at")
+    .eq("subscriber_id", subscriberId)
+    .eq("id", clientId)
+    .maybeSingle()
+
+  if (error) {
+    throw error
+  }
+
+  if (!data) {
+    return null
+  }
+
+  const { data: user, error: userError } = await supabase
+    .from("app_users")
+    .select("email, full_name")
+    .eq("client_id", clientId)
+    .eq("role", "client_user")
+    .maybeSingle()
+
+  if (userError) {
+    throw userError
+  }
+
+  return {
+    ...data,
+    employee_defaults: normalizeEmployeeDefaults(
+      clientEmployeeDefaultsSchema.parse(data.employee_defaults ?? {})
+    ),
+    access_email: user?.email ?? null,
+    contact_name: user?.full_name ?? null,
+  }
+}
+
+export async function updateClientEmployeeDefaults(
+  subscriberId: string,
+  clientId: string,
+  employeeDefaults: Record<string, string | boolean | number | null>
+) {
+  const supabase = getSupabaseServerClient()
+
+  const { data, error } = await supabase
+    .from("clients")
+    .update({
+      employee_defaults: normalizeEmployeeDefaults(clientEmployeeDefaultsSchema.parse(employeeDefaults)),
+    })
+    .eq("subscriber_id", subscriberId)
+    .eq("id", clientId)
+    .select("id, name, email, cnpj, contmatic_nickname, employee_defaults, max_employees, created_at, updated_at")
+    .maybeSingle()
+
+  if (error) {
+    throw error
+  }
+
+  if (!data) {
+    throw new Error("Cliente nao encontrado.")
+  }
+
+  return {
+    ...data,
     employee_defaults: normalizeEmployeeDefaults(
       clientEmployeeDefaultsSchema.parse(data.employee_defaults ?? {})
     ),

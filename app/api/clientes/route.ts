@@ -2,9 +2,11 @@ import { z } from "zod"
 import {
   clientPayloadSchema,
   createClientRecord,
+  getClientRecordById,
   deleteClientRecord,
   getClientDefaultsForClientUser,
   listClientRecords,
+  updateClientEmployeeDefaults,
   updateClientRecord,
 } from "@/lib/client-repository"
 import { getCurrentSession } from "@/lib/auth-session"
@@ -26,6 +28,11 @@ const deleteClientPayloadSchema = z.object({
   id: z.string().uuid(),
 })
 
+const updateDefaultsPayloadSchema = z.object({
+  id: z.string().uuid(),
+  employeeDefaults: z.record(z.string(), z.union([z.string(), z.boolean(), z.number(), z.null()])).default({}),
+})
+
 export async function GET(request: Request) {
   try {
     const session = await getCurrentSession()
@@ -36,6 +43,7 @@ export async function GET(request: Request) {
 
     const url = new URL(request.url)
     const currentClientDefaults = url.searchParams.get("current") === "1"
+    const clientId = url.searchParams.get("id")
 
     if (currentClientDefaults) {
       if (session.role !== "client_user" || !session.clientId) {
@@ -43,6 +51,19 @@ export async function GET(request: Request) {
       }
 
       const record = await getClientDefaultsForClientUser(session.clientId, session.subscriberId)
+
+      return Response.json({
+        ok: true,
+        record,
+      })
+    }
+
+    if (clientId) {
+      if (session.role !== "subscriber_admin" || !session.subscriberId) {
+        return Response.json({ ok: false, error: "Somente o assinante pode consultar este cliente." }, { status: 403 })
+      }
+
+      const record = await getClientRecordById(session.subscriberId, clientId)
 
       return Response.json({
         ok: true,
@@ -146,6 +167,38 @@ export async function PUT(request: Request) {
       {
         ok: false,
         error: error instanceof Error ? error.message : "Erro ao editar cliente",
+      },
+      { status: 500 }
+    )
+  }
+}
+
+export async function PATCH(request: Request) {
+  try {
+    const session = await getCurrentSession()
+
+    if (!session) {
+      return Response.json({ ok: false, error: "Nao autenticado." }, { status: 401 })
+    }
+
+    if (session.role !== "subscriber_admin" || !session.subscriberId) {
+      return Response.json({ ok: false, error: "Somente o assinante pode alterar os padroes do cliente." }, { status: 403 })
+    }
+
+    const payload = updateDefaultsPayloadSchema.parse(await request.json())
+    const record = await updateClientEmployeeDefaults(session.subscriberId, payload.id, payload.employeeDefaults)
+
+    return Response.json({
+      ok: true,
+      record,
+    })
+  } catch (error) {
+    console.error(error)
+
+    return Response.json(
+      {
+        ok: false,
+        error: error instanceof Error ? error.message : "Erro ao salvar padroes do cliente",
       },
       { status: 500 }
     )
