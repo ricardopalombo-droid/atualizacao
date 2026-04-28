@@ -42,6 +42,38 @@ export type RequiredExportField = {
 
 export const dynamicReferenceFieldKeys = ["cargo", "horario", "sindicato"] as const
 
+export const clientPresetFieldKeys = [
+  "indicativo_admissao",
+  "sindicato",
+  "tipo_tributacao_sindical",
+  "categoria_normativa",
+  "tipo_contrato",
+  "caged",
+  "percepcao_seguro_desemprego",
+  "forma_pagamento",
+  "tipo_pagamento",
+  "cargo",
+  "regime_jornada",
+  "grau_risco",
+  "codigo_admissao",
+  "horas_semanais",
+  "horas_mensais",
+  "horario",
+  "vinculo_empregaticio",
+  "local",
+  "departamento",
+  "setor",
+  "secao",
+  "registro_funcionario",
+  "folha_ficha",
+  "chapa",
+  "banco",
+  "agencia",
+  "tipo_conta",
+  "numero_conta",
+  "antecipar_indenizacao_fgts",
+] as const
+
 function buildOptions(values: readonly string[]): FieldOption[] {
   return [{ label: "Selecione", value: "" }, ...values.map((value) => ({ label: value, value }))]
 }

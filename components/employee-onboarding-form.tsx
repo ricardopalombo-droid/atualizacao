@@ -288,6 +288,49 @@ export function EmployeeOnboardingForm({
   const missingRequiredFields = useMemo(() => getMissingRequiredFields(formData), [formData])
 
   useEffect(() => {
+    if (variant !== "client" || editRecordId || publicToken) {
+      return
+    }
+
+    let isMounted = true
+
+    async function loadClientDefaults() {
+      try {
+        const response = await fetch("/api/clientes?current=1", {
+          method: "GET",
+          cache: "no-store",
+        })
+
+        const result = (await response.json()) as {
+          ok: boolean
+          record?: {
+            employee_defaults?: Record<string, string | boolean | number | null>
+          } | null
+          error?: string
+        }
+
+        if (!response.ok || !result.ok || !result.record?.employee_defaults || !isMounted) {
+          return
+        }
+
+        setFormData((previous) => ({
+          ...previous,
+          ...result.record!.employee_defaults,
+        }))
+        setStatusMessage("Os padroes contabeis da empresa ja foram aplicados neste novo cadastro.")
+      } catch {
+        // Mantem o fluxo atual se a leitura dos padroes falhar.
+      }
+    }
+
+    void loadClientDefaults()
+
+    return () => {
+      isMounted = false
+    }
+  }, [editRecordId, publicToken, variant])
+
+  useEffect(() => {
     const recalculatedExperienceFields = buildExperienceFields(
       formData.data_admissao,
       formData.experiencia_qtde_dias,

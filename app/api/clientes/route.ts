@@ -3,6 +3,7 @@ import {
   clientPayloadSchema,
   createClientRecord,
   deleteClientRecord,
+  getClientDefaultsForClientUser,
   listClientRecords,
   updateClientRecord,
 } from "@/lib/client-repository"
@@ -11,25 +12,42 @@ import { getCurrentSession } from "@/lib/auth-session"
 const updateClientPayloadSchema = z.object({
   id: z.string().uuid(),
   name: z.string().trim().min(2, "Informe o nome do cliente."),
-  email: z.string().trim().email("Informe um e-mail válido.").optional().or(z.literal("")),
+  email: z.string().trim().email("Informe um e-mail valido.").optional().or(z.literal("")),
   cnpj: z.string().trim().optional().or(z.literal("")),
   contmaticNickname: z.string().trim().optional().or(z.literal("")),
   maxEmployees: z.coerce.number().int().positive().max(100000).optional(),
-  contactName: z.string().trim().min(2, "Informe o nome do responsável."),
-  accessEmail: z.string().trim().email("Informe um e-mail de acesso válido."),
+  contactName: z.string().trim().min(2, "Informe o nome do responsavel."),
+  accessEmail: z.string().trim().email("Informe um e-mail de acesso valido."),
   temporaryPassword: z.string().optional().or(z.literal("")),
+  employeeDefaults: z.record(z.string(), z.union([z.string(), z.boolean(), z.number(), z.null()])).default({}),
 })
 
 const deleteClientPayloadSchema = z.object({
   id: z.string().uuid(),
 })
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
     const session = await getCurrentSession()
 
     if (!session) {
-      return Response.json({ ok: false, error: "Não autenticado." }, { status: 401 })
+      return Response.json({ ok: false, error: "Nao autenticado." }, { status: 401 })
+    }
+
+    const url = new URL(request.url)
+    const currentClientDefaults = url.searchParams.get("current") === "1"
+
+    if (currentClientDefaults) {
+      if (session.role !== "client_user" || !session.clientId) {
+        return Response.json({ ok: false, error: "Somente o cliente pode consultar os proprios padroes." }, { status: 403 })
+      }
+
+      const record = await getClientDefaultsForClientUser(session.clientId, session.subscriberId)
+
+      return Response.json({
+        ok: true,
+        record,
+      })
     }
 
     if (session.role !== "subscriber_admin") {
@@ -64,7 +82,7 @@ export async function POST(request: Request) {
     const session = await getCurrentSession()
 
     if (!session) {
-      return Response.json({ ok: false, error: "Não autenticado." }, { status: 401 })
+      return Response.json({ ok: false, error: "Nao autenticado." }, { status: 401 })
     }
 
     if (session.role !== "subscriber_admin") {
@@ -102,7 +120,7 @@ export async function PUT(request: Request) {
     const session = await getCurrentSession()
 
     if (!session) {
-      return Response.json({ ok: false, error: "Não autenticado." }, { status: 401 })
+      return Response.json({ ok: false, error: "Nao autenticado." }, { status: 401 })
     }
 
     if (session.role !== "subscriber_admin") {
@@ -139,7 +157,7 @@ export async function DELETE(request: Request) {
     const session = await getCurrentSession()
 
     if (!session) {
-      return Response.json({ ok: false, error: "Não autenticado." }, { status: 401 })
+      return Response.json({ ok: false, error: "Nao autenticado." }, { status: 401 })
     }
 
     if (session.role !== "subscriber_admin") {

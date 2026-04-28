@@ -1,7 +1,8 @@
 "use client"
 
-import { useEffect, useState } from "react"
-import { Building2, Pencil, Plus, Trash2, Users } from "lucide-react"
+import { useEffect, useMemo, useState } from "react"
+import { Building2, Pencil, Plus, Settings2, Trash2, Users } from "lucide-react"
+import { clientPresetFieldKeys, dynamicReferenceFieldKeys, formSections, type FieldOption } from "@/lib/employee-form-config"
 
 type ClientRecord = {
   id: string
@@ -9,6 +10,7 @@ type ClientRecord = {
   email: string | null
   cnpj: string | null
   contmatic_nickname: string | null
+  employee_defaults: Record<string, string | boolean | number | null>
   max_employees: number | null
   access_email: string | null
   contact_name: string | null
@@ -25,7 +27,47 @@ type FormState = {
   contactName: string
   accessEmail: string
   temporaryPassword: string
+  employeeDefaults: Record<string, string | boolean>
 }
+
+type PresetFieldMeta = {
+  key: string
+  label: string
+  type: "text" | "number" | "select" | "checkbox"
+  options?: FieldOption[]
+  placeholder?: string
+  isDynamicCode?: boolean
+}
+
+const clientPresetFieldMeta = formSections
+  .flatMap((section) => section.fields)
+  .filter((field) => clientPresetFieldKeys.includes(field.key as (typeof clientPresetFieldKeys)[number]))
+  .map((field) => ({
+    key: field.key,
+    label:
+      dynamicReferenceFieldKeys.includes(field.key as (typeof dynamicReferenceFieldKeys)[number])
+        ? `${field.label} padrao (codigo)`
+        : field.label,
+    type:
+      field.type === "checkbox"
+        ? "checkbox"
+        : field.type === "select"
+          ? "select"
+          : field.type === "number"
+            ? "number"
+            : "text",
+    options: field.options,
+    placeholder:
+      dynamicReferenceFieldKeys.includes(field.key as (typeof dynamicReferenceFieldKeys)[number])
+        ? `Informe o codigo padrao de ${field.label.toLowerCase()}`
+        : field.placeholder,
+    isDynamicCode: dynamicReferenceFieldKeys.includes(field.key as (typeof dynamicReferenceFieldKeys)[number]),
+  })) as PresetFieldMeta[]
+
+const initialEmployeeDefaults = clientPresetFieldMeta.reduce<Record<string, string | boolean>>((accumulator, field) => {
+  accumulator[field.key] = field.type === "checkbox" ? false : ""
+  return accumulator
+}, {})
 
 const initialForm: FormState = {
   id: null,
@@ -37,15 +79,20 @@ const initialForm: FormState = {
   contactName: "",
   accessEmail: "",
   temporaryPassword: "",
+  employeeDefaults: initialEmployeeDefaults,
 }
 
 export function ClientManagement() {
   const [form, setForm] = useState<FormState>(initialForm)
   const [clients, setClients] = useState<ClientRecord[]>([])
-  const [statusMessage, setStatusMessage] = useState("Cadastre os clientes que ficarao abaixo do assinante.")
+  const [statusMessage, setStatusMessage] = useState("Cadastre os clientes e defina os padroes contabeis de cada empresa.")
   const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
   const [isDeletingId, setIsDeletingId] = useState<string | null>(null)
+
+  const highlightedPresetLabels = useMemo(() => {
+    return clientPresetFieldMeta.slice(0, 8).map((field) => field.label)
+  }, [])
 
   useEffect(() => {
     void loadClients()
@@ -86,7 +133,19 @@ export function ClientManagement() {
     }))
   }
 
+  function updateEmployeeDefault(key: string, value: string | boolean) {
+    setForm((previous) => ({
+      ...previous,
+      employeeDefaults: {
+        ...previous.employeeDefaults,
+        [key]: value,
+      },
+    }))
+  }
+
   function startEditing(client: ClientRecord) {
+    const normalizedDefaults = { ...initialEmployeeDefaults, ...client.employee_defaults }
+
     setForm({
       id: client.id,
       name: client.name,
@@ -97,6 +156,7 @@ export function ClientManagement() {
       contactName: client.contact_name ?? "",
       accessEmail: client.access_email ?? "",
       temporaryPassword: "",
+      employeeDefaults: normalizedDefaults,
     })
     setStatusMessage(`Editando o cliente ${client.name}.`)
   }
@@ -170,6 +230,7 @@ export function ClientManagement() {
           contactName: form.contactName,
           accessEmail: form.accessEmail,
           temporaryPassword: form.temporaryPassword,
+          employeeDefaults: form.employeeDefaults,
         }),
       })
 
@@ -204,7 +265,7 @@ export function ClientManagement() {
 
   return (
     <div className="space-y-6">
-      <section className="grid gap-6 xl:grid-cols-[1.1fr_1.3fr]">
+      <section className="grid gap-6 xl:grid-cols-[1.15fr_1.25fr]">
         <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
           <div className="flex items-start gap-3">
             <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-yellow-100 text-yellow-700">
@@ -213,7 +274,7 @@ export function ClientManagement() {
             <div>
               <h2 className="text-2xl font-bold text-slate-900">Cadastro de clientes do assinante</h2>
               <p className="mt-2 leading-7 text-slate-600">
-                Esta area pertence ao assinante para organizar a propria carteira de empresas, acessos e limites operacionais.
+                Esta area pertence ao assinante para organizar a carteira de empresas, acessos e padroes contabeis que podem ser reaproveitados em novos cadastros.
               </p>
             </div>
           </div>
@@ -227,6 +288,35 @@ export function ClientManagement() {
             <Field label="E-mail de acesso do cliente" type="email" value={form.accessEmail} onChange={(value) => updateField("accessEmail", value)} placeholder="login@cliente.com.br" />
             <Field label={form.id ? "Nova senha do cliente (opcional)" : "Senha provisoria"} type="password" value={form.temporaryPassword} onChange={(value) => updateField("temporaryPassword", value)} placeholder={form.id ? "Preencha apenas se quiser trocar" : "Defina uma senha inicial"} />
             <Field label="Limite de funcionarios" type="number" value={form.maxEmployees} onChange={(value) => updateField("maxEmployees", value)} placeholder="200" />
+
+            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+              <div className="flex items-start gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-white text-slate-700 shadow-sm">
+                  <Settings2 size={18} />
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-slate-900">Padroes contabeis do cliente</h3>
+                  <p className="mt-1 text-sm leading-6 text-slate-600">
+                    Esses valores entram automaticamente nos campos internos quando a empresa iniciar um novo cadastro de funcionario. A empresa ainda pode revisar, complementar ou alterar depois.
+                  </p>
+                </div>
+              </div>
+
+              <div className="mt-4 rounded-2xl bg-white p-4 text-sm text-slate-600">
+                Campos mais usados nesse pre-preenchimento: {highlightedPresetLabels.join(", ")}.
+              </div>
+
+              <div className="mt-4 grid gap-4 md:grid-cols-2">
+                {clientPresetFieldMeta.map((field) => (
+                  <PresetField
+                    key={field.key}
+                    field={field}
+                    value={form.employeeDefaults[field.key]}
+                    onChange={(value) => updateEmployeeDefault(field.key, value)}
+                  />
+                ))}
+              </div>
+            </div>
 
             <div className="flex flex-wrap items-center gap-3 pt-2">
               <button
@@ -283,6 +373,7 @@ export function ClientManagement() {
                     <th className="px-4 py-3">Login do cliente</th>
                     <th className="px-4 py-3">CNPJ</th>
                     <th className="px-4 py-3">Limite</th>
+                    <th className="px-4 py-3">Padroes</th>
                     <th className="px-4 py-3">Atualizado</th>
                     <th className="px-4 py-3">Acao</th>
                   </tr>
@@ -298,6 +389,7 @@ export function ClientManagement() {
                       <td className="px-4 py-3">{client.access_email || client.email || "Sem e-mail"}</td>
                       <td className="px-4 py-3">{client.cnpj || "Sem CNPJ"}</td>
                       <td className="px-4 py-3">{client.max_employees ?? "Nao definido"}</td>
+                      <td className="px-4 py-3">{countFilledDefaults(client.employee_defaults)} campo(s)</td>
                       <td className="px-4 py-3">{formatDateTime(client.updated_at)}</td>
                       <td className="px-4 py-3">
                         <div className="flex flex-wrap gap-2">
@@ -332,6 +424,62 @@ export function ClientManagement() {
   )
 }
 
+function PresetField({
+  field,
+  value,
+  onChange,
+}: {
+  field: PresetFieldMeta
+  value: string | boolean | undefined
+  onChange: (value: string | boolean) => void
+}) {
+  if (field.type === "checkbox") {
+    return (
+      <label className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-4 text-sm font-medium text-slate-700">
+        <input
+          type="checkbox"
+          checked={Boolean(value)}
+          onChange={(event) => onChange(event.target.checked)}
+          className="h-4 w-4 rounded border-slate-300 text-yellow-500 focus:ring-yellow-400"
+        />
+        <span>{field.label}</span>
+      </label>
+    )
+  }
+
+  if (field.type === "select") {
+    return (
+      <div>
+        <label className="mb-2 block text-sm font-semibold text-slate-700">{field.label}</label>
+        <select
+          value={String(value ?? "")}
+          onChange={(event) => onChange(event.target.value)}
+          className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-slate-900 outline-none transition focus:border-yellow-400 focus:ring-2 focus:ring-yellow-200"
+        >
+          {(field.options ?? []).map((option) => (
+            <option key={option.value} value={option.value}>
+              {option.label}
+            </option>
+          ))}
+        </select>
+      </div>
+    )
+  }
+
+  return (
+    <div>
+      <label className="mb-2 block text-sm font-semibold text-slate-700">{field.label}</label>
+      <input
+        type={field.type}
+        value={String(value ?? "")}
+        onChange={(event) => onChange(event.target.value)}
+        placeholder={field.placeholder}
+        className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-slate-900 outline-none transition focus:border-yellow-400 focus:ring-2 focus:ring-yellow-200"
+      />
+    </div>
+  )
+}
+
 function Field({
   label,
   value,
@@ -357,6 +505,20 @@ function Field({
       />
     </div>
   )
+}
+
+function countFilledDefaults(defaults: Record<string, string | boolean | number | null>) {
+  return Object.values(defaults).filter((value) => {
+    if (typeof value === "boolean") {
+      return value
+    }
+
+    if (typeof value === "number") {
+      return true
+    }
+
+    return typeof value === "string" && value.trim().length > 0
+  }).length
 }
 
 function formatDateTime(value: string) {
