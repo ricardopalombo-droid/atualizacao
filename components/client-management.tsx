@@ -211,8 +211,7 @@ export function ClientManagement() {
 
   return (
     <div className="space-y-6">
-      <section className="grid gap-6 xl:grid-cols-[0.95fr_1.35fr]">
-        <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+      <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
           <div className="flex items-start gap-3">
             <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-yellow-100 text-yellow-700">
               <Building2 size={22} />
@@ -226,14 +225,16 @@ export function ClientManagement() {
           </div>
 
           <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
-            <Field label="Nome do cliente" value={form.name} onChange={(value) => updateField("name", value)} placeholder="Ex.: Clinica Exemplo Ltda" />
-            <Field label="E-mail principal" type="email" value={form.email} onChange={(value) => updateField("email", value)} placeholder="contato@cliente.com.br" />
-            <Field label="CNPJ" value={form.cnpj} onChange={(value) => updateField("cnpj", value)} placeholder="00.000.000/0001-00" />
-            <Field label="Apelido Contmatic" value={form.contmaticNickname} onChange={(value) => updateField("contmaticNickname", value)} placeholder="Ex.: SOFTMATIC" />
-            <Field label="Responsavel pelo cliente" value={form.contactName} onChange={(value) => updateField("contactName", value)} placeholder="Ex.: Maria Oliveira" />
-            <Field label="E-mail de acesso do cliente" type="email" value={form.accessEmail} onChange={(value) => updateField("accessEmail", value)} placeholder="login@cliente.com.br" />
-            <Field label={form.id ? "Nova senha do cliente (opcional)" : "Senha provisoria"} type="password" value={form.temporaryPassword} onChange={(value) => updateField("temporaryPassword", value)} placeholder={form.id ? "Preencha apenas se quiser trocar" : "Defina uma senha inicial"} />
-            <Field label="Limite de funcionarios" type="number" value={form.maxEmployees} onChange={(value) => updateField("maxEmployees", value)} placeholder="200" />
+            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+              <Field label="Nome do cliente" value={form.name} onChange={(value) => updateField("name", value)} placeholder="Ex.: Clinica Exemplo Ltda" />
+              <Field label="E-mail principal" type="email" value={form.email} onChange={(value) => updateField("email", value)} placeholder="contato@cliente.com.br" />
+              <Field label="CNPJ" value={form.cnpj} onChange={(value) => updateField("cnpj", value)} placeholder="00.000.000/0001-00" />
+              <Field label="Apelido Contmatic" value={form.contmaticNickname} onChange={(value) => updateField("contmaticNickname", value)} placeholder="Ex.: SOFTMATIC" />
+              <Field label="Responsavel pelo cliente" value={form.contactName} onChange={(value) => updateField("contactName", value)} placeholder="Ex.: Maria Oliveira" />
+              <Field label="E-mail de acesso do cliente" type="email" value={form.accessEmail} onChange={(value) => updateField("accessEmail", value)} placeholder="login@cliente.com.br" />
+              <Field label={form.id ? "Nova senha do cliente (opcional)" : "Senha provisoria"} type="password" value={form.temporaryPassword} onChange={(value) => updateField("temporaryPassword", value)} placeholder={form.id ? "Preencha apenas se quiser trocar" : "Defina uma senha inicial"} />
+              <Field label="Limite de funcionarios" type="number" value={form.maxEmployees} onChange={(value) => updateField("maxEmployees", value)} placeholder="200" />
+            </div>
 
             <div className="flex flex-wrap items-center gap-3 pt-2">
               <button
@@ -256,9 +257,9 @@ export function ClientManagement() {
               <p className="text-sm text-slate-600">{statusMessage}</p>
             </div>
           </form>
-        </div>
+      </section>
 
-        <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+      <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
           <div className="flex items-end justify-between gap-4">
             <div>
               <h2 className="text-2xl font-bold text-slate-900">Clientes cadastrados</h2>
@@ -282,7 +283,8 @@ export function ClientManagement() {
             </div>
           ) : (
             <div className="mt-6 overflow-hidden rounded-2xl border border-slate-200">
-              <table className="min-w-full divide-y divide-slate-200">
+              <div className="overflow-x-auto">
+              <table className="min-w-[1100px] divide-y divide-slate-200">
                 <thead className="bg-slate-50">
                   <tr className="text-left text-sm font-semibold text-slate-700">
                     <th className="px-4 py-3">Cliente</th>
@@ -340,9 +342,9 @@ export function ClientManagement() {
                   ))}
                 </tbody>
               </table>
+              </div>
             </div>
           )}
-        </section>
       </section>
     </div>
   )
