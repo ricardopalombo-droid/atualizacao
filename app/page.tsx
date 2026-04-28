@@ -1,6 +1,6 @@
 import Image from "next/image"
 import Link from "next/link"
-import { ArrowRight, Cog, ShieldCheck, Zap } from "lucide-react"
+import { ArrowRight, CheckCircle2, ClipboardList, Cog, ShieldCheck, Target, UsersRound, Zap } from "lucide-react"
 import { PRODUTOS } from "@/lib/produtos"
 
 const beneficios = [
@@ -64,38 +64,52 @@ export default function HomePage() {
 
       <section className="border-b border-slate-200 bg-gradient-to-b from-white via-slate-50 to-slate-100">
         <div className="mx-auto max-w-6xl px-6 py-16 lg:py-20">
-          <div className="grid gap-8 lg:grid-cols-[1.05fr_0.95fr]">
-            <div className="rounded-[2rem] border border-slate-200 bg-white p-10 shadow-[0_24px_70px_-40px_rgba(15,23,42,0.35)]">
-              <span className="inline-flex rounded-full bg-slate-100 px-5 py-2 text-sm font-semibold text-slate-700">
-              Automacao personalizada
-              </span>
+          <div className="grid items-stretch gap-6 lg:grid-cols-[1.08fr_0.92fr]">
+            <div className="rounded-[1.75rem] border border-slate-200 bg-white p-8 shadow-[0_20px_60px_-42px_rgba(15,23,42,0.35)]">
+              <div className="flex items-start gap-4">
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-yellow-100 text-yellow-700">
+                  <UsersRound size={22} />
+                </div>
+                <div>
+                  <h1 className="text-2xl font-bold leading-tight text-slate-900 md:text-3xl">
+                    Solucoes criadas para a realidade do seu escritorio
+                  </h1>
+                  <p className="mt-2 max-w-xl text-sm leading-7 text-slate-500">
+                    Automacoes pensadas para a rotina de escritorios contabeis, com
+                    menos retrabalho e mais consistencia operacional.
+                  </p>
+                </div>
+              </div>
 
-              <h1 className="mt-6 text-4xl font-bold leading-tight text-slate-900 md:text-5xl">
-                Solucoes criadas para a realidade do seu escritorio
-              </h1>
+              <div className="mt-8 space-y-5">
+                <div className="flex items-start gap-3">
+                  <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-yellow-500" />
+                  <p className="text-sm leading-7 text-slate-600">
+                    Trabalhamos com personalizacoes sob medida nos sistemas da linha
+                    Contmatic, adaptando as automacoes conforme a necessidade de cada
+                    cliente. Isso inclui desde rotinas especificas ate processos mais
+                    complexos dentro dos sistemas.
+                  </p>
+                </div>
 
-              <div className="mt-8 space-y-6 text-lg leading-8 text-slate-600">
-                <p>
-                  Na PalSys, desenvolvemos solucoes de automacao pensadas especialmente
-                  para a rotina de escritorios contabeis. Nosso objetivo e facilitar
-                  tarefas repetitivas, reduzir erros e ganhar tempo no dia a dia.
-                </p>
-                <p>
-                  Trabalhamos com personalizacoes sob medida nos sistemas da linha
-                  Contmatic, adaptando as automacoes conforme a necessidade de cada
-                  cliente. Isso inclui desde rotinas especificas ate processos mais
-                  complexos dentro dos sistemas.
-                </p>
-                <p>
-                  Tambem realizamos alteracoes e cadastros em massa, agilizando
-                  atividades que normalmente levariam horas para serem feitas
-                  manualmente. Com isso, sua equipe pode focar no que realmente
-                  importa: analise, atendimento e crescimento do negocio.
-                </p>
-                <p>
-                  Se voce busca mais produtividade, padronizacao e seguranca nos
-                  processos, a PalSys pode criar a solucao ideal para o seu escritorio.
-                </p>
+                <div className="flex items-start gap-3">
+                  <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-yellow-500" />
+                  <p className="text-sm leading-7 text-slate-600">
+                    Tambem realizamos alteracoes e cadastros em massa, agilizando
+                    atividades que normalmente levariam horas para serem feitas
+                    manualmente. Com isso, sua equipe pode focar no que realmente
+                    importa: analise, atendimento e crescimento do negocio.
+                  </p>
+                </div>
+
+                <div className="flex items-start gap-3">
+                  <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-yellow-500" />
+                  <p className="text-sm leading-7 text-slate-600">
+                    Se voce busca mais produtividade, padronizacao e seguranca nos
+                    processos, a PalSys pode criar a solucao ideal para o seu
+                    escritorio.
+                  </p>
+                </div>
               </div>
 
               <div className="mt-8 flex flex-col gap-4 sm:flex-row">
@@ -115,42 +129,49 @@ export default function HomePage() {
               </div>
             </div>
 
-            <div className="rounded-[2rem] bg-slate-900 p-8 text-white shadow-[0_24px_70px_-40px_rgba(15,23,42,0.65)]">
-              <h2 className="text-3xl font-bold leading-tight md:text-4xl">
+            <div className="rounded-[1.75rem] bg-slate-900 p-8 text-white shadow-[0_20px_60px_-42px_rgba(15,23,42,0.65)]">
+              <h2 className="text-2xl font-bold leading-tight md:text-3xl">
                 Como a PalSys ajuda no dia a dia
               </h2>
 
-              <div className="mt-8 space-y-4">
-                <div className="rounded-2xl border border-white/10 bg-white/5 p-6">
-                  <strong className="text-xl">Rotinas sob medida</strong>
-                  <p className="mt-3 leading-7 text-slate-300">
-                    Automatizamos tarefas conforme a realidade operacional do
-                    escritorio e dos clientes atendidos.
-                  </p>
+              <div className="mt-7 space-y-4">
+                <div className="flex items-start gap-4 rounded-2xl border border-white/10 bg-white/5 p-5">
+                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-blue-500/15 text-blue-200">
+                    <Target size={20} />
+                  </div>
+                  <div>
+                    <strong className="text-lg">Rotinas sob medida</strong>
+                    <p className="mt-2 text-sm leading-7 text-slate-300">
+                      Automatizamos tarefas conforme a realidade operacional do
+                      escritorio e dos clientes atendidos.
+                    </p>
+                  </div>
                 </div>
 
-                <div className="rounded-2xl border border-white/10 bg-white/5 p-6">
-                  <strong className="text-xl">Alteracoes e cadastros em massa</strong>
-                  <p className="mt-3 leading-7 text-slate-300">
-                    Reduza horas de digitacao manual em processos repetitivos dentro
-                    dos sistemas contabeis.
-                  </p>
+                <div className="flex items-start gap-4 rounded-2xl border border-white/10 bg-white/5 p-5">
+                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-yellow-400/15 text-yellow-300">
+                    <ClipboardList size={20} />
+                  </div>
+                  <div>
+                    <strong className="text-lg">Alteracoes e cadastros em massa</strong>
+                    <p className="mt-2 text-sm leading-7 text-slate-300">
+                      Reduza horas de digitacao manual em processos repetitivos dentro
+                      dos sistemas contabeis.
+                    </p>
+                  </div>
                 </div>
 
-                <div className="rounded-2xl border border-white/10 bg-white/5 p-6">
-                  <strong className="text-xl">Padronizacao e seguranca</strong>
-                  <p className="mt-3 leading-7 text-slate-300">
-                    Mais consistencia nas entregas, menos retrabalho e menor risco de
-                    falhas humanas.
-                  </p>
-                </div>
-
-                <div className="rounded-2xl border border-white/10 bg-white/5 p-6">
-                  <strong className="text-xl">Mais tempo para a equipe</strong>
-                  <p className="mt-3 leading-7 text-slate-300">
-                    Sua equipe ganha folego para focar em analise, atendimento e
-                    crescimento do negocio.
-                  </p>
+                <div className="flex items-start gap-4 rounded-2xl border border-white/10 bg-white/5 p-5">
+                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-slate-200/15 text-slate-100">
+                    <ShieldCheck size={20} />
+                  </div>
+                  <div>
+                    <strong className="text-lg">Padronizacao e seguranca</strong>
+                    <p className="mt-2 text-sm leading-7 text-slate-300">
+                      Mais consistencia nas entregas, menos retrabalho e menor risco
+                      de falhas humanas.
+                    </p>
+                  </div>
                 </div>
               </div>
             </div>
