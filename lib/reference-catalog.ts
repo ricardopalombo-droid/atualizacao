@@ -1,7 +1,14 @@
 import { z } from "zod"
 import { getSupabaseServerClient } from "@/lib/supabase-server"
 
-export const referenceTypeSchema = z.enum(["cargo", "horario", "sindicato"])
+export const referenceTypeSchema = z.enum([
+  "cargo",
+  "horario",
+  "sindicato",
+  "departamento",
+  "setor",
+  "secao",
+])
 
 export type ReferenceType = z.infer<typeof referenceTypeSchema>
 
@@ -100,6 +107,79 @@ function parseHorarioLine(line: string) {
     code,
     label,
   } satisfies ParsedReferenceItem
+}
+
+function isSimpleCatalogNoise(line: string) {
+  return (
+    !line ||
+    /^c[oó]digo$/i.test(line) ||
+    /^c[oó]d\.$/i.test(line) ||
+    /^descri[cç][aã]o$/i.test(line) ||
+    /^listagem/i.test(line) ||
+    /^p[aá]g/i.test(line) ||
+    /^emitido em/i.test(line)
+  )
+}
+
+function parseSimpleCatalogText(text: string) {
+  const lines = text
+    .split(/\r?\n/)
+    .map((line) => normalizeWhitespace(line))
+    .filter(Boolean)
+
+  const items: ParsedReferenceItem[] = []
+
+  for (let index = 0; index < lines.length; index += 1) {
+    const line = lines[index] ?? ""
+
+    if (isSimpleCatalogNoise(line)) {
+      continue
+    }
+
+    const inlineMatch = line.match(/^(\d+)\s+(.+)$/)
+
+    if (inlineMatch) {
+      const code = inlineMatch[1]
+      const label = normalizeWhitespace(inlineMatch[2] ?? "")
+
+      if (label && !isSimpleCatalogNoise(label) && !/^\d+$/.test(label)) {
+        items.push({ code, label })
+        continue
+      }
+    }
+
+    if (!/^\d+$/.test(line)) {
+      continue
+    }
+
+    let cursor = index + 1
+    let label = ""
+
+    while (cursor < lines.length) {
+      const currentLine = lines[cursor] ?? ""
+
+      if (!currentLine || isSimpleCatalogNoise(currentLine)) {
+        cursor += 1
+        continue
+      }
+
+      if (/^\d+$/.test(currentLine)) {
+        break
+      }
+
+      label = currentLine
+      break
+    }
+
+    if (label) {
+      items.push({
+        code: line,
+        label: normalizeWhitespace(label),
+      })
+    }
+  }
+
+  return uniqueByCode(items)
 }
 
 function parseSindicatoText(text: string) {
@@ -431,6 +511,10 @@ export async function parseReferencePdf(buffer: Buffer, referenceType: Reference
       return parseHorarioText(text)
     case "sindicato":
       return parseSindicatoText(text)
+    case "departamento":
+    case "setor":
+    case "secao":
+      return parseSimpleCatalogText(text)
   }
 }
 
@@ -505,6 +589,9 @@ export async function getReferenceCatalogSummary(clientId: string) {
     cargo: [] as ReferenceCatalogItem[],
     horario: [] as ReferenceCatalogItem[],
     sindicato: [] as ReferenceCatalogItem[],
+    departamento: [] as ReferenceCatalogItem[],
+    setor: [] as ReferenceCatalogItem[],
+    secao: [] as ReferenceCatalogItem[],
   }
 
   for (const record of records) {

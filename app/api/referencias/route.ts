@@ -61,7 +61,7 @@ export async function POST(request: Request) {
 
     if (session.role !== "client_user") {
       return Response.json(
-        { ok: false, error: "Somente o cliente pode importar cargos, horarios e sindicatos." },
+        { ok: false, error: "Somente o cliente pode importar as bases de referencias da empresa." },
         { status: 403 }
       )
     }

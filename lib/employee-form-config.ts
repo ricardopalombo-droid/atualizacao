@@ -40,7 +40,14 @@ export type RequiredExportField = {
   label: string
 }
 
-export const dynamicReferenceFieldKeys = ["cargo", "horario", "sindicato"] as const
+export const dynamicReferenceFieldKeys = [
+  "cargo",
+  "horario",
+  "sindicato",
+  "departamento",
+  "setor",
+  "secao",
+] as const
 
 export const clientPresetFieldKeys = [
   "indicativo_admissao",
@@ -486,9 +493,9 @@ export const formSections: FormSection[] = [
     audience: "client",
     fields: [
       { key: "local", label: "Local", type: "text", audience: "client" },
-      { key: "departamento", label: "Departamento", type: "text", audience: "client" },
-      { key: "setor", label: "Setor", type: "text", audience: "client" },
-      { key: "secao", label: "Secao", type: "text", audience: "client" },
+      { key: "departamento", label: "Departamento", type: "select", audience: "client" },
+      { key: "setor", label: "Setor", type: "select", audience: "client" },
+      { key: "secao", label: "Secao", type: "select", audience: "client" },
       { key: "data_exame_medico", label: "Data exame medico", type: "date", audience: "client" },
       { key: "validade_exame_medico", label: "Validade exame medico (meses)", type: "number", audience: "client" },
       { key: "data_saida", label: "Data de saida", type: "date", audience: "client" },

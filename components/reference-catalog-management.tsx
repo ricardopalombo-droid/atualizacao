@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react"
 import { FileUp, Layers3 } from "lucide-react"
 
-type ReferenceType = "cargo" | "horario" | "sindicato"
+type ReferenceType = "cargo" | "horario" | "sindicato" | "departamento" | "setor" | "secao"
 
 type ReferenceRecord = {
   id: string
@@ -18,29 +18,43 @@ const referenceLabels: Record<ReferenceType, string> = {
   cargo: "Cargos",
   horario: "Horarios",
   sindicato: "Sindicatos",
+  departamento: "Departamentos",
+  setor: "Setores",
+  secao: "Secoes",
 }
 
 const helpByType: Record<ReferenceType, string> = {
   cargo: "Importe o PDF de cargos para alimentar o campo Cargo e reaproveitar o CBO do cadastro de origem.",
   horario: "Importe o PDF de horarios para transformar o campo Horario em lista selecionavel.",
   sindicato: "Importe o PDF de sindicatos para oferecer uma lista padronizada no cadastro contratual.",
+  departamento: "Importe o PDF de departamentos para oferecer uma lista padronizada por empresa.",
+  setor: "Importe o PDF de setores para oferecer uma lista padronizada por empresa.",
+  secao: "Importe o PDF de secoes para oferecer uma lista padronizada por empresa.",
 }
 
 const replaceWarningByType: Record<ReferenceType, string> = {
   cargo: "Esta importacao vai substituir toda a base atual de cargos desta empresa pelo conteudo do novo PDF.",
   horario: "Esta importacao vai substituir toda a base atual de horarios desta empresa pelo conteudo do novo PDF.",
   sindicato: "Esta importacao vai substituir toda a base atual de sindicatos desta empresa pelo conteudo do novo PDF.",
+  departamento: "Esta importacao vai substituir toda a base atual de departamentos desta empresa pelo conteudo do novo PDF.",
+  setor: "Esta importacao vai substituir toda a base atual de setores desta empresa pelo conteudo do novo PDF.",
+  secao: "Esta importacao vai substituir toda a base atual de secoes desta empresa pelo conteudo do novo PDF.",
 }
+
+const referenceTypes: ReferenceType[] = ["cargo", "horario", "sindicato", "departamento", "setor", "secao"]
 
 export function ReferenceCatalogManagement() {
   const [summary, setSummary] = useState<ReferenceSummary>({
     cargo: [],
     horario: [],
     sindicato: [],
+    departamento: [],
+    setor: [],
+    secao: [],
   })
   const [selectedFiles, setSelectedFiles] = useState<Partial<Record<ReferenceType, File | null>>>({})
   const [statusMessage, setStatusMessage] = useState(
-    "Importe os PDFs de cargos, horarios e sindicatos para alimentar as listas da sua empresa."
+    "Importe os PDFs das bases da sua empresa para alimentar as listas internas do cadastro."
   )
   const [isLoading, setIsLoading] = useState(true)
   const [isUploading, setIsUploading] = useState<ReferenceType | null>(null)
@@ -140,7 +154,7 @@ export function ReferenceCatalogManagement() {
   return (
     <section className="space-y-6">
       <div className="grid gap-6 xl:grid-cols-3">
-        {(["cargo", "horario", "sindicato"] as const).map((referenceType) => (
+        {referenceTypes.map((referenceType) => (
           <article
             key={referenceType}
             className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm"
@@ -196,7 +210,7 @@ export function ReferenceCatalogManagement() {
           </div>
           <div className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-4 py-2 text-sm font-semibold text-slate-700">
             <Layers3 size={16} />
-            {summary.cargo.length + summary.horario.length + summary.sindicato.length} registro(s) exibidos
+            {Object.values(summary).reduce((total, records) => total + records.length, 0)} registro(s) exibidos
           </div>
         </div>
 
@@ -208,7 +222,7 @@ export function ReferenceCatalogManagement() {
           </div>
         ) : (
           <div className="mt-6 grid gap-6 xl:grid-cols-3">
-            {(["cargo", "horario", "sindicato"] as const).map((referenceType) => (
+            {referenceTypes.map((referenceType) => (
               <div key={referenceType} className="rounded-2xl border border-slate-200">
                 <div className="border-b border-slate-200 bg-slate-50 px-4 py-3">
                   <strong className="text-slate-900">{referenceLabels[referenceType]}</strong>

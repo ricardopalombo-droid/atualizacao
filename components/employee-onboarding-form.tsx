@@ -44,7 +44,9 @@ type EmployeeOnboardingFormProps = {
   variant?: "client" | "employee"
   initialRecordId?: string | null
   publicToken?: string | null
-  lookupCatalog?: Partial<Record<"cargo" | "horario" | "sindicato", LookupRecord[]>>
+  lookupCatalog?: Partial<
+    Record<"cargo" | "horario" | "sindicato" | "departamento" | "setor" | "secao", LookupRecord[]>
+  >
 }
 
 type LookupRecord = {
@@ -274,6 +276,9 @@ export function EmployeeOnboardingForm({
       cargo: buildLookupOptions(lookupCatalog.cargo ?? []),
       horario: buildLookupOptions(lookupCatalog.horario ?? []),
       sindicato: buildLookupOptions(lookupCatalog.sindicato ?? []),
+      departamento: buildLookupOptions(lookupCatalog.departamento ?? []),
+      setor: buildLookupOptions(lookupCatalog.setor ?? []),
+      secao: buildLookupOptions(lookupCatalog.secao ?? []),
     }),
     [lookupCatalog]
   )
@@ -282,6 +287,9 @@ export function EmployeeOnboardingForm({
       cargo: new Map((lookupCatalog.cargo ?? []).map((record) => [record.code, record])),
       horario: new Map((lookupCatalog.horario ?? []).map((record) => [record.code, record])),
       sindicato: new Map((lookupCatalog.sindicato ?? []).map((record) => [record.code, record])),
+      departamento: new Map((lookupCatalog.departamento ?? []).map((record) => [record.code, record])),
+      setor: new Map((lookupCatalog.setor ?? []).map((record) => [record.code, record])),
+      secao: new Map((lookupCatalog.secao ?? []).map((record) => [record.code, record])),
     }),
     [lookupCatalog]
   )
@@ -437,7 +445,7 @@ export function EmployeeOnboardingForm({
 
   function updateField(key: string, value: string | boolean) {
     if (dynamicReferenceFieldKeys.includes(key as (typeof dynamicReferenceFieldKeys)[number]) && typeof value === "string") {
-      const typedKey = key as "cargo" | "horario" | "sindicato"
+      const typedKey = key as "cargo" | "horario" | "sindicato" | "departamento" | "setor" | "secao"
       const selectedRecord = lookupRecordByKey[typedKey].get(value)
 
       setFormData((previous) => ({
@@ -899,7 +907,21 @@ export function EmployeeOnboardingForm({
                   key={field.key}
                   field={field}
                   value={formData[field.key]}
-                  optionsOverride={lookupOptionsByKey[field.key as "cargo" | "horario" | "sindicato"]}
+                  optionsOverride={
+                    dynamicReferenceFieldKeys.includes(
+                      field.key as (typeof dynamicReferenceFieldKeys)[number]
+                    )
+                      ? lookupOptionsByKey[
+                          field.key as
+                            | "cargo"
+                            | "horario"
+                            | "sindicato"
+                            | "departamento"
+                            | "setor"
+                            | "secao"
+                        ]
+                      : undefined
+                  }
                   readOnly={
                     (variant === "employee" ? field.audience === "client" : false) ||
                     (field.key === "ctps_numero" && Boolean(formData.ctps_digital)) ||

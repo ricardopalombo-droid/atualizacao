@@ -13,7 +13,9 @@ type ClientDefaultsFormProps = {
     contmatic_nickname: string | null
     employee_defaults: Record<string, string | boolean | number | null>
   }
-  lookupCatalog?: Partial<Record<"cargo" | "horario" | "sindicato", LookupRecord[]>>
+  lookupCatalog?: Partial<
+    Record<"cargo" | "horario" | "sindicato" | "departamento" | "setor" | "secao", LookupRecord[]>
+  >
 }
 
 type LookupRecord = {
@@ -94,6 +96,9 @@ export function ClientDefaultsForm({ client, lookupCatalog = {} }: ClientDefault
       cargo: buildOptions(lookupCatalog?.cargo ?? []),
       horario: buildOptions(lookupCatalog?.horario ?? []),
       sindicato: buildOptions(lookupCatalog?.sindicato ?? []),
+      departamento: buildOptions(lookupCatalog?.departamento ?? []),
+      setor: buildOptions(lookupCatalog?.setor ?? []),
+      secao: buildOptions(lookupCatalog?.secao ?? []),
     }
   }, [lookupCatalog])
 
@@ -175,8 +180,12 @@ export function ClientDefaultsForm({ client, lookupCatalog = {} }: ClientDefault
                 field={field}
                 value={values[field.key]}
                 optionsOverride={
-                  field.key === "cargo" || field.key === "horario" || field.key === "sindicato"
-                    ? dynamicOptionsByKey[field.key]
+                  dynamicReferenceFieldKeys.includes(
+                    field.key as (typeof dynamicReferenceFieldKeys)[number]
+                  )
+                    ? dynamicOptionsByKey[
+                        field.key as "cargo" | "horario" | "sindicato" | "departamento" | "setor" | "secao"
+                      ]
                     : undefined
                 }
                 onChange={(value) => updateValue(field.key, value)}
