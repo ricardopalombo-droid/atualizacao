@@ -5,6 +5,7 @@ import { listEmployeeRecords } from "@/lib/cadastro-repository"
 import { workflowStatusLabels, type WorkflowStatus } from "@/lib/employee-form-config"
 import { LogoutButton } from "@/components/logout-button"
 import { getCurrentSession } from "@/lib/auth-session"
+import { getSiteAccessSummary } from "@/lib/site-analytics"
 
 export default async function PainelPage() {
   const session = await getCurrentSession()
@@ -20,6 +21,8 @@ export default async function PainelPage() {
           subscriberId: session.subscriberId,
           clientId: session.clientId,
         })
+
+  const accessSummary = session.role === "palsys_admin" ? await getSiteAccessSummary() : null
 
   const funcoes =
     session.role === "palsys_admin"
@@ -208,6 +211,74 @@ export default async function PainelPage() {
             )}
           </section>
         ) : null}
+
+        {session.role === "palsys_admin" && accessSummary ? (
+          <section className="mt-8 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+            <div className="flex flex-col gap-2">
+              <h2 className="text-2xl font-bold text-slate-900">Resumo de acessos ao site</h2>
+              <p className="text-slate-600">
+                Visão simples para acompanhar o volume de acessos e as páginas mais visitadas.
+              </p>
+            </div>
+
+            <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+              <article className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
+                <p className="text-sm font-semibold text-slate-500">Acessos hoje</p>
+                <p className="mt-2 text-3xl font-bold text-slate-900">{accessSummary.totalToday}</p>
+              </article>
+              <article className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
+                <p className="text-sm font-semibold text-slate-500">Últimos 7 dias</p>
+                <p className="mt-2 text-3xl font-bold text-slate-900">{accessSummary.total7Days}</p>
+              </article>
+              <article className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
+                <p className="text-sm font-semibold text-slate-500">Últimos 30 dias</p>
+                <p className="mt-2 text-3xl font-bold text-slate-900">{accessSummary.total30Days}</p>
+              </article>
+              <article className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
+                <p className="text-sm font-semibold text-slate-500">Visitantes únicos</p>
+                <p className="mt-2 text-3xl font-bold text-slate-900">{accessSummary.uniqueVisitors30Days}</p>
+              </article>
+            </div>
+
+            <div className="mt-8 grid gap-6 lg:grid-cols-2">
+              <article className="rounded-2xl border border-slate-200 p-5">
+                <h3 className="text-lg font-bold text-slate-900">Páginas mais acessadas</h3>
+                <div className="mt-4 space-y-3">
+                  {accessSummary.topPages.length === 0 ? (
+                    <p className="text-sm text-slate-500">Ainda não há acessos registrados.</p>
+                  ) : (
+                    accessSummary.topPages.map((item) => (
+                      <div key={item.pathname} className="flex items-center justify-between rounded-xl bg-slate-50 px-4 py-3">
+                        <span className="font-medium text-slate-700">{item.pathname}</span>
+                        <span className="rounded-full bg-yellow-100 px-3 py-1 text-xs font-bold text-yellow-800">
+                          {item.count}
+                        </span>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </article>
+
+              <article className="rounded-2xl border border-slate-200 p-5">
+                <h3 className="text-lg font-bold text-slate-900">Acessos por perfil</h3>
+                <div className="mt-4 space-y-3">
+                  {accessSummary.byRole.length === 0 ? (
+                    <p className="text-sm text-slate-500">Ainda não há acessos registrados.</p>
+                  ) : (
+                    accessSummary.byRole.map((item) => (
+                      <div key={item.role} className="flex items-center justify-between rounded-xl bg-slate-50 px-4 py-3">
+                        <span className="font-medium text-slate-700">{formatRoleLabel(item.role)}</span>
+                        <span className="rounded-full bg-slate-900 px-3 py-1 text-xs font-bold text-white">
+                          {item.count}
+                        </span>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </article>
+            </div>
+          </section>
+        ) : null}
       </section>
     </main>
   )
@@ -218,4 +289,11 @@ function formatDateTime(value: string) {
     dateStyle: "short",
     timeStyle: "short",
   }).format(new Date(value))
+}
+
+function formatRoleLabel(role: string) {
+  if (role === "palsys_admin") return "PalSys"
+  if (role === "subscriber_admin") return "Assinante"
+  if (role === "client_user") return "Cliente"
+  return "Visitante"
 }
