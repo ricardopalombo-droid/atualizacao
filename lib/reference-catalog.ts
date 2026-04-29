@@ -129,9 +129,23 @@ function parseSimpleCatalogText(text: string) {
     .filter(Boolean)
 
   const items: ParsedReferenceItem[] = []
+  let foundTableHeader = false
 
   for (let index = 0; index < lines.length; index += 1) {
     const line = lines[index] ?? ""
+
+    if (!foundTableHeader) {
+      const nextLine = lines[index + 1] ?? ""
+
+      if (
+        /c[oó]digo/i.test(line) && /descri[cç][aã]o/i.test(line) ||
+        (/^c[oó]digo$/i.test(line) && /descri[cç][aã]o/i.test(nextLine))
+      ) {
+        foundTableHeader = true
+      }
+
+      continue
+    }
 
     if (isSimpleCatalogNoise(line)) {
       continue
