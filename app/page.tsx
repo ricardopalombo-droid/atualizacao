@@ -1,6 +1,15 @@
 import Image from "next/image"
 import Link from "next/link"
-import { ArrowRight, CheckCircle2, ClipboardList, Cog, ShieldCheck, Target, UsersRound, Zap } from "lucide-react"
+import {
+  ArrowRight,
+  CheckCircle2,
+  ClipboardList,
+  Cog,
+  ShieldCheck,
+  Target,
+  UsersRound,
+  Zap,
+} from "lucide-react"
 import { PRODUTOS } from "@/lib/produtos"
 
 const beneficios = [
@@ -107,15 +116,13 @@ export default function HomePage() {
 
             <div className="relative flex items-center justify-center">
               <div className="absolute inset-x-10 inset-y-8 rounded-full bg-blue-100/60 blur-3xl" />
-              <div className="relative overflow-hidden rounded-[2rem] border border-slate-200 bg-white p-6 shadow-[0_20px_60px_-42px_rgba(15,23,42,0.35)]">
-                <div className="absolute -right-4 -top-4 h-20 w-20 rounded-full bg-yellow-300/70 blur-2xl" />
-                <div className="absolute -left-4 bottom-6 h-24 w-24 rounded-full bg-blue-200/80 blur-2xl" />
+              <div className="relative">
                 <Image
-                  src="/logo-palsys.png"
-                  alt="PalSys"
-                  width={520}
-                  height={260}
-                  className="relative h-auto w-full max-w-[30rem]"
+                  src="/comp.png"
+                  alt="PalSys automação contábil"
+                  width={640}
+                  height={380}
+                  className="h-auto w-full max-w-[34rem]"
                   priority
                 />
               </div>
@@ -129,9 +136,9 @@ export default function HomePage() {
                   <UsersRound size={22} />
                 </div>
                 <div>
-                  <h1 className="text-2xl font-bold leading-tight text-slate-900 md:text-3xl">
+                  <h2 className="text-2xl font-bold leading-tight text-slate-900 md:text-3xl">
                     Soluções criadas para a realidade do seu escritório
-                  </h1>
+                  </h2>
                   <p className="mt-2 max-w-xl text-sm leading-7 text-slate-500">
                     Automações pensadas para a rotina de escritórios contábeis, com
                     menos retrabalho e mais consistência operacional.
@@ -271,7 +278,7 @@ export default function HomePage() {
           <div className="max-w-2xl">
             <h2 className="text-3xl font-bold text-slate-900 md:text-4xl">Produtos</h2>
             <p className="mt-4 text-lg text-slate-600">
-            Escolha a automação ideal para a necessidade do seu escritório.
+              Escolha a automação ideal para a necessidade do seu escritório.
             </p>
           </div>
 
