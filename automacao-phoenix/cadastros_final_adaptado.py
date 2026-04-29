@@ -614,6 +614,55 @@ def duplo_clique_primeiro_item(x=None, y=None):
     dormir_controlado(0.5)
 
 
+def extrair_codigo_referencia(valor):
+    texto = limpar_texto(valor).strip()
+    if texto == "":
+        return ""
+
+    correspondencia = re.match(r"^([A-Za-z0-9]+)", texto)
+    if correspondencia:
+        return correspondencia.group(1)
+
+    return texto
+
+
+def preencher_campo_local_apos_deficiencia(codigo):
+    codigo_limpo = extrair_codigo_referencia(codigo)
+    if codigo_limpo == "":
+        pyautogui.press("tab")
+        dormir_controlado(0.25)
+        return
+
+    pyautogui.hotkey("ctrl", "enter")
+    dormir_controlado(0.25)
+    limpar_e_digitar(codigo_limpo, intervalo=0.05)
+    dormir_controlado(0.2)
+    pyautogui.press("enter")
+    dormir_controlado(0.35)
+    pyautogui.press("tab")
+    dormir_controlado(0.25)
+
+
+def preencher_campo_estrutura_apos_local(codigo):
+    codigo_limpo = extrair_codigo_referencia(codigo)
+    if codigo_limpo == "":
+        pyautogui.press("tab")
+        dormir_controlado(0.25)
+        return
+
+    pyautogui.hotkey("ctrl", "enter")
+    dormir_controlado(0.25)
+    pyautogui.press("tab")
+    dormir_controlado(0.2)
+    limpar_e_digitar(codigo_limpo, intervalo=0.05)
+    dormir_controlado(0.2)
+    pyautogui.hotkey("alt", "p")
+    dormir_controlado(0.8)
+    duplo_clique_primeiro_item(PRIMEIRO_ITEM_LISTA_X, PRIMEIRO_ITEM_LISTA_Y)
+    pyautogui.press("tab")
+    dormir_controlado(0.25)
+
+
 def separar_coluna_an(valor):
     texto = limpar_texto(valor)
 
@@ -1348,7 +1397,10 @@ def preencher_sistema(dados: dict, empresa_habilitada: str, empresa_rateio: str)
     col_i = formatar_data_sem_barras(dados["I"])
     col_j = limpar_texto(dados["J"])
     col_k = limpar_texto(dados["K"])
-    col_q_numerico = limpar_somente_numeros(dados["Q"])
+    col_q_numerico = extrair_codigo_referencia(dados["Q"])
+    col_r_numerico = extrair_codigo_referencia(dados["R"])
+    col_s_numerico = extrair_codigo_referencia(dados["S"])
+    col_t_numerico = extrair_codigo_referencia(dados["T"])
     col_y_numerico = primeiros_numeros(dados["Y"])
     col_aa_numerico = primeiros_numeros(dados["AA"])
     col_ab = formatar_valor_ab(dados["AB"])
@@ -1551,17 +1603,10 @@ def preencher_sistema(dados: dict, empresa_habilitada: str, empresa_rateio: str)
             preenche_cota=flag_preenche_cota_pcd,
         )
 
-    if empresa_rateio == "S":
-        pyautogui.hotkey("ctrl", "enter")
-        dormir_controlado(0.2)
-        escrever(col_q_numerico)
-        pyautogui.press("enter")
-        dormir_controlado(0.3)
-        pressionar_tab(4)   
-
-    if empresa_rateio == "N":
-        pressionar_tab(3)
-        dormir_controlado(0.3)
+    preencher_campo_local_apos_deficiencia(col_q_numerico)
+    preencher_campo_estrutura_apos_local(col_r_numerico)
+    preencher_campo_estrutura_apos_local(col_s_numerico)
+    preencher_campo_estrutura_apos_local(col_t_numerico)
 
     pyautogui.hotkey("ctrl", "enter")
     dormir_controlado(0.2)

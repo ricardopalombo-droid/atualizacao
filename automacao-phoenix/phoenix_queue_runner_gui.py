@@ -92,7 +92,6 @@ class PhoenixQueueRunnerApp:
         self.password_var = tk.StringVar()
         self.legacy_script_var = tk.StringVar(value="cadastros_final_adaptado.py")
         self.empresa_habilitada_var = tk.StringVar(value="N")
-        self.empresa_rateio_var = tk.StringVar(value="N")
         self.status_var = tk.StringVar(value="Preencha o login do escritorio e carregue a fila do Phoenix.")
         self.texto_licenca = tk.StringVar(
             value=f"Licenciado para: {getattr(self.cliente_licenca, 'customer_name', '')}"
@@ -315,9 +314,6 @@ class PhoenixQueueRunnerApp:
         ttk.Label(credentials, text="Empresa habilitada no eSocial").grid(row=2, column=0, sticky="w", pady=(12, 0))
         ttk.Combobox(credentials, textvariable=self.empresa_habilitada_var, values=["N", "S"], width=22, state="readonly").grid(row=3, column=0, sticky="w", padx=(0, 12))
 
-        ttk.Label(credentials, text="Empresa faz rateio").grid(row=2, column=1, sticky="w", pady=(12, 0))
-        ttk.Combobox(credentials, textvariable=self.empresa_rateio_var, values=["N", "S"], width=18, state="readonly").grid(row=3, column=1, sticky="w", padx=(0, 12))
-
         credentials.columnconfigure(0, weight=1)
         credentials.columnconfigure(1, weight=1)
         credentials.columnconfigure(2, weight=1)
@@ -362,7 +358,6 @@ class PhoenixQueueRunnerApp:
         self.email_var.set(str(data.get("email", "")))
         self.legacy_script_var.set(str(data.get("legacyScript", self.legacy_script_var.get())))
         self.empresa_habilitada_var.set(str(data.get("empresaHabilitada", self.empresa_habilitada_var.get())))
-        self.empresa_rateio_var.set(str(data.get("empresaRateio", self.empresa_rateio_var.get())))
 
     def save_settings(self):
         SETTINGS_PATH.write_text(
@@ -372,7 +367,6 @@ class PhoenixQueueRunnerApp:
                     "email": self.email_var.get().strip(),
                     "legacyScript": self.legacy_script_var.get().strip(),
                     "empresaHabilitada": self.empresa_habilitada_var.get().strip(),
-                    "empresaRateio": self.empresa_rateio_var.get().strip(),
                 },
                 ensure_ascii=False,
                 indent=2,
@@ -478,7 +472,7 @@ class PhoenixQueueRunnerApp:
                 employee_id=record["id"],
                 legacy_script=self.legacy_script_var.get().strip(),
                 empresa_habilitada=self.empresa_habilitada_var.get().strip() or "N",
-                empresa_rateio=self.empresa_rateio_var.get().strip() or "N",
+                empresa_rateio="N",
             )
             self.root.after(0, lambda: self.set_status("Execucao concluida. Atualizando a fila..."))
             self.root.after(0, self.load_queue)
