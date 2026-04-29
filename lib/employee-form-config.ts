@@ -44,6 +44,7 @@ export const dynamicReferenceFieldKeys = [
   "cargo",
   "horario",
   "sindicato",
+  "local",
   "departamento",
   "setor",
   "secao",
@@ -492,7 +493,7 @@ export const formSections: FormSection[] = [
     description: "Informacoes operacionais da empresa e do exame medico.",
     audience: "client",
     fields: [
-      { key: "local", label: "Local", type: "text", audience: "client" },
+      { key: "local", label: "Local", type: "select", audience: "client" },
       { key: "departamento", label: "Departamento", type: "select", audience: "client" },
       { key: "setor", label: "Setor", type: "select", audience: "client" },
       { key: "secao", label: "Secao", type: "select", audience: "client" },

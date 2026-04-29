@@ -78,7 +78,7 @@ create table if not exists public.dependents (
 create table if not exists public.reference_catalog_items (
   id uuid primary key default gen_random_uuid(),
   client_id uuid not null references public.clients(id) on delete cascade,
-  reference_type text not null check (reference_type in ('cargo', 'horario', 'sindicato', 'departamento', 'setor', 'secao')),
+  reference_type text not null check (reference_type in ('cargo', 'horario', 'sindicato', 'local', 'departamento', 'setor', 'secao')),
   code text not null,
   label text not null,
   metadata jsonb not null default '{}'::jsonb,

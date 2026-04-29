@@ -45,7 +45,10 @@ type EmployeeOnboardingFormProps = {
   initialRecordId?: string | null
   publicToken?: string | null
   lookupCatalog?: Partial<
-    Record<"cargo" | "horario" | "sindicato" | "departamento" | "setor" | "secao", LookupRecord[]>
+    Record<
+      "cargo" | "horario" | "sindicato" | "local" | "departamento" | "setor" | "secao",
+      LookupRecord[]
+    >
   >
 }
 
@@ -276,6 +279,7 @@ export function EmployeeOnboardingForm({
       cargo: buildLookupOptions(lookupCatalog.cargo ?? []),
       horario: buildLookupOptions(lookupCatalog.horario ?? []),
       sindicato: buildLookupOptions(lookupCatalog.sindicato ?? []),
+      local: buildLookupOptions(lookupCatalog.local ?? []),
       departamento: buildLookupOptions(lookupCatalog.departamento ?? []),
       setor: buildLookupOptions(lookupCatalog.setor ?? []),
       secao: buildLookupOptions(lookupCatalog.secao ?? []),
@@ -287,6 +291,7 @@ export function EmployeeOnboardingForm({
       cargo: new Map((lookupCatalog.cargo ?? []).map((record) => [record.code, record])),
       horario: new Map((lookupCatalog.horario ?? []).map((record) => [record.code, record])),
       sindicato: new Map((lookupCatalog.sindicato ?? []).map((record) => [record.code, record])),
+      local: new Map((lookupCatalog.local ?? []).map((record) => [record.code, record])),
       departamento: new Map((lookupCatalog.departamento ?? []).map((record) => [record.code, record])),
       setor: new Map((lookupCatalog.setor ?? []).map((record) => [record.code, record])),
       secao: new Map((lookupCatalog.secao ?? []).map((record) => [record.code, record])),
@@ -445,7 +450,15 @@ export function EmployeeOnboardingForm({
 
   function updateField(key: string, value: string | boolean) {
     if (dynamicReferenceFieldKeys.includes(key as (typeof dynamicReferenceFieldKeys)[number]) && typeof value === "string") {
-      const typedKey = key as "cargo" | "horario" | "sindicato" | "departamento" | "setor" | "secao"
+      const typedKey =
+        key as
+          | "cargo"
+          | "horario"
+          | "sindicato"
+          | "local"
+          | "departamento"
+          | "setor"
+          | "secao"
       const selectedRecord = lookupRecordByKey[typedKey].get(value)
 
       setFormData((previous) => ({
@@ -916,6 +929,7 @@ export function EmployeeOnboardingForm({
                             | "cargo"
                             | "horario"
                             | "sindicato"
+                            | "local"
                             | "departamento"
                             | "setor"
                             | "secao"

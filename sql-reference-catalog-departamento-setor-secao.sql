@@ -8,6 +8,7 @@ check (
     'cargo',
     'horario',
     'sindicato',
+    'local',
     'departamento',
     'setor',
     'secao'

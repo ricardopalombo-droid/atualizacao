@@ -3,7 +3,14 @@
 import { useEffect, useState } from "react"
 import { FileUp, Layers3 } from "lucide-react"
 
-type ReferenceType = "cargo" | "horario" | "sindicato" | "departamento" | "setor" | "secao"
+type ReferenceType =
+  | "cargo"
+  | "horario"
+  | "sindicato"
+  | "local"
+  | "departamento"
+  | "setor"
+  | "secao"
 
 type ReferenceRecord = {
   id: string
@@ -18,6 +25,7 @@ const referenceLabels: Record<ReferenceType, string> = {
   cargo: "Cargos",
   horario: "Horarios",
   sindicato: "Sindicatos",
+  local: "Locais",
   departamento: "Departamentos",
   setor: "Setores",
   secao: "Secoes",
@@ -27,6 +35,7 @@ const helpByType: Record<ReferenceType, string> = {
   cargo: "Importe o PDF de cargos para alimentar o campo Cargo e reaproveitar o CBO do cadastro de origem.",
   horario: "Importe o PDF de horarios para transformar o campo Horario em lista selecionavel.",
   sindicato: "Importe o PDF de sindicatos para oferecer uma lista padronizada no cadastro contratual.",
+  local: "Importe o PDF de locais para oferecer uma lista padronizada por empresa.",
   departamento: "Importe o PDF de departamentos para oferecer uma lista padronizada por empresa.",
   setor: "Importe o PDF de setores para oferecer uma lista padronizada por empresa.",
   secao: "Importe o PDF de secoes para oferecer uma lista padronizada por empresa.",
@@ -36,18 +45,28 @@ const replaceWarningByType: Record<ReferenceType, string> = {
   cargo: "Esta importacao vai substituir toda a base atual de cargos desta empresa pelo conteudo do novo PDF.",
   horario: "Esta importacao vai substituir toda a base atual de horarios desta empresa pelo conteudo do novo PDF.",
   sindicato: "Esta importacao vai substituir toda a base atual de sindicatos desta empresa pelo conteudo do novo PDF.",
+  local: "Esta importacao vai substituir toda a base atual de locais desta empresa pelo conteudo do novo PDF.",
   departamento: "Esta importacao vai substituir toda a base atual de departamentos desta empresa pelo conteudo do novo PDF.",
   setor: "Esta importacao vai substituir toda a base atual de setores desta empresa pelo conteudo do novo PDF.",
   secao: "Esta importacao vai substituir toda a base atual de secoes desta empresa pelo conteudo do novo PDF.",
 }
 
-const referenceTypes: ReferenceType[] = ["cargo", "horario", "sindicato", "departamento", "setor", "secao"]
+const referenceTypes: ReferenceType[] = [
+  "cargo",
+  "horario",
+  "sindicato",
+  "local",
+  "departamento",
+  "setor",
+  "secao",
+]
 
 export function ReferenceCatalogManagement() {
   const [summary, setSummary] = useState<ReferenceSummary>({
     cargo: [],
     horario: [],
     sindicato: [],
+    local: [],
     departamento: [],
     setor: [],
     secao: [],

@@ -14,7 +14,10 @@ type ClientDefaultsFormProps = {
     employee_defaults: Record<string, string | boolean | number | null>
   }
   lookupCatalog?: Partial<
-    Record<"cargo" | "horario" | "sindicato" | "departamento" | "setor" | "secao", LookupRecord[]>
+    Record<
+      "cargo" | "horario" | "sindicato" | "local" | "departamento" | "setor" | "secao",
+      LookupRecord[]
+    >
   >
 }
 
@@ -96,6 +99,7 @@ export function ClientDefaultsForm({ client, lookupCatalog = {} }: ClientDefault
       cargo: buildOptions(lookupCatalog?.cargo ?? []),
       horario: buildOptions(lookupCatalog?.horario ?? []),
       sindicato: buildOptions(lookupCatalog?.sindicato ?? []),
+      local: buildOptions(lookupCatalog?.local ?? []),
       departamento: buildOptions(lookupCatalog?.departamento ?? []),
       setor: buildOptions(lookupCatalog?.setor ?? []),
       secao: buildOptions(lookupCatalog?.secao ?? []),
@@ -183,8 +187,15 @@ export function ClientDefaultsForm({ client, lookupCatalog = {} }: ClientDefault
                   dynamicReferenceFieldKeys.includes(
                     field.key as (typeof dynamicReferenceFieldKeys)[number]
                   )
-                    ? dynamicOptionsByKey[
-                        field.key as "cargo" | "horario" | "sindicato" | "departamento" | "setor" | "secao"
+                      ? dynamicOptionsByKey[
+                        field.key as
+                          | "cargo"
+                          | "horario"
+                          | "sindicato"
+                          | "local"
+                          | "departamento"
+                          | "setor"
+                          | "secao"
                       ]
                     : undefined
                 }

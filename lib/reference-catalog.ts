@@ -5,6 +5,7 @@ export const referenceTypeSchema = z.enum([
   "cargo",
   "horario",
   "sindicato",
+  "local",
   "departamento",
   "setor",
   "secao",
@@ -511,6 +512,7 @@ export async function parseReferencePdf(buffer: Buffer, referenceType: Reference
       return parseHorarioText(text)
     case "sindicato":
       return parseSindicatoText(text)
+    case "local":
     case "departamento":
     case "setor":
     case "secao":
@@ -589,6 +591,7 @@ export async function getReferenceCatalogSummary(clientId: string) {
     cargo: [] as ReferenceCatalogItem[],
     horario: [] as ReferenceCatalogItem[],
     sindicato: [] as ReferenceCatalogItem[],
+    local: [] as ReferenceCatalogItem[],
     departamento: [] as ReferenceCatalogItem[],
     setor: [] as ReferenceCatalogItem[],
     secao: [] as ReferenceCatalogItem[],
