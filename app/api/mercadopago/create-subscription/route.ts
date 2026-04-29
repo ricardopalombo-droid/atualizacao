@@ -6,6 +6,7 @@ const PRODUTOS_LIBERADOS = new Set([
   "fgts-001",
   "whats-001",
   "email-001",
+  "funcionarios-001",
 ])
 
 export async function POST(req: Request) {

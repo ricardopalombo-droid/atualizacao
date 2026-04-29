@@ -7,6 +7,9 @@ type EnviarEmailEntregaParams = {
   licenseKey: string
   downloadUrl: string
   horasValidade: number
+  panelAccessUrl?: string
+  accessEmail?: string
+  temporaryPassword?: string | null
 }
 
 function getTransporter() {
@@ -43,6 +46,9 @@ export async function enviarEmailEntrega({
   licenseKey,
   downloadUrl,
   horasValidade,
+  panelAccessUrl,
+  accessEmail,
+  temporaryPassword,
 }: EnviarEmailEntregaParams) {
   const nomeExibicao = nome?.trim() || email
   const { transporter, from } = getTransporter()
@@ -54,6 +60,23 @@ export async function enviarEmailEntrega({
       <p>Olá, <strong>${escapeHtml(nomeExibicao)}</strong>.</p>
 
       <p>Seu pagamento foi confirmado e seu acesso já foi liberado.</p>
+
+      ${
+        panelAccessUrl
+          ? `
+      <div style="margin:24px 0;padding:16px;border:1px solid #e5e7eb;border-radius:12px;background:#fff7ed;">
+        <p style="margin:0 0 10px 0;"><strong>Acesso ao painel do escritório</strong></p>
+        <p style="margin:0 0 8px 0;"><strong>Link:</strong> <a href="${panelAccessUrl}">${panelAccessUrl}</a></p>
+        ${accessEmail ? `<p style="margin:0 0 8px 0;"><strong>Login:</strong> ${escapeHtml(accessEmail)}</p>` : ""}
+        ${
+          temporaryPassword
+            ? `<p style="margin:0;"><strong>Senha provisória:</strong> ${escapeHtml(temporaryPassword)}</p>`
+            : `<p style="margin:0;">Use a senha já cadastrada para este e-mail.</p>`
+        }
+      </div>
+      `
+          : ""
+      }
 
       <div style="margin:24px 0;padding:16px;border:1px solid #e5e7eb;border-radius:12px;background:#f9fafb;">
         <p style="margin:0 0 10px 0;"><strong>Produto:</strong> ${escapeHtml(produtoNome)}</p>
@@ -85,6 +108,10 @@ Compra aprovada com sucesso
 Olá, ${nomeExibicao}.
 
 Seu pagamento foi confirmado e seu acesso já foi liberado.
+
+${panelAccessUrl ? `Acesso ao painel: ${panelAccessUrl}` : ""}
+${accessEmail ? `Login: ${accessEmail}` : ""}
+${temporaryPassword ? `Senha provisória: ${temporaryPassword}` : ""}
 
 Produto: ${produtoNome}
 Chave da licença: ${licenseKey}

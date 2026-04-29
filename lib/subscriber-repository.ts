@@ -1,5 +1,5 @@
 import { z } from "zod"
-import { hashPassword } from "@/lib/auth-crypto"
+import { createInviteToken, hashPassword } from "@/lib/auth-crypto"
 import { getSupabaseServerClient } from "@/lib/supabase-server"
 
 export const subscriberPayloadSchema = z.object({
@@ -23,6 +23,22 @@ export type SubscriberRecordListItem = {
   admin_name: string | null
   access_email: string | null
   updated_at: string
+}
+
+type EnsurePurchasedSubscriberAccessResult = {
+  created: boolean
+  accessEmail: string
+  temporaryPassword: string | null
+  subscriberId: string
+}
+
+const DEFAULT_PURCHASED_SUBSCRIBER_LIMITS = {
+  maxClients: 100,
+  maxEmployees: 10000,
+}
+
+function createTemporaryPassword() {
+  return `Pal${createInviteToken(4)}!`
 }
 
 export async function createSubscriberRecord(payload: SubscriberPayload) {
@@ -215,5 +231,77 @@ export async function deleteSubscriberRecord(id: string) {
 
   if (deleteSubscriberError) {
     throw deleteSubscriberError
+  }
+}
+
+export async function ensureSubscriberAccessForPurchase(input: {
+  officeName: string
+  accessEmail: string
+}): Promise<EnsurePurchasedSubscriberAccessResult> {
+  const supabase = getSupabaseServerClient()
+  const officeName = input.officeName.trim() || input.accessEmail
+  const accessEmail = input.accessEmail.trim().toLowerCase()
+
+  const { data: existingUser, error: existingUserError } = await supabase
+    .from("app_users")
+    .select("id, role, subscriber_id")
+    .eq("email", accessEmail)
+    .maybeSingle()
+
+  if (existingUserError) {
+    throw existingUserError
+  }
+
+  if (existingUser) {
+    if (existingUser.role !== "subscriber_admin" || !existingUser.subscriber_id) {
+      throw new Error("Já existe um usuário com este e-mail em outro perfil. Use outro e-mail para o escritório.")
+    }
+
+    return {
+      created: false,
+      accessEmail,
+      temporaryPassword: null,
+      subscriberId: existingUser.subscriber_id,
+    }
+  }
+
+  const { data: subscriber, error: subscriberError } = await supabase
+    .from("subscribers")
+    .insert({
+      name: officeName,
+      email: accessEmail,
+      max_clients: DEFAULT_PURCHASED_SUBSCRIBER_LIMITS.maxClients,
+      max_employees: DEFAULT_PURCHASED_SUBSCRIBER_LIMITS.maxEmployees,
+    })
+    .select("id")
+    .single()
+
+  if (subscriberError) {
+    throw subscriberError
+  }
+
+  const temporaryPassword = createTemporaryPassword()
+  const password = hashPassword(temporaryPassword)
+
+  const { error: userError } = await supabase.from("app_users").insert({
+    email: accessEmail,
+    full_name: officeName,
+    role: "subscriber_admin",
+    subscriber_id: subscriber.id,
+    client_id: null,
+    can_view_personal_data: true,
+    password_hash: password.hash,
+    password_salt: password.salt,
+  })
+
+  if (userError) {
+    throw userError
+  }
+
+  return {
+    created: true,
+    accessEmail,
+    temporaryPassword,
+    subscriberId: subscriber.id,
   }
 }

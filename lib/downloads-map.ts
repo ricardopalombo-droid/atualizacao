@@ -4,4 +4,5 @@ export const DOWNLOADS_MAP: Record<string, string> = {
   "whats-001": "Instalador_EnvioWhatsApp.exe",
   "email-001": "Instalador_EnvioEmail.exe",
   "dre-001": "Instalador_DRE.exe",
+  "funcionarios-001": "PalSysRunnerPhoenix.exe",
 }

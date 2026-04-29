@@ -319,9 +319,6 @@ class PhoenixQueueRunnerApp:
 
         ttk.Button(credentials, text="Carregar fila", command=self.load_queue).grid(row=1, column=3, sticky="ew")
 
-        ttk.Label(credentials, text="Empresa habilitada no eSocial").grid(row=2, column=0, sticky="w", pady=(12, 0))
-        ttk.Combobox(credentials, textvariable=self.empresa_habilitada_var, values=["N", "S"], width=22, state="readonly").grid(row=3, column=0, sticky="w", padx=(0, 12))
-
         credentials.columnconfigure(0, weight=1)
         credentials.columnconfigure(1, weight=1)
         credentials.columnconfigure(2, weight=1)
@@ -364,7 +361,7 @@ class PhoenixQueueRunnerApp:
 
         self.base_url_var.set(str(data.get("baseUrl", self.base_url_var.get())))
         self.email_var.set(str(data.get("email", "")))
-        self.empresa_habilitada_var.set(str(data.get("empresaHabilitada", self.empresa_habilitada_var.get())))
+        self.empresa_habilitada_var.set("N")
 
     def save_settings(self):
         SETTINGS_PATH.write_text(
@@ -372,7 +369,7 @@ class PhoenixQueueRunnerApp:
                 {
                     "baseUrl": self.base_url_var.get().strip(),
                     "email": self.email_var.get().strip(),
-                    "empresaHabilitada": self.empresa_habilitada_var.get().strip(),
+                    "empresaHabilitada": "N",
                 },
                 ensure_ascii=False,
                 indent=2,
@@ -477,7 +474,7 @@ class PhoenixQueueRunnerApp:
                 password=self.password_var.get(),
                 employee_id=record["id"],
                 legacy_script=str(DEFAULT_LEGACY_SCRIPT),
-                empresa_habilitada=self.empresa_habilitada_var.get().strip() or "N",
+                empresa_habilitada="N",
                 empresa_rateio="N",
             )
             self.root.after(0, lambda: self.set_status("Execucao concluida. Atualizando a fila..."))

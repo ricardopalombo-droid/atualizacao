@@ -5,6 +5,7 @@ import {
 } from "@/lib/assinaturas-store"
 import { gerarLinkDownloadS3 } from "@/lib/s3-download"
 import { enviarEmailEntrega } from "@/lib/email-entrega"
+import { ensureSubscriberAccessForPurchase } from "@/lib/subscriber-repository"
 
 type DadosLicenca = {
   assinaturaId: string
@@ -27,6 +28,7 @@ type RespostaLicenca = {
 const LICENSE_SERVER_URL = "https://license-server-production-ee3a.up.railway.app/webhook/mercadopago"
 const LICENSE_API_TOKEN = process.env.LICENSE_API_TOKEN || ""
 const HORAS_VALIDADE_DOWNLOAD = 6
+const PRODUTO_CADASTRO_FUNCIONARIOS = "funcionarios-001"
 
 async function buscarComRetry(subscriptionId: string, tentativas = 5) {
   for (let i = 0; i < tentativas; i++) {
@@ -309,6 +311,27 @@ export async function POST(req: Request) {
           HORAS_VALIDADE_DOWNLOAD * 60 * 60
         )
 
+        let accessPayload:
+          | {
+              panelAccessUrl: string
+              accessEmail: string
+              temporaryPassword: string | null
+            }
+          | undefined
+
+        if (cadastro.produto_ref === PRODUTO_CADASTRO_FUNCIONARIOS) {
+          const access = await ensureSubscriberAccessForPurchase({
+            officeName: cadastro.nome_cliente || cadastro.email_cliente,
+            accessEmail: cadastro.email_cliente,
+          })
+
+          accessPayload = {
+            panelAccessUrl: `${process.env.NEXT_PUBLIC_SITE_URL}/acesso`,
+            accessEmail: access.accessEmail,
+            temporaryPassword: access.temporaryPassword,
+          }
+        }
+
         await enviarEmailEntrega({
           email: cadastro.email_cliente,
           nome: cadastro.nome_cliente || cadastro.email_cliente,
@@ -316,6 +339,9 @@ export async function POST(req: Request) {
           licenseKey,
           downloadUrl: download.url,
           horasValidade: HORAS_VALIDADE_DOWNLOAD,
+          panelAccessUrl: accessPayload?.panelAccessUrl,
+          accessEmail: accessPayload?.accessEmail,
+          temporaryPassword: accessPayload?.temporaryPassword ?? null,
         })
 
         console.log("📧 E-mail de entrega enviado com sucesso")
