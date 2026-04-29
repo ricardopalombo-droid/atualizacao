@@ -114,6 +114,24 @@ def esperar_janela_sumir_por_titulo(titulo: str, timeout: float = 8.0, intervalo
     return False
 
 
+def esperar_abertura_janela_lookup(timeout: float = 5.0, intervalo: float = 0.2) -> bool:
+    titulo_inicial = obter_titulo_janela_ativa().strip().lower()
+    limite = time.time() + timeout
+
+    while time.time() < limite:
+        try:
+            titulo_atual = obter_titulo_janela_ativa().strip().lower()
+            if titulo_atual and titulo_atual != titulo_inicial:
+                dormir_controlado(0.2)
+                return True
+        except Exception:
+            pass
+        time.sleep(intervalo)
+
+    dormir_controlado(5.0)
+    return False
+
+
 def selecionar_empresa_por_apelido_contmatic():
     apelido = limpar_texto(APELIDO_CONTMATIC_ATUAL)
     if not apelido:
@@ -610,7 +628,16 @@ def duplo_clique_primeiro_item(x=None, y=None):
     if x is not None and y is not None:
         pyautogui.doubleClick(x=x, y=y, interval=0.2)
     else:
-        pyautogui.doubleClick(interval=0.2)
+        try:
+            janela = gw.getActiveWindow()
+            if janela is not None:
+                alvo_x = int(janela.left + 170)
+                alvo_y = int(janela.top + 120)
+                pyautogui.doubleClick(x=alvo_x, y=alvo_y, interval=0.2)
+            else:
+                pyautogui.doubleClick(interval=0.2)
+        except Exception:
+            pyautogui.doubleClick(interval=0.2)
     dormir_controlado(0.5)
 
 
@@ -643,7 +670,7 @@ def preencher_campo_local_apos_deficiencia(codigo):
     dormir_controlado(0.25)
 
 
-def preencher_campo_estrutura_apos_local(codigo):
+def preencher_campo_estrutura_apos_local(codigo, voltar_com_shift_tab=False):
     codigo_limpo = extrair_codigo_referencia(codigo)
     if codigo_limpo == "":
         pyautogui.press("tab")
@@ -651,16 +678,25 @@ def preencher_campo_estrutura_apos_local(codigo):
         return
 
     pyautogui.hotkey("ctrl", "enter")
-    dormir_controlado(0.25)
+    esperar_abertura_janela_lookup(timeout=5.0, intervalo=0.2)
     pyautogui.press("tab")
     dormir_controlado(0.2)
     limpar_e_digitar(codigo_limpo, intervalo=0.05)
     dormir_controlado(0.2)
     pyautogui.hotkey("alt", "p")
-    dormir_controlado(0.8)
+    dormir_controlado(0.35)
+    titulo_lista = obter_titulo_janela_ativa()
     duplo_clique_primeiro_item(PRIMEIRO_ITEM_LISTA_X, PRIMEIRO_ITEM_LISTA_Y)
-    pyautogui.press("tab")
-    dormir_controlado(0.25)
+    if titulo_lista and not esperar_janela_sumir_por_titulo(titulo_lista, timeout=1.2, intervalo=0.2):
+        duplo_clique_primeiro_item(PRIMEIRO_ITEM_LISTA_X, PRIMEIRO_ITEM_LISTA_Y)
+        esperar_janela_sumir_por_titulo(titulo_lista, timeout=1.2, intervalo=0.2)
+    if voltar_com_shift_tab:
+        for _ in range(4):
+            pyautogui.hotkey("shift", "tab")
+            dormir_controlado(0.2)
+    else:
+        pyautogui.press("tab")
+        dormir_controlado(0.25)
 
 
 def separar_coluna_an(valor):
@@ -1606,7 +1642,7 @@ def preencher_sistema(dados: dict, empresa_habilitada: str, empresa_rateio: str)
     preencher_campo_local_apos_deficiencia(col_q_numerico)
     preencher_campo_estrutura_apos_local(col_r_numerico)
     preencher_campo_estrutura_apos_local(col_s_numerico)
-    preencher_campo_estrutura_apos_local(col_t_numerico)
+    preencher_campo_estrutura_apos_local(col_t_numerico, voltar_com_shift_tab=True)
 
     pyautogui.hotkey("ctrl", "enter")
     dormir_controlado(0.2)

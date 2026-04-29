@@ -1,5 +1,6 @@
 import atexit
 import json
+import sys
 import threading
 import time
 import tkinter as tk
@@ -13,11 +14,18 @@ from licenca_app import iniciar_protecao_licenca
 from phoenix_legacy_site_runner import login, run_employee
 
 
-SETTINGS_PATH = Path(__file__).with_name("phoenix_queue_runner_settings.json")
-BASE_DIR = Path(__file__).resolve().parent
-LOGO_PATH = BASE_DIR / "PalSys.png"
-ICON_PATH = BASE_DIR / "PalSys.ico"
-WHATSAPP_ICON_PATH = BASE_DIR / "whatsapp.png"
+if getattr(sys, "frozen", False):
+    APP_DIR = Path(sys.executable).resolve().parent
+    BUNDLE_DIR = Path(getattr(sys, "_MEIPASS", APP_DIR))
+else:
+    APP_DIR = Path(__file__).resolve().parent
+    BUNDLE_DIR = APP_DIR
+
+SETTINGS_PATH = APP_DIR / "phoenix_queue_runner_settings.json"
+DEFAULT_LEGACY_SCRIPT = BUNDLE_DIR / "cadastros_final_adaptado.py"
+LOGO_PATH = BUNDLE_DIR / "PalSys.png"
+ICON_PATH = BUNDLE_DIR / "PalSys.ico"
+WHATSAPP_ICON_PATH = BUNDLE_DIR / "whatsapp.png"
 WHATSAPP_LINK = "https://wa.me/5512997952482"
 LICENSE_SERVER_URL = "https://license-server-production-ee3a.up.railway.app"
 
@@ -90,7 +98,7 @@ class PhoenixQueueRunnerApp:
         self.base_url_var = tk.StringVar(value="https://www.palsys.com.br")
         self.email_var = tk.StringVar()
         self.password_var = tk.StringVar()
-        self.legacy_script_var = tk.StringVar(value="cadastros_final_adaptado.py")
+        self.legacy_script_var = tk.StringVar(value=str(DEFAULT_LEGACY_SCRIPT))
         self.empresa_habilitada_var = tk.StringVar(value="N")
         self.status_var = tk.StringVar(value="Preencha o login do escritorio e carregue a fila do Phoenix.")
         self.texto_licenca = tk.StringVar(
@@ -356,7 +364,6 @@ class PhoenixQueueRunnerApp:
 
         self.base_url_var.set(str(data.get("baseUrl", self.base_url_var.get())))
         self.email_var.set(str(data.get("email", "")))
-        self.legacy_script_var.set(str(data.get("legacyScript", self.legacy_script_var.get())))
         self.empresa_habilitada_var.set(str(data.get("empresaHabilitada", self.empresa_habilitada_var.get())))
 
     def save_settings(self):
@@ -365,7 +372,6 @@ class PhoenixQueueRunnerApp:
                 {
                     "baseUrl": self.base_url_var.get().strip(),
                     "email": self.email_var.get().strip(),
-                    "legacyScript": self.legacy_script_var.get().strip(),
                     "empresaHabilitada": self.empresa_habilitada_var.get().strip(),
                 },
                 ensure_ascii=False,
@@ -470,7 +476,7 @@ class PhoenixQueueRunnerApp:
                 email=self.email_var.get().strip(),
                 password=self.password_var.get(),
                 employee_id=record["id"],
-                legacy_script=self.legacy_script_var.get().strip(),
+                legacy_script=str(DEFAULT_LEGACY_SCRIPT),
                 empresa_habilitada=self.empresa_habilitada_var.get().strip() or "N",
                 empresa_rateio="N",
             )
@@ -490,7 +496,7 @@ if __name__ == "__main__":
 
     cliente_licenca, _ = iniciar_protecao_licenca(
         LICENSE_SERVER_URL,
-        arquivo_licenca=str(BASE_DIR / "licenca.key"),
+        arquivo_licenca=str(APP_DIR / "licenca.key"),
         parent=root,
     )
     atexit.register(cliente_licenca.release)
