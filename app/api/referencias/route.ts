@@ -10,6 +10,22 @@ import {
 export const runtime = "nodejs"
 export const maxDuration = 60
 
+function getErrorMessage(error: unknown) {
+  if (error instanceof Error) {
+    return error.message
+  }
+
+  if (typeof error === "object" && error !== null && "message" in error) {
+    const message = (error as { message?: unknown }).message
+
+    if (typeof message === "string" && message.trim()) {
+      return message
+    }
+  }
+
+  return null
+}
+
 export async function GET(request: Request) {
   try {
     const session = await getCurrentSession()
@@ -44,7 +60,7 @@ export async function GET(request: Request) {
     return Response.json(
       {
         ok: false,
-        error: error instanceof Error ? error.message : "Erro ao carregar referencias",
+        error: getErrorMessage(error) ?? "Erro ao carregar referencias",
       },
       { status: 500 }
     )
@@ -89,7 +105,7 @@ export async function POST(request: Request) {
     return Response.json(
       {
         ok: false,
-        error: error instanceof Error ? error.message : "Erro ao importar PDF de referencias",
+        error: getErrorMessage(error) ?? "Erro ao importar PDF de referencias",
       },
       { status: 500 }
     )
