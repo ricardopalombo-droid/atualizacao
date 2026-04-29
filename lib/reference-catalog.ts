@@ -118,8 +118,13 @@ function isSimpleCatalogNoise(line: string) {
     /^descri[cç][aã]o$/i.test(line) ||
     /^listagem/i.test(line) ||
     /^p[aá]g/i.test(line) ||
-    /^emitido em/i.test(line)
+    /^emitido em/i.test(line) ||
+    /^total de /i.test(line)
   )
+}
+
+function isDocumentLikeLabel(line: string) {
+  return /^\d{2,3}(?:\.\d{3})+\/\d{4}-\d{2}$/.test(line) || /^[\d./-]+$/.test(line)
 }
 
 function parseSimpleCatalogText(text: string) {
@@ -157,7 +162,12 @@ function parseSimpleCatalogText(text: string) {
       const code = inlineMatch[1]
       const label = normalizeWhitespace(inlineMatch[2] ?? "")
 
-      if (label && !isSimpleCatalogNoise(label) && !/^\d+$/.test(label)) {
+      if (
+        label &&
+        !isSimpleCatalogNoise(label) &&
+        !/^\d+$/.test(label) &&
+        !isDocumentLikeLabel(label)
+      ) {
         items.push({ code, label })
         continue
       }
@@ -187,10 +197,14 @@ function parseSimpleCatalogText(text: string) {
     }
 
     if (label) {
-      items.push({
-        code: line,
-        label: normalizeWhitespace(label),
-      })
+      const normalizedLabel = normalizeWhitespace(label)
+
+      if (!isSimpleCatalogNoise(normalizedLabel) && !isDocumentLikeLabel(normalizedLabel)) {
+        items.push({
+          code: line,
+          label: normalizedLabel,
+        })
+      }
     }
   }
 
