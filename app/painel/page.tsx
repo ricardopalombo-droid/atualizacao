@@ -221,7 +221,7 @@ export default async function PainelPage() {
               </p>
             </div>
 
-            <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+            <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-5">
               <article className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
                 <p className="text-sm font-semibold text-slate-500">Acessos hoje</p>
                 <p className="mt-2 text-3xl font-bold text-slate-900">{accessSummary.totalToday}</p>
@@ -233,6 +233,10 @@ export default async function PainelPage() {
               <article className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
                 <p className="text-sm font-semibold text-slate-500">Últimos 30 dias</p>
                 <p className="mt-2 text-3xl font-bold text-slate-900">{accessSummary.total30Days}</p>
+              </article>
+              <article className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
+                <p className="text-sm font-semibold text-slate-500">Home /</p>
+                <p className="mt-2 text-3xl font-bold text-slate-900">{accessSummary.homepage30Days}</p>
               </article>
               <article className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
                 <p className="text-sm font-semibold text-slate-500">Visitantes únicos</p>
@@ -256,6 +260,24 @@ export default async function PainelPage() {
                       </div>
                     ))
                   )}
+                </div>
+              </article>
+
+              <article className="rounded-2xl border border-slate-200 p-5">
+                <h3 className="text-lg font-bold text-slate-900">Home x demais páginas</h3>
+                <div className="mt-4 space-y-3">
+                  <div className="flex items-center justify-between rounded-xl bg-slate-50 px-4 py-3">
+                    <span className="font-medium text-slate-700">Página inicial (/)</span>
+                    <span className="rounded-full bg-yellow-100 px-3 py-1 text-xs font-bold text-yellow-800">
+                      {accessSummary.homepage30Days}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between rounded-xl bg-slate-50 px-4 py-3">
+                    <span className="font-medium text-slate-700">Demais páginas públicas</span>
+                    <span className="rounded-full bg-slate-900 px-3 py-1 text-xs font-bold text-white">
+                      {accessSummary.otherPages30Days}
+                    </span>
+                  </div>
                 </div>
               </article>
 

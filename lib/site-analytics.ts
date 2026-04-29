@@ -65,6 +65,8 @@ export async function getSiteAccessSummary() {
   const totalToday = events.filter((event) => new Date(event.created_at) >= startOfToday).length
   const total7Days = events.filter((event) => new Date(event.created_at) >= from7Days).length
   const total30Days = events.length
+  const homepage30Days = events.filter((event) => event.pathname === "/").length
+  const otherPages30Days = events.filter((event) => event.pathname !== "/").length
 
   const uniqueVisitors30Days = new Set(events.map((event) => event.visitor_id).filter(Boolean)).size
 
@@ -92,6 +94,8 @@ export async function getSiteAccessSummary() {
     totalToday,
     total7Days,
     total30Days,
+    homepage30Days,
+    otherPages30Days,
     uniqueVisitors30Days,
     topPages,
     byRole,
