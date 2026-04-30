@@ -75,8 +75,17 @@ export const PRODUTOS: ProdutoSite[] = [
     status: "em_breve",
   },
   {
-    nome: "Cadastro automatizado de funcionários",
+    nome: "Cadastros de funcionários via planilha",
     preco: 39.9,
+    ref: "funcionarios-planilha-001",
+    descricao:
+      "Importação de dados por planilha para rotinas de cadastro de funcionários, em uma versão anterior que será disponibilizada em breve.",
+    icone: Users,
+    status: "em_breve",
+  },
+  {
+    nome: "Cadastro automatizado de funcionários",
+    preco: 79.9,
     ref: "funcionarios-001",
     descricao:
       "O escritório acessa o painel, cadastra seus clientes e usa o runner para levar os dados ao sistema da folha com mais agilidade.",
