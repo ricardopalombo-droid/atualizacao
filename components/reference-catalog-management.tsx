@@ -28,7 +28,7 @@ const referenceLabels: Record<ReferenceType, string> = {
   local: "Locais",
   departamento: "Departamentos",
   setor: "Setores",
-  secao: "Secoes",
+  secao: "Seções",
 }
 
 const helpByType: Record<ReferenceType, string> = {
@@ -38,7 +38,7 @@ const helpByType: Record<ReferenceType, string> = {
   local: "Importe o PDF de locais para oferecer uma lista padronizada por empresa.",
   departamento: "Importe o PDF de departamentos para oferecer uma lista padronizada por empresa.",
   setor: "Importe o PDF de setores para oferecer uma lista padronizada por empresa.",
-  secao: "Importe o PDF de secoes para oferecer uma lista padronizada por empresa.",
+  secao: "Importe o PDF de seções para oferecer uma lista padronizada por empresa.",
 }
 
 const replaceWarningByType: Record<ReferenceType, string> = {
@@ -48,7 +48,7 @@ const replaceWarningByType: Record<ReferenceType, string> = {
   local: "Esta importacao vai substituir toda a base atual de locais desta empresa pelo conteudo do novo PDF.",
   departamento: "Esta importacao vai substituir toda a base atual de departamentos desta empresa pelo conteudo do novo PDF.",
   setor: "Esta importacao vai substituir toda a base atual de setores desta empresa pelo conteudo do novo PDF.",
-  secao: "Esta importacao vai substituir toda a base atual de secoes desta empresa pelo conteudo do novo PDF.",
+  secao: "Esta importação vai substituir toda a base atual de seções desta empresa pelo conteúdo do novo PDF.",
 }
 
 const referenceTypes: ReferenceType[] = [
