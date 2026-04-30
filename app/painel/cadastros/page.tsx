@@ -31,12 +31,11 @@ export default async function CadastrosPage({
         <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
           <div>
             <span className="inline-flex rounded-full bg-yellow-100 px-4 py-1 text-sm font-bold text-yellow-800">
-              Módulo interno
+              Operação da empresa
             </span>
-            <h1 className="mt-4 text-4xl font-bold text-slate-900">Cadastro de funcionários</h1>
+          <h1 className="mt-4 text-4xl font-bold text-slate-900">Painel de cadastros de funcionários</h1>
             <p className="mt-3 max-w-3xl text-slate-600">
-              Dispare o link para o funcionário, acompanhe o retorno do cadastro básico e finalize
-              a parte interna do cliente antes de exportar a planilha.
+              Esta área é destinada à empresa cliente para convidar funcionários, revisar informações e concluir a parte interna do cadastro.
             </p>
           </div>
 
