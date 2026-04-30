@@ -869,7 +869,7 @@ export function EmployeeOnboardingForm({
               }`}
             >
               <UsersRound size={16} />
-              Visão do cliente
+              Visão da empresa
             </button>
           </div>
         ) : null}
