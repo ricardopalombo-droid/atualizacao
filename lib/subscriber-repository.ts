@@ -1,5 +1,5 @@
 import { z } from "zod"
-import { createInviteToken, hashPassword } from "@/lib/auth-crypto"
+import { createInviteToken, hashPassword, sha256Hex } from "@/lib/auth-crypto"
 import { getSupabaseServerClient } from "@/lib/supabase-server"
 
 export const subscriberPayloadSchema = z.object({
@@ -28,17 +28,13 @@ export type SubscriberRecordListItem = {
 type EnsurePurchasedSubscriberAccessResult = {
   created: boolean
   accessEmail: string
-  temporaryPassword: string | null
+  setupPasswordUrl: string | null
   subscriberId: string
 }
 
 const DEFAULT_PURCHASED_SUBSCRIBER_LIMITS = {
   maxClients: 100,
   maxEmployees: 10000,
-}
-
-function createTemporaryPassword() {
-  return `Pal${createInviteToken(4)}!`
 }
 
 export async function createSubscriberRecord(payload: SubscriberPayload) {
@@ -260,7 +256,7 @@ export async function ensureSubscriberAccessForPurchase(input: {
     return {
       created: false,
       accessEmail,
-      temporaryPassword: null,
+      setupPasswordUrl: null,
       subscriberId: existingUser.subscriber_id,
     }
   }
@@ -280,8 +276,10 @@ export async function ensureSubscriberAccessForPurchase(input: {
     throw subscriberError
   }
 
-  const temporaryPassword = createTemporaryPassword()
-  const password = hashPassword(temporaryPassword)
+  const setupToken = createInviteToken()
+  const setupTokenHash = sha256Hex(setupToken)
+  const setupTokenExpiresAt = new Date(Date.now() + 1000 * 60 * 60 * 72).toISOString()
+  const setupPasswordUrl = `${process.env.NEXT_PUBLIC_SITE_URL || "https://www.palsys.com.br"}/acesso/definir-senha?token=${encodeURIComponent(setupToken)}`
 
   const { error: userError } = await supabase.from("app_users").insert({
     email: accessEmail,
@@ -290,8 +288,8 @@ export async function ensureSubscriberAccessForPurchase(input: {
     subscriber_id: subscriber.id,
     client_id: null,
     can_view_personal_data: true,
-    password_hash: password.hash,
-    password_salt: password.salt,
+    activation_token_hash: setupTokenHash,
+    activation_token_expires_at: setupTokenExpiresAt,
   })
 
   if (userError) {
@@ -301,7 +299,7 @@ export async function ensureSubscriberAccessForPurchase(input: {
   return {
     created: true,
     accessEmail,
-    temporaryPassword,
+    setupPasswordUrl,
     subscriberId: subscriber.id,
   }
 }

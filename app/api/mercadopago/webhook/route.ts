@@ -54,7 +54,7 @@ function mapearProdutoParaServidor(produtoRef: string) {
     "whats-001": "9",
     "email-001": "11",
     "extratos-001": "8",
-    "funcionarios-001": "1",
+    "funcionarios-001": "14",
   }
 
   return mapa[produtoRef] || produtoRef
@@ -315,7 +315,7 @@ export async function POST(req: Request) {
           | {
               panelAccessUrl: string
               accessEmail: string
-              temporaryPassword: string | null
+              setupPasswordUrl: string | null
             }
           | undefined
 
@@ -326,9 +326,9 @@ export async function POST(req: Request) {
           })
 
           accessPayload = {
-            panelAccessUrl: `${process.env.NEXT_PUBLIC_SITE_URL}/acesso`,
+            panelAccessUrl: `${process.env.NEXT_PUBLIC_SITE_URL || "https://www.palsys.com.br"}/acesso`,
             accessEmail: access.accessEmail,
-            temporaryPassword: access.temporaryPassword,
+            setupPasswordUrl: access.setupPasswordUrl,
           }
         }
 
@@ -341,7 +341,7 @@ export async function POST(req: Request) {
           horasValidade: HORAS_VALIDADE_DOWNLOAD,
           panelAccessUrl: accessPayload?.panelAccessUrl,
           accessEmail: accessPayload?.accessEmail,
-          temporaryPassword: accessPayload?.temporaryPassword ?? null,
+          setupPasswordUrl: accessPayload?.setupPasswordUrl ?? null,
         })
 
         console.log("📧 E-mail de entrega enviado com sucesso")

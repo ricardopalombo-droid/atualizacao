@@ -30,6 +30,8 @@ create table if not exists public.app_users (
   client_id uuid references public.clients(id) on delete cascade,
   password_hash text not null default '',
   password_salt text not null default '',
+  activation_token_hash text,
+  activation_token_expires_at timestamptz,
   can_view_personal_data boolean not null default false,
   is_active boolean not null default true,
   created_at timestamptz not null default now(),
