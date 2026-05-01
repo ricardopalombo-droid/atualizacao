@@ -6,7 +6,10 @@ import { useRouter } from "next/navigation"
 export function LoginForm() {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
+  const [isResetPending, startResetTransition] = useTransition()
   const [errorMessage, setErrorMessage] = useState("")
+  const [resetMessage, setResetMessage] = useState("")
+  const [resetMode, setResetMode] = useState(false)
   const [credentials, setCredentials] = useState({
     email: "",
     password: "",
@@ -22,6 +25,7 @@ export function LoginForm() {
   function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
     setErrorMessage("")
+    setResetMessage("")
 
     startTransition(async () => {
       const response = await fetch("/api/auth/login", {
@@ -40,6 +44,34 @@ export function LoginForm() {
 
       router.push("/painel")
       router.refresh()
+    })
+  }
+
+  function handleResetPassword() {
+    setErrorMessage("")
+    setResetMessage("")
+
+    startResetTransition(async () => {
+      const response = await fetch("/api/auth/request-password-reset", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email: credentials.email,
+        }),
+      })
+
+      const data = (await response.json().catch(() => null)) as { error?: string; message?: string } | null
+
+      if (!response.ok) {
+        setErrorMessage(data?.error ?? "Não foi possível enviar o link.")
+        return
+      }
+
+      setResetMessage(
+        data?.message ?? "Se o e-mail existir na base, enviaremos um link para criar uma nova senha."
+      )
     })
   }
 
@@ -83,6 +115,7 @@ export function LoginForm() {
       </div>
 
       {errorMessage ? <p className="mt-4 text-sm font-medium text-red-600">{errorMessage}</p> : null}
+      {resetMessage ? <p className="mt-4 text-sm font-medium text-emerald-600">{resetMessage}</p> : null}
 
       <button
         type="submit"
@@ -91,6 +124,32 @@ export function LoginForm() {
       >
         {isPending ? "Entrando..." : "Entrar"}
       </button>
+
+      <div className="mt-5 border-t border-slate-200 pt-5">
+        <button
+          type="button"
+          onClick={() => setResetMode((current) => !current)}
+          className="text-sm font-semibold text-slate-700 underline-offset-4 hover:underline"
+        >
+          {resetMode ? "Ocultar redefinição de senha" : "Criar ou trocar senha"}
+        </button>
+
+        {resetMode ? (
+          <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 p-4">
+            <p className="text-sm text-slate-600">
+              Informe o e-mail de acesso para receber um link de criação ou troca de senha.
+            </p>
+            <button
+              type="button"
+              onClick={handleResetPassword}
+              disabled={isResetPending}
+              className="mt-4 inline-flex w-full items-center justify-center rounded-xl border border-slate-300 bg-white px-5 py-3 font-bold text-slate-900 hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-70"
+            >
+              {isResetPending ? "Enviando..." : "Receber link por e-mail"}
+            </button>
+          </div>
+        ) : null}
+      </div>
     </form>
   )
 }
