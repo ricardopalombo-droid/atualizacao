@@ -37,6 +37,17 @@ type DependentFormState = {
   relationshipDegree: string
   birthDate: string
   registryDeliveryDate: string
+  naturality: string
+  registryOffice: string
+  registryNumber: string
+  bookNumber: string
+  sheetNumber: string
+  situationStartDate: string
+  situationMotive: string
+  irrf: boolean
+  familySalary: boolean
+  alimony: boolean
+  healthPlan: boolean
   notes: string
 }
 
@@ -70,6 +81,17 @@ const emptyDependentForm: DependentFormState = {
   relationshipDegree: "",
   birthDate: "",
   registryDeliveryDate: "",
+  naturality: "",
+  registryOffice: "",
+  registryNumber: "",
+  bookNumber: "",
+  sheetNumber: "",
+  situationStartDate: "",
+  situationMotive: "",
+  irrf: false,
+  familySalary: false,
+  alimony: false,
+  healthPlan: false,
   notes: "",
 }
 
@@ -102,6 +124,39 @@ const dependentRelationshipOptions = [
   },
   { value: "12 - Ex-cônjuge", label: "12 - Ex-cônjuge" },
   { value: "99 - Agregado/Outros", label: "99 - Agregado/Outros" },
+] as const
+
+const contmaticDependentRelationshipOptions = [
+  { value: "", label: "Selecione" },
+  { value: "1 - Filho(a) válido", label: "1 - Filho(a) válido" },
+  { value: "2 - Filho(a) vitalício (inválido)", label: "2 - Filho(a) vitalício (inválido)" },
+  { value: "3 - Enteado(a) válido", label: "3 - Enteado(a) válido" },
+  { value: "4 - Enteado(a) vitalício (inválido)", label: "4 - Enteado(a) vitalício (inválido)" },
+  { value: "5 - Filho válido estudante maior", label: "5 - Filho válido estudante maior" },
+  { value: "6 - Enteado(a) válido estudante maior", label: "6 - Enteado(a) válido estudante maior" },
+  { value: "7 - Menor pobre com guarda", label: "7 - Menor pobre com guarda" },
+  { value: "8 - Menor pobre com guarda mantido até", label: "8 - Menor pobre com guarda mantido até" },
+  { value: "9 - Cônjuge", label: "9 - Cônjuge" },
+  { value: "10 - Companheiro(a)", label: "10 - Companheiro(a)" },
+  { value: "11 - Pai", label: "11 - Pai" },
+  { value: "12 - Avós", label: "12 - Avós" },
+  { value: "13 - Bisavós", label: "13 - Bisavós" },
+  { value: "14 - Irmão com guarda", label: "14 - Irmão com guarda" },
+  { value: "15 - Neto com guarda", label: "15 - Neto com guarda" },
+  { value: "16 - Bisneto com guarda", label: "16 - Bisneto com guarda" },
+  { value: "17 - Irmão com guarda vitalício (inválido)", label: "17 - Irmão com guarda vitalício (inválido)" },
+  { value: "18 - Neto com guarda vitalício (inválido)", label: "18 - Neto com guarda vitalício (inválido)" },
+  { value: "19 - Bisneto com guarda vitalício (inválido)", label: "19 - Bisneto com guarda vitalício (inválido)" },
+  { value: "20 - Irmão com guarda maior estudante", label: "20 - Irmão com guarda maior estudante" },
+  { value: "21 - Neto com guarda maior estudante", label: "21 - Neto com guarda maior estudante" },
+  { value: "22 - Bisneto com guarda maior estudante", label: "22 - Bisneto com guarda maior estudante" },
+  { value: "23 - Cônjuge que trabalha", label: "23 - Cônjuge que trabalha" },
+  { value: "24 - Companheiro(a) que trabalha", label: "24 - Companheiro(a) que trabalha" },
+  { value: "25 - Filho\\enteado só salário família", label: "25 - Filho\\enteado só salário família" },
+  { value: "26 - Filho\\enteado só salário família vitalício (inválido)", label: "26 - Filho\\enteado só salário família vitalício (inválido)" },
+  { value: "27 - Agregados/Outros - Convênio Médico", label: "27 - Agregados/Outros - Convênio Médico" },
+  { value: "28 - Incapaz, da qual seja tutor ou curador", label: "28 - Incapaz, da qual seja tutor ou curador" },
+  { value: "29 - Ex-cônjuge", label: "29 - Ex-cônjuge" },
 ] as const
 
 function normalizeHoursValue(rawValue: string) {
@@ -433,6 +488,17 @@ export function EmployeeOnboardingForm({
             relationshipDegree: dependent.relationship_degree ?? "",
             birthDate: dependent.birth_date ?? "",
             registryDeliveryDate: dependent.registry_delivery_date ?? "",
+            naturality: String(dependent.full_payload?.naturality ?? ""),
+            registryOffice: String(dependent.full_payload?.registryOffice ?? ""),
+            registryNumber: String(dependent.full_payload?.registryNumber ?? ""),
+            bookNumber: String(dependent.full_payload?.bookNumber ?? ""),
+            sheetNumber: String(dependent.full_payload?.sheetNumber ?? ""),
+            situationStartDate: String(dependent.full_payload?.situationStartDate ?? ""),
+            situationMotive: String(dependent.full_payload?.situationMotive ?? ""),
+            irrf: Boolean(dependent.full_payload?.irrf),
+            familySalary: Boolean(dependent.full_payload?.familySalary),
+            alimony: Boolean(dependent.full_payload?.alimony),
+            healthPlan: Boolean(dependent.full_payload?.healthPlan),
             notes: String(dependent.full_payload?.notes ?? ""),
           }))
         )
@@ -566,6 +632,26 @@ export function EmployeeOnboardingForm({
       return
     }
 
+    if (key === "irrf") {
+      const nextValue = Boolean(value)
+      setDependentForm((previous) => ({
+        ...previous,
+        irrf: nextValue,
+        alimony: nextValue ? false : previous.alimony,
+      }))
+      return
+    }
+
+    if (key === "alimony") {
+      const nextValue = Boolean(value)
+      setDependentForm((previous) => ({
+        ...previous,
+        alimony: nextValue,
+        irrf: nextValue ? false : previous.irrf,
+      }))
+      return
+    }
+
     setDependentForm((previous) => ({
       ...previous,
       [key]: value,
@@ -588,6 +674,16 @@ export function EmployeeOnboardingForm({
 
     if (!dependentForm.relationshipName.trim()) {
       setStatusMessage("Informe o nome do dependente antes de salvar.")
+      return
+    }
+
+    if (!dependentForm.birthDate) {
+      setStatusMessage("Informe a data de nascimento do dependente antes de salvar.")
+      return
+    }
+
+    if (dependentForm.irrf && dependentForm.alimony) {
+      setStatusMessage("IRRF e Pensão Alimentícia não podem ser marcados ao mesmo tempo.")
       return
     }
 
@@ -837,6 +933,17 @@ export function EmployeeOnboardingForm({
         grau_parentesco: dependent.relationshipDegree,
         nascimento: dependent.birthDate,
         data_entrega_registro: dependent.registryDeliveryDate,
+        naturalidade: dependent.naturality,
+        cartorio: dependent.registryOffice,
+        registro: dependent.registryNumber,
+        livro: dependent.bookNumber,
+        folha: dependent.sheetNumber,
+        data_inicio_situacao: dependent.situationStartDate,
+        motivo_situacao: dependent.situationMotive,
+        irrf: dependent.irrf,
+        salario_familia: dependent.familySalary,
+        pensao_alimenticia: dependent.alimony,
+        convenio_assistencia_saude: dependent.healthPlan,
         observacoes: dependent.notes,
       })),
     })
@@ -983,12 +1090,12 @@ export function EmployeeOnboardingForm({
             </div>
           </section>
         ) : (
-          <DependentsSection
-            dependentForm={dependentForm}
-            dependents={dependents}
-            readOnly={employeeReadOnly}
-            onFieldChange={updateDependentField}
-            onSave={saveDependent}
+        <DependentsSectionPhoenix
+          dependentForm={dependentForm}
+          dependents={dependents}
+          readOnly={employeeReadOnly}
+          onFieldChange={updateDependentField}
+          onSave={saveDependent}
             onCancelEdit={resetDependentForm}
             onEdit={editDependent}
             onDelete={deleteDependent}
@@ -1232,6 +1339,247 @@ function DependentsSection({
           onChange={(value) => onFieldChange("registryDeliveryDate", value)}
           readOnly={readOnly}
         />
+        <div className="md:col-span-2 xl:col-span-3">
+          <label className="mb-2 block text-sm font-semibold text-slate-700">Observações</label>
+          <textarea
+            value={dependentForm.notes}
+            readOnly={readOnly}
+            onChange={(event) => onFieldChange("notes", event.target.value)}
+            placeholder="Anotações complementares sobre o dependente"
+            className={`min-h-28 w-full rounded-2xl border px-4 py-3 outline-none transition ${
+              readOnly
+                ? "border-slate-200 bg-slate-100 text-slate-500"
+                : "border-slate-300 bg-white text-slate-900 focus:border-yellow-400 focus:ring-2 focus:ring-yellow-200"
+            }`}
+          />
+        </div>
+      </div>
+
+      {!readOnly ? (
+        <div className="flex flex-wrap gap-3">
+          <button
+            type="button"
+            onClick={onSave}
+            className="inline-flex items-center gap-2 rounded-xl bg-slate-900 px-4 py-3 font-semibold text-white hover:bg-slate-800"
+          >
+            <Plus size={18} />
+            {dependentForm.id ? "Salvar dependente" : "Adicionar dependente"}
+          </button>
+          {dependentForm.id ? (
+            <button
+              type="button"
+              onClick={onCancelEdit}
+              className="inline-flex items-center gap-2 rounded-xl border border-slate-300 px-4 py-3 font-semibold text-slate-700 hover:bg-slate-100"
+            >
+              Cancelar edição
+            </button>
+          ) : null}
+        </div>
+      ) : null}
+
+      {dependents.length === 0 ? (
+        <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-6 text-slate-600">
+          Ainda não há dependentes adicionados para este funcionário.
+        </div>
+      ) : (
+        <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
+          <table className="min-w-full divide-y divide-slate-200">
+            <thead className="bg-slate-50">
+              <tr className="text-left text-sm font-semibold text-slate-700">
+                <th className="px-4 py-3">Dependente</th>
+                <th className="px-4 py-3">CPF</th>
+                <th className="px-4 py-3">Parentesco</th>
+                <th className="px-4 py-3">Nascimento</th>
+                {!readOnly ? <th className="px-4 py-3">Ação</th> : null}
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-200 bg-white">
+              {dependents.map((dependent) => (
+                <tr key={dependent.id ?? dependent.relationshipName} className="text-sm text-slate-700">
+                  <td className="px-4 py-3 font-medium text-slate-900">{dependent.relationshipName}</td>
+                  <td className="px-4 py-3">{dependent.cpf || "Sem CPF"}</td>
+                  <td className="px-4 py-3">{dependent.relationshipDegree || "Não informado"}</td>
+                  <td className="px-4 py-3">{dependent.birthDate ? formatDateLabel(dependent.birthDate) : "Sem data"}</td>
+                  {!readOnly ? (
+                    <td className="px-4 py-3">
+                      <div className="flex flex-wrap gap-2">
+                        <button
+                          type="button"
+                          onClick={() => onEdit(dependent)}
+                          className="inline-flex items-center gap-2 rounded-lg bg-slate-900 px-4 py-2 font-semibold text-white hover:bg-slate-800"
+                        >
+                          <Pencil size={16} />
+                          Editar
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => dependent.id && onDelete(dependent.id)}
+                          className="inline-flex items-center gap-2 rounded-lg border border-red-200 px-4 py-2 font-semibold text-red-700 hover:bg-red-50"
+                        >
+                          <Trash2 size={16} />
+                          Excluir
+                        </button>
+                      </div>
+                    </td>
+                  ) : null}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </section>
+  )
+}
+
+function DependentsSectionPhoenix({
+  dependentForm,
+  dependents,
+  readOnly,
+  onFieldChange,
+  onSave,
+  onCancelEdit,
+  onEdit,
+  onDelete,
+}: {
+  dependentForm: DependentFormState
+  dependents: DependentFormState[]
+  readOnly?: boolean
+  onFieldChange: <Key extends keyof DependentFormState>(key: Key, value: DependentFormState[Key]) => void
+  onSave: () => void
+  onCancelEdit: () => void
+  onEdit: (dependent: DependentFormState) => void
+  onDelete: (id: string) => void
+}) {
+  return (
+    <section className="mt-6 space-y-6 rounded-3xl border border-slate-200 bg-slate-50 p-6">
+      <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+        <div>
+          <h3 className="text-2xl font-bold text-slate-900">Dependentes</h3>
+          <p className="mt-2 text-slate-600">
+            Cadastre os dependentes na ordem em que devem seguir para o sistema da folha.
+          </p>
+        </div>
+        <div className="rounded-2xl bg-white px-4 py-3 text-sm font-semibold text-slate-700">
+          {dependents.length} dependente(s) na lista
+        </div>
+      </div>
+
+      <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+        <SimpleField
+          label="Nome do dependente"
+          value={dependentForm.relationshipName}
+          onChange={(value) => onFieldChange("relationshipName", value)}
+          placeholder="Ex.: Ana da Silva"
+          readOnly={readOnly}
+        />
+        <SimpleField
+          label="CPF"
+          value={dependentForm.cpf}
+          onChange={(value) => onFieldChange("cpf", value)}
+          placeholder="000.000.000-00"
+          readOnly={readOnly}
+        />
+        <SimpleField
+          label="Tipo de parentesco"
+          type="select"
+          value={dependentForm.relationshipDegree}
+          onChange={(value) => onFieldChange("relationshipDegree", value)}
+          options={contmaticDependentRelationshipOptions}
+          readOnly={readOnly}
+        />
+        <SimpleField
+          label="Data de nascimento"
+          type="date"
+          value={dependentForm.birthDate}
+          onChange={(value) => onFieldChange("birthDate", value)}
+          readOnly={readOnly}
+        />
+        <SimpleField
+          label="Data de entrega do registro"
+          type="date"
+          value={dependentForm.registryDeliveryDate}
+          onChange={(value) => onFieldChange("registryDeliveryDate", value)}
+          readOnly={readOnly}
+        />
+        <SimpleField
+          label="Naturalidade"
+          value={dependentForm.naturality}
+          onChange={(value) => onFieldChange("naturality", value)}
+          placeholder="Município do dependente"
+          readOnly={readOnly}
+        />
+        <SimpleField
+          label="Cartório"
+          value={dependentForm.registryOffice}
+          onChange={(value) => onFieldChange("registryOffice", value)}
+          placeholder="Cartório"
+          readOnly={readOnly}
+        />
+        <SimpleField
+          label="Registro"
+          value={dependentForm.registryNumber}
+          onChange={(value) => onFieldChange("registryNumber", value)}
+          placeholder="Número do registro"
+          readOnly={readOnly}
+        />
+        <SimpleField
+          label="Livro"
+          value={dependentForm.bookNumber}
+          onChange={(value) => onFieldChange("bookNumber", value)}
+          placeholder="Número do livro"
+          readOnly={readOnly}
+        />
+        <SimpleField
+          label="Folha"
+          value={dependentForm.sheetNumber}
+          onChange={(value) => onFieldChange("sheetNumber", value)}
+          placeholder="Número da folha"
+          readOnly={readOnly}
+        />
+        <SimpleField
+          label="Data início da situação"
+          type="date"
+          value={dependentForm.situationStartDate}
+          onChange={(value) => onFieldChange("situationStartDate", value)}
+          readOnly={readOnly}
+        />
+        <div className="md:col-span-2 xl:col-span-3">
+          <label className="mb-2 block text-sm font-semibold text-slate-700">Motivo da situação</label>
+          <input
+            value={dependentForm.situationMotive}
+            readOnly={readOnly}
+            onChange={(event) => onFieldChange("situationMotive", event.target.value)}
+            placeholder="Motivo da situação do dependente"
+            className={`w-full rounded-2xl border px-4 py-3 outline-none transition ${
+              readOnly
+                ? "border-slate-200 bg-slate-100 text-slate-500"
+                : "border-slate-300 bg-white text-slate-900 focus:border-yellow-400 focus:ring-2 focus:ring-yellow-200"
+            }`}
+          />
+        </div>
+        <div className="md:col-span-2 xl:col-span-3">
+          <label className="mb-3 block text-sm font-semibold text-slate-700">Tipo de dependente</label>
+          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+            <label className={`flex items-center gap-3 rounded-2xl border px-4 py-3 text-sm font-medium ${readOnly ? "border-slate-200 bg-slate-100 text-slate-500" : "border-slate-200 bg-white text-slate-700"}`}>
+              <input type="checkbox" checked={dependentForm.irrf} disabled={readOnly} onChange={(event) => onFieldChange("irrf", event.target.checked)} className="h-4 w-4 rounded border-slate-300 text-yellow-500 focus:ring-yellow-400" />
+              <span>IRRF</span>
+            </label>
+            <label className={`flex items-center gap-3 rounded-2xl border px-4 py-3 text-sm font-medium ${readOnly ? "border-slate-200 bg-slate-100 text-slate-500" : "border-slate-200 bg-white text-slate-700"}`}>
+              <input type="checkbox" checked={dependentForm.familySalary} disabled={readOnly} onChange={(event) => onFieldChange("familySalary", event.target.checked)} className="h-4 w-4 rounded border-slate-300 text-yellow-500 focus:ring-yellow-400" />
+              <span>Salário família</span>
+            </label>
+            <label className={`flex items-center gap-3 rounded-2xl border px-4 py-3 text-sm font-medium ${readOnly ? "border-slate-200 bg-slate-100 text-slate-500" : "border-slate-200 bg-white text-slate-700"}`}>
+              <input type="checkbox" checked={dependentForm.alimony} disabled={readOnly} onChange={(event) => onFieldChange("alimony", event.target.checked)} className="h-4 w-4 rounded border-slate-300 text-yellow-500 focus:ring-yellow-400" />
+              <span>Pensão alimentícia</span>
+            </label>
+            <label className={`flex items-center gap-3 rounded-2xl border px-4 py-3 text-sm font-medium ${readOnly ? "border-slate-200 bg-slate-100 text-slate-500" : "border-slate-200 bg-white text-slate-700"}`}>
+              <input type="checkbox" checked={dependentForm.healthPlan} disabled={readOnly} onChange={(event) => onFieldChange("healthPlan", event.target.checked)} className="h-4 w-4 rounded border-slate-300 text-yellow-500 focus:ring-yellow-400" />
+              <span>Convênio assistência saúde</span>
+            </label>
+          </div>
+          <p className="mt-2 text-xs text-slate-500">IRRF e Pensão alimentícia não podem ser marcados ao mesmo tempo.</p>
+        </div>
         <div className="md:col-span-2 xl:col-span-3">
           <label className="mb-2 block text-sm font-semibold text-slate-700">Observações</label>
           <textarea

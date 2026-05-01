@@ -195,6 +195,7 @@ def run_employee(
     legacy.PAUSADO = False
     legacy.EM_EXECUCAO = True
     legacy.APELIDO_CONTMATIC_ATUAL = legacy_columns.get("EXTRA_CLIENT_CONTMATIC_NICKNAME", "")
+    legacy.DEPENDENTES_PAYLOAD_ATUAL = payload.get("dependents", [])
 
     try:
         legacy.ativar_janela_contmatic()

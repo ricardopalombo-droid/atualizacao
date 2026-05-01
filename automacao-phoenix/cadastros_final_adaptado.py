@@ -28,6 +28,7 @@ PRIMEIRO_ITEM_LISTA_Y = None
 TEMPO_INICIAL = 5
 NOME_JANELA_CONTMATIC = "Contmatic Folha Phoenix"
 APELIDO_CONTMATIC_ATUAL = ""
+DEPENDENTES_PAYLOAD_ATUAL = []
 
 pyautogui.PAUSE = 0.25
 pyautogui.FAILSAFE = True
@@ -741,6 +742,141 @@ def selecionar_opcao_lista(valor, confirmar_com_enter=True):
     if confirmar_com_enter:
         pyautogui.press("enter")
         dormir_controlado(0.4)
+
+
+def obter_dependentes_payload():
+    dependentes = globals().get("DEPENDENTES_PAYLOAD_ATUAL", [])
+    if isinstance(dependentes, list):
+        return dependentes
+    return []
+
+
+def valor_dependente(dependente, chave, padrao=""):
+    if not isinstance(dependente, dict):
+        return padrao
+
+    if chave in dependente and dependente.get(chave) is not None:
+        return dependente.get(chave)
+
+    full_payload = dependente.get("full_payload")
+    if isinstance(full_payload, dict):
+        return full_payload.get(chave, padrao)
+
+    return padrao
+
+
+def bool_dependente(dependente, chave):
+    return extra_bool(valor_dependente(dependente, chave, False))
+
+
+def normalizar_naturalidade_dependente(valor):
+    texto = limpar_texto(valor).strip()
+    if texto == "":
+        return ""
+    return re.sub(r"\s*-\s*[A-Z]{2}$", "", texto, flags=re.IGNORECASE).strip()
+
+
+def preencher_dependentes_apos_rg():
+    dependentes = obter_dependentes_payload()
+    if not dependentes:
+        return
+
+    pyautogui.hotkey("ctrl", "d")
+    dormir_controlado(0.8)
+
+    for indice, dependente in enumerate(dependentes, start=1):
+        nome = limpar_texto(dependente.get("relationship_name") or valor_dependente(dependente, "relationshipName"))
+        nascimento = formatar_data_sem_barras(dependente.get("birth_date") or valor_dependente(dependente, "birthDate"))
+        cpf = limpar_texto(dependente.get("cpf") or valor_dependente(dependente, "cpf"))
+
+        if valor_vazio(nome) or valor_vazio(nascimento) or valor_vazio(cpf):
+            log(f"Dependente {indice} ignorado por falta de nome, data de nascimento ou CPF.")
+            continue
+
+        naturalidade = normalizar_naturalidade_dependente(
+            valor_dependente(dependente, "naturality") or valor_dependente(dependente, "naturalidade")
+        )
+        cartorio = limpar_texto(valor_dependente(dependente, "registryOffice") or valor_dependente(dependente, "cartorio"))
+        registro = limpar_texto(valor_dependente(dependente, "registryNumber") or valor_dependente(dependente, "registro"))
+        livro = limpar_texto(valor_dependente(dependente, "bookNumber") or valor_dependente(dependente, "livro"))
+        folha = limpar_texto(valor_dependente(dependente, "sheetNumber") or valor_dependente(dependente, "folha"))
+        data_inicio = formatar_data_sem_barras(
+            valor_dependente(dependente, "situationStartDate") or valor_dependente(dependente, "data_inicio_situacao")
+        )
+        tipo_parentesco = limpar_texto(
+            dependente.get("relationship_degree") or valor_dependente(dependente, "relationshipDegree") or valor_dependente(dependente, "grau_parentesco")
+        )
+        motivo_situacao = limpar_texto(valor_dependente(dependente, "situationMotive") or valor_dependente(dependente, "motivo_situacao"))
+        flag_irrf = bool_dependente(dependente, "irrf")
+        flag_salario_familia = bool_dependente(dependente, "familySalary") or bool_dependente(dependente, "salario_familia")
+        flag_pensao = bool_dependente(dependente, "alimony") or bool_dependente(dependente, "pensao_alimenticia")
+        flag_convenio = bool_dependente(dependente, "healthPlan") or bool_dependente(dependente, "convenio_assistencia_saude")
+
+        if flag_irrf:
+            flag_pensao = False
+        elif flag_pensao:
+            flag_irrf = False
+
+        pyautogui.hotkey("alt", "i")
+        dormir_controlado(0.35)
+        pyautogui.hotkey("ctrl", "a")
+        dormir_controlado(0.1)
+        pyautogui.press("backspace")
+        dormir_controlado(0.1)
+        digitar_lento(str(indice), intervalo=0.05)
+        dormir_controlado(0.2)
+        pyautogui.press("tab")
+        dormir_controlado(0.2)
+
+        digitar_lento(nome, intervalo=0.05)
+        dormir_controlado(0.2)
+        pyautogui.press("tab")
+        dormir_controlado(0.2)
+
+        digitar_lento(nascimento, intervalo=0.05)
+        dormir_controlado(0.2)
+        pyautogui.press("tab")
+        dormir_controlado(0.2)
+
+        preencher_ou_tab(naturalidade)
+        preencher_ou_tab(cpf)
+        preencher_ou_tab(cartorio)
+        preencher_ou_tab(registro)
+        preencher_ou_tab(livro)
+        preencher_ou_tab(folha)
+
+        pyautogui.hotkey("alt", "g")
+        dormir_controlado(0.5)
+
+        pyautogui.hotkey("shift", "tab")
+        dormir_controlado(0.2)
+        pyautogui.press("enter")
+        dormir_controlado(0.35)
+
+        preencher_ou_tab(data_inicio)
+        pyautogui.press("tab")
+        dormir_controlado(0.2)
+        pyautogui.press("tab")
+        dormir_controlado(0.2)
+
+        selecionar_combo_por_codigo_sem_tab(tipo_parentesco)
+        pyautogui.press("tab")
+        dormir_controlado(0.2)
+
+        preencher_ou_tab(motivo_situacao)
+
+        for marcado in (flag_irrf, flag_salario_familia, flag_pensao, flag_convenio):
+            if marcado:
+                pyautogui.press("space")
+                dormir_controlado(0.15)
+            pyautogui.press("tab")
+            dormir_controlado(0.2)
+
+        pyautogui.hotkey("alt", "g")
+        dormir_controlado(0.5)
+
+    pyautogui.hotkey("alt", "f4")
+    dormir_controlado(0.5)
 
 
 # =========================
@@ -1950,7 +2086,7 @@ def preencher_sistema(dados: dict, empresa_habilitada: str, empresa_rateio: str)
         dormir_controlado(0.25)
 
     if valor_vazio(col_ap):
-
+        preencher_dependentes_apos_rg()
         pyautogui.hotkey("alt", "g")
         dormir_controlado(0.6)
         pyautogui.hotkey("alt", "s")
@@ -1971,6 +2107,7 @@ def preencher_sistema(dados: dict, empresa_habilitada: str, empresa_rateio: str)
         pyautogui.press("enter")
         dormir_controlado(0.25)
 
+        preencher_dependentes_apos_rg()
         pyautogui.hotkey("alt", "g")
         dormir_controlado(0.6)
         pyautogui.hotkey("alt", "s")

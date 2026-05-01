@@ -18,6 +18,17 @@ export const dependentPayloadSchema = z.object({
   relationshipDegree: z.string().default(""),
   birthDate: z.string().default(""),
   registryDeliveryDate: z.string().default(""),
+  naturality: z.string().default(""),
+  registryOffice: z.string().default(""),
+  registryNumber: z.string().default(""),
+  bookNumber: z.string().default(""),
+  sheetNumber: z.string().default(""),
+  situationStartDate: z.string().default(""),
+  situationMotive: z.string().default(""),
+  irrf: z.boolean().default(false),
+  familySalary: z.boolean().default(false),
+  alimony: z.boolean().default(false),
+  healthPlan: z.boolean().default(false),
   notes: z.string().default(""),
 })
 
