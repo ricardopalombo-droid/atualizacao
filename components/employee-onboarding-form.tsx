@@ -299,6 +299,9 @@ export function EmployeeOnboardingForm({
     [lookupCatalog]
   )
   const missingRequiredFields = useMemo(() => getMissingRequiredFields(formData), [formData])
+  const employeeReadOnly =
+    variant === "employee" &&
+    ["preenchido_funcionario", "em_revisao_cliente", "finalizado", "exportado"].includes(status)
 
   useEffect(() => {
     if (variant !== "client" || editRecordId || publicToken) {
@@ -433,7 +436,11 @@ export function EmployeeOnboardingForm({
             notes: String(dependent.full_payload?.notes ?? ""),
           }))
         )
-        setStatusMessage("Cadastro carregado para continuar o preenchimento.")
+        setStatusMessage(
+          result.record.workflow_status === "convite_enviado"
+            ? "Cadastro carregado para continuar o preenchimento."
+            : "Este cadastro já foi enviado e não pode mais ser alterado pelo funcionário."
+        )
       } catch (error) {
         if (isMounted) {
           setStatusMessage(error instanceof Error ? error.message : "Erro ao carregar cadastro salvo.")
@@ -449,6 +456,10 @@ export function EmployeeOnboardingForm({
   }, [editRecordId, publicToken, variant])
 
   function updateField(key: string, value: string | boolean) {
+    if (employeeReadOnly) {
+      return
+    }
+
     if (dynamicReferenceFieldKeys.includes(key as (typeof dynamicReferenceFieldKeys)[number]) && typeof value === "string") {
       const typedKey =
         key as
@@ -551,6 +562,10 @@ export function EmployeeOnboardingForm({
   }
 
   function updateDependentField<Key extends keyof DependentFormState>(key: Key, value: DependentFormState[Key]) {
+    if (employeeReadOnly) {
+      return
+    }
+
     setDependentForm((previous) => ({
       ...previous,
       [key]: value,
@@ -558,10 +573,19 @@ export function EmployeeOnboardingForm({
   }
 
   function resetDependentForm() {
+    if (employeeReadOnly) {
+      return
+    }
+
     setDependentForm(emptyDependentForm)
   }
 
   function saveDependent() {
+    if (employeeReadOnly) {
+      setStatusMessage("Este cadastro já foi enviado e não pode mais ser alterado pelo funcionário.")
+      return
+    }
+
     if (!dependentForm.relationshipName.trim()) {
       setStatusMessage("Informe o nome do dependente antes de salvar.")
       return
@@ -587,11 +611,20 @@ export function EmployeeOnboardingForm({
   }
 
   function editDependent(dependent: DependentFormState) {
+    if (employeeReadOnly) {
+      return
+    }
+
     setDependentForm(dependent)
     setStatusMessage(`Editando o dependente ${dependent.relationshipName}.`)
   }
 
   function deleteDependent(id: string) {
+    if (employeeReadOnly) {
+      setStatusMessage("Este cadastro já foi enviado e não pode mais ser alterado pelo funcionário.")
+      return
+    }
+
     const target = dependents.find((item) => item.id === id)
     const confirmed = window.confirm(
       `Excluir o dependente ${target?.relationshipName || "selecionado"} da lista atual?`
@@ -937,6 +970,7 @@ export function EmployeeOnboardingForm({
                       : undefined
                   }
                   readOnly={
+                    employeeReadOnly ||
                     (variant === "employee" ? field.audience === "client" : false) ||
                     (field.key === "ctps_numero" && Boolean(formData.ctps_digital)) ||
                     (field.key === "ctps_serie" && Boolean(formData.ctps_digital)) ||
@@ -952,6 +986,7 @@ export function EmployeeOnboardingForm({
           <DependentsSection
             dependentForm={dependentForm}
             dependents={dependents}
+            readOnly={employeeReadOnly}
             onFieldChange={updateDependentField}
             onSave={saveDependent}
             onCancelEdit={resetDependentForm}
@@ -960,11 +995,18 @@ export function EmployeeOnboardingForm({
           />
         )}
 
+        {employeeReadOnly ? (
+          <div className="mt-6 rounded-3xl border border-slate-200 bg-slate-50 p-6 text-sm font-medium text-slate-600">
+            Este cadastro já foi enviado pelo funcionário e não pode mais ser alterado neste link.
+          </div>
+        ) : null}
+
         <ActionPanel
           variant={variant}
           viewer={viewer}
           status={status}
           isSaving={isSaving}
+          employeeReadOnly={employeeReadOnly}
           currentStatusIndex={currentStatusIndex}
           missingRequiredFieldCount={missingRequiredFields.length}
           onSaveDraft={saveDraft}
@@ -1123,6 +1165,7 @@ function RequiredFieldsNotice({
 function DependentsSection({
   dependentForm,
   dependents,
+  readOnly,
   onFieldChange,
   onSave,
   onCancelEdit,
@@ -1131,6 +1174,7 @@ function DependentsSection({
 }: {
   dependentForm: DependentFormState
   dependents: DependentFormState[]
+  readOnly?: boolean
   onFieldChange: <Key extends keyof DependentFormState>(key: Key, value: DependentFormState[Key]) => void
   onSave: () => void
   onCancelEdit: () => void
@@ -1157,12 +1201,14 @@ function DependentsSection({
           value={dependentForm.relationshipName}
           onChange={(value) => onFieldChange("relationshipName", value)}
           placeholder="Ex.: Ana da Silva"
+          readOnly={readOnly}
         />
         <SimpleField
           label="CPF"
           value={dependentForm.cpf}
           onChange={(value) => onFieldChange("cpf", value)}
           placeholder="000.000.000-00"
+          readOnly={readOnly}
         />
         <SimpleField
           label="Grau de parentesco"
@@ -1170,49 +1216,59 @@ function DependentsSection({
           value={dependentForm.relationshipDegree}
           onChange={(value) => onFieldChange("relationshipDegree", value)}
           options={dependentRelationshipOptions}
+          readOnly={readOnly}
         />
         <SimpleField
           label="Data de nascimento"
           type="date"
           value={dependentForm.birthDate}
           onChange={(value) => onFieldChange("birthDate", value)}
+          readOnly={readOnly}
         />
         <SimpleField
           label="Data de entrega do registro"
           type="date"
           value={dependentForm.registryDeliveryDate}
           onChange={(value) => onFieldChange("registryDeliveryDate", value)}
+          readOnly={readOnly}
         />
         <div className="md:col-span-2 xl:col-span-3">
           <label className="mb-2 block text-sm font-semibold text-slate-700">Observações</label>
           <textarea
             value={dependentForm.notes}
+            readOnly={readOnly}
             onChange={(event) => onFieldChange("notes", event.target.value)}
             placeholder="Anotações complementares sobre o dependente"
-            className="min-h-28 w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-slate-900 outline-none transition focus:border-yellow-400 focus:ring-2 focus:ring-yellow-200"
+            className={`min-h-28 w-full rounded-2xl border px-4 py-3 outline-none transition ${
+              readOnly
+                ? "border-slate-200 bg-slate-100 text-slate-500"
+                : "border-slate-300 bg-white text-slate-900 focus:border-yellow-400 focus:ring-2 focus:ring-yellow-200"
+            }`}
           />
         </div>
       </div>
 
-      <div className="flex flex-wrap gap-3">
-        <button
-          type="button"
-          onClick={onSave}
-          className="inline-flex items-center gap-2 rounded-xl bg-slate-900 px-4 py-3 font-semibold text-white hover:bg-slate-800"
-        >
-          <Plus size={18} />
-          {dependentForm.id ? "Salvar dependente" : "Adicionar dependente"}
-        </button>
-        {dependentForm.id ? (
+      {!readOnly ? (
+        <div className="flex flex-wrap gap-3">
           <button
             type="button"
-            onClick={onCancelEdit}
-            className="inline-flex items-center gap-2 rounded-xl border border-slate-300 px-4 py-3 font-semibold text-slate-700 hover:bg-slate-100"
+            onClick={onSave}
+            className="inline-flex items-center gap-2 rounded-xl bg-slate-900 px-4 py-3 font-semibold text-white hover:bg-slate-800"
           >
-            Cancelar edição
+            <Plus size={18} />
+            {dependentForm.id ? "Salvar dependente" : "Adicionar dependente"}
           </button>
-        ) : null}
-      </div>
+          {dependentForm.id ? (
+            <button
+              type="button"
+              onClick={onCancelEdit}
+              className="inline-flex items-center gap-2 rounded-xl border border-slate-300 px-4 py-3 font-semibold text-slate-700 hover:bg-slate-100"
+            >
+              Cancelar edição
+            </button>
+          ) : null}
+        </div>
+      ) : null}
 
       {dependents.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-6 text-slate-600">
@@ -1227,7 +1283,7 @@ function DependentsSection({
                 <th className="px-4 py-3">CPF</th>
                 <th className="px-4 py-3">Parentesco</th>
                 <th className="px-4 py-3">Nascimento</th>
-                <th className="px-4 py-3">Ação</th>
+                {!readOnly ? <th className="px-4 py-3">Ação</th> : null}
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-200 bg-white">
@@ -1237,26 +1293,28 @@ function DependentsSection({
                   <td className="px-4 py-3">{dependent.cpf || "Sem CPF"}</td>
                   <td className="px-4 py-3">{dependent.relationshipDegree || "Não informado"}</td>
                   <td className="px-4 py-3">{dependent.birthDate ? formatDateLabel(dependent.birthDate) : "Sem data"}</td>
-                  <td className="px-4 py-3">
-                    <div className="flex flex-wrap gap-2">
-                      <button
-                        type="button"
-                        onClick={() => onEdit(dependent)}
-                        className="inline-flex items-center gap-2 rounded-lg bg-slate-900 px-4 py-2 font-semibold text-white hover:bg-slate-800"
-                      >
-                        <Pencil size={16} />
-                        Editar
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => dependent.id && onDelete(dependent.id)}
-                        className="inline-flex items-center gap-2 rounded-lg border border-red-200 px-4 py-2 font-semibold text-red-700 hover:bg-red-50"
-                      >
-                        <Trash2 size={16} />
-                        Excluir
-                      </button>
-                    </div>
-                  </td>
+                  {!readOnly ? (
+                    <td className="px-4 py-3">
+                      <div className="flex flex-wrap gap-2">
+                        <button
+                          type="button"
+                          onClick={() => onEdit(dependent)}
+                          className="inline-flex items-center gap-2 rounded-lg bg-slate-900 px-4 py-2 font-semibold text-white hover:bg-slate-800"
+                        >
+                          <Pencil size={16} />
+                          Editar
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => dependent.id && onDelete(dependent.id)}
+                          className="inline-flex items-center gap-2 rounded-lg border border-red-200 px-4 py-2 font-semibold text-red-700 hover:bg-red-50"
+                        >
+                          <Trash2 size={16} />
+                          Excluir
+                        </button>
+                      </div>
+                    </td>
+                  ) : null}
                 </tr>
               ))}
             </tbody>
@@ -1272,6 +1330,7 @@ function ActionPanel({
   viewer,
   status,
   isSaving,
+  employeeReadOnly,
   currentStatusIndex,
   missingRequiredFieldCount,
   onSaveDraft,
@@ -1285,6 +1344,7 @@ function ActionPanel({
   viewer: FieldAudience
   status: WorkflowStatus
   isSaving: boolean
+  employeeReadOnly: boolean
   currentStatusIndex: number
   missingRequiredFieldCount: number
   onSaveDraft: () => Promise<void>
@@ -1363,7 +1423,7 @@ function ActionPanel({
           <button
             type="button"
             onClick={onSubmitEmployeeData}
-            disabled={isSaving}
+            disabled={isSaving || employeeReadOnly}
             className="inline-flex items-center gap-2 rounded-xl bg-yellow-400 px-4 py-3 font-bold text-slate-900 hover:brightness-95"
           >
             <SendHorizontal size={18} />
@@ -1499,6 +1559,7 @@ function SimpleField({
   placeholder,
   type = "text",
   options,
+  readOnly = false,
 }: {
   label: string
   value: string
@@ -1506,6 +1567,7 @@ function SimpleField({
   placeholder?: string
   type?: "text" | "date" | "select"
   options?: ReadonlyArray<{ value: string; label: string }>
+  readOnly?: boolean
 }) {
   if (type === "select") {
     return (
@@ -1513,8 +1575,13 @@ function SimpleField({
         <label className="mb-2 block text-sm font-semibold text-slate-700">{label}</label>
         <select
           value={value}
+          disabled={readOnly}
           onChange={(event) => onChange(event.target.value)}
-          className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-slate-900 outline-none transition focus:border-yellow-400 focus:ring-2 focus:ring-yellow-200"
+          className={`w-full rounded-2xl border px-4 py-3 outline-none transition ${
+            readOnly
+              ? "border-slate-200 bg-slate-100 text-slate-500"
+              : "border-slate-300 bg-white text-slate-900 focus:border-yellow-400 focus:ring-2 focus:ring-yellow-200"
+          }`}
         >
           {options?.map((option) => (
             <option key={option.value} value={option.value}>
@@ -1532,9 +1599,14 @@ function SimpleField({
       <input
         type={type}
         value={value}
+        readOnly={readOnly}
         onChange={(event) => onChange(event.target.value)}
         placeholder={placeholder}
-        className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-slate-900 outline-none transition focus:border-yellow-400 focus:ring-2 focus:ring-yellow-200"
+        className={`w-full rounded-2xl border px-4 py-3 outline-none transition ${
+          readOnly
+            ? "border-slate-200 bg-slate-100 text-slate-500"
+            : "border-slate-300 bg-white text-slate-900 focus:border-yellow-400 focus:ring-2 focus:ring-yellow-200"
+        }`}
       />
     </div>
   )

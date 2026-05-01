@@ -453,6 +453,10 @@ export async function submitEmployeeRecordByInviteToken(
     throw new Error("Link inválido ou expirado.")
   }
 
+  if (record.workflow_status !== "convite_enviado") {
+    throw new Error("Este cadastro já foi enviado e não pode mais ser alterado pelo funcionário.")
+  }
+
   return upsertEmployeeRecord({
     id: record.id,
     clientId: record.client_id,
