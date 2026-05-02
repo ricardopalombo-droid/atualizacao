@@ -34,7 +34,7 @@ export const PRODUTOS: ProdutoSite[] = [
     preco: 49.9,
     ref: "fgts-001",
     descricao:
-      "Agilize a importação das guias no FGTS Digital com mais praticidade no dia a dia.",
+      "Agilize a importação das guias no FGTS Digital com mais praticidade no dia a dia. Uma alternativa para escritórios que buscam mais rapidez e produtividade sem depender do Integra Contador da RFB.",
     icone: Landmark,
     status: "disponivel",
   },
