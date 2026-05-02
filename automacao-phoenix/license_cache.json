@@ -1,13 +1,13 @@
 {
   "payload": {
-    "session_token": "JRpsu8eM5m9yTQp_RB3DvKpVtUatqoP5A12LEaevPS4",
+    "session_token": "dCdWe90Ly3Y-_VsR2HrrtcLqqTwMNjy1dZrKdlNuOnQ",
     "license_status": "active",
     "expires_at": "2026-05-28T13:07:17.187170",
-    "offline_until": "2026-05-03T16:46:26.342180",
+    "offline_until": "2026-05-06T00:10:06.355693",
     "heartbeat_seconds": 120,
     "license_key": "589B-2CE0-7C34-BD44",
     "machine_id": "188b8d3ebee3eacfce60ec56fb5ecb7c6e4e921688fd4f5522bb30aef3be81d5",
     "customer_name": "Palsys teste"
   },
-  "signature": "MOvssiI6R6iDquAj15sx7el7lsNQZBDdJLI77xDeV58TGB4+LKLCVJl4+vLIO7Hhr7CpNXaixsIEpmDCIiP7Bg=="
+  "signature": "4g+LP9VBmhWdwrZoqdSM6hLzuG/6YsxxChRcfArcFK7L1AVgZ2G+PwOYF1JM5wZSBnLgdYQHalYf+sRs31cqBA=="
 }
