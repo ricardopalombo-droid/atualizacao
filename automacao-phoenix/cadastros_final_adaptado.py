@@ -779,7 +779,10 @@ def normalizar_naturalidade_dependente(valor):
 def preencher_dependentes_apos_rg():
     dependentes = obter_dependentes_payload()
     if not dependentes:
+        log("Nenhum dependente recebido pelo runner para esta ficha.")
         return
+
+    log(f"Iniciando cadastro de {len(dependentes)} dependente(s) apos o RG.")
 
     pyautogui.hotkey("ctrl", "d")
     dormir_controlado(0.8)
@@ -792,6 +795,8 @@ def preencher_dependentes_apos_rg():
         if valor_vazio(nome) or valor_vazio(nascimento) or valor_vazio(cpf):
             log(f"Dependente {indice} ignorado por falta de nome, data de nascimento ou CPF.")
             continue
+
+        log(f"Cadastrando dependente {indice}: {nome}")
 
         naturalidade = normalizar_naturalidade_dependente(
             valor_dependente(dependente, "naturality") or valor_dependente(dependente, "naturalidade")

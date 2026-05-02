@@ -6,12 +6,12 @@ import time
 import tkinter as tk
 import webbrowser
 from pathlib import Path
-from tkinter import messagebox, ttk
+from tkinter import messagebox, ttk, scrolledtext
 
 import requests
 
 from licenca_app import iniciar_protecao_licenca
-from phoenix_legacy_site_runner import login, run_employee
+from phoenix_legacy_site_runner import fetch_payload, login, run_employee
 
 
 if getattr(sys, "frozen", False):
@@ -109,6 +109,7 @@ class PhoenixQueueRunnerApp:
         self.records: list[dict] = []
         self.logo_topo = None
         self.icone_whatsapp = None
+        self.txt_log = None
 
         self.configure_styles()
         self.load_settings()
@@ -348,6 +349,11 @@ class PhoenixQueueRunnerApp:
         ttk.Button(actions, text="Executar selecionado", command=self.execute_selected).pack(side="left")
         ttk.Button(actions, text="Atualizar fila", command=self.load_queue).pack(side="left", padx=(8, 0))
 
+        log_frame = ttk.LabelFrame(container, text="Log da execucao", padding=12)
+        log_frame.pack(fill="both", expand=False, pady=(16, 0))
+        self.txt_log = scrolledtext.ScrolledText(log_frame, height=8, wrap="word")
+        self.txt_log.pack(fill="both", expand=True)
+
         ttk.Label(container, textvariable=self.status_var, wraplength=1180, foreground="#334155").pack(fill="x", pady=(14, 0))
 
     def load_settings(self):
@@ -380,6 +386,12 @@ class PhoenixQueueRunnerApp:
     def set_status(self, text: str):
         self.status_var.set(text)
 
+    def add_log(self, text: str):
+        if self.txt_log is None:
+            return
+        self.txt_log.insert(tk.END, text + "\n")
+        self.txt_log.see(tk.END)
+
     def load_queue(self):
         self.save_settings()
         thread = threading.Thread(target=self._load_queue_worker, daemon=True)
@@ -388,6 +400,7 @@ class PhoenixQueueRunnerApp:
     def _load_queue_worker(self):
         try:
             self.root.after(0, lambda: self.set_status("Entrando no site e carregando a fila do Phoenix..."))
+            self.root.after(0, lambda: self.add_log("Entrando no site e carregando a fila do Phoenix..."))
             session = requests.Session()
             login(session, self.base_url_var.get().strip(), self.email_var.get().strip(), self.password_var.get())
             records = fetch_pending_queue(session, self.base_url_var.get().strip())
@@ -395,10 +408,12 @@ class PhoenixQueueRunnerApp:
             self.records = records
             self.root.after(0, self._render_queue)
             self.root.after(0, lambda: self.set_status(f"Fila carregada com {len(records)} cadastro(s) enviado(s) ao Phoenix."))
+            self.root.after(0, lambda: self.add_log(f"Fila carregada com {len(records)} cadastro(s) enviado(s) ao Phoenix."))
             if records:
                 self.root.after(0, self._ask_run_first)
         except Exception as error:
             self.root.after(0, lambda: self.set_status(str(error)))
+            self.root.after(0, lambda: self.add_log(f"Erro ao carregar fila: {error}"))
             self.root.after(0, lambda: messagebox.showerror("Phoenix Runner", str(error)))
 
     def _render_queue(self):
@@ -468,6 +483,17 @@ class PhoenixQueueRunnerApp:
     def _execute_worker(self, record: dict):
         try:
             self.root.after(0, lambda: self.set_status(f"Executando no Phoenix: {record.get('employeeName') or record['id']}"))
+            self.root.after(0, lambda: self.add_log(f"Executando no Phoenix: {record.get('employeeName') or record['id']}"))
+            payload = fetch_payload(self.session or requests.Session(), self.base_url_var.get().strip(), record["id"])
+            dependents = payload.get("dependents", [])
+            dependents_count = len(dependents) if isinstance(dependents, list) else 0
+            self.root.after(0, lambda: self.add_log(f"Dependentes recebidos do site: {dependents_count}"))
+            if isinstance(dependents, list) and dependents:
+                first = dependents[0]
+                nome = first.get("relationship_name") or first.get("relationshipName") or ""
+                cpf = first.get("cpf") or ""
+                nascimento = first.get("birth_date") or first.get("birthDate") or ""
+                self.root.after(0, lambda: self.add_log(f"Primeiro dependente: {nome} | CPF: {cpf} | Nascimento: {nascimento}"))
             run_employee(
                 base_url=self.base_url_var.get().strip(),
                 email=self.email_var.get().strip(),
@@ -478,9 +504,11 @@ class PhoenixQueueRunnerApp:
                 empresa_rateio="N",
             )
             self.root.after(0, lambda: self.set_status("Execucao concluida. Atualizando a fila..."))
+            self.root.after(0, lambda: self.add_log("Execucao concluida. Atualizando a fila..."))
             self.root.after(0, self.load_queue)
         except Exception as error:
             self.root.after(0, lambda: self.set_status(f"Falha na execucao: {error}"))
+            self.root.after(0, lambda: self.add_log(f"Falha na execucao: {error}"))
             self.root.after(0, lambda: messagebox.showerror("Phoenix Runner", str(error)))
 
     def run(self):

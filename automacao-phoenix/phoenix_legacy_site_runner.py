@@ -155,6 +155,16 @@ def print_preview(payload: dict, legacy_columns: dict):
 
     print("-" * 60)
     print(f"Funcionario: {payload['employeeId']}")
+    dependents = payload.get("dependents", [])
+    print(f"Dependentes recebidos: {len(dependents) if isinstance(dependents, list) else 0}")
+    if isinstance(dependents, list) and dependents:
+        primeiro = dependents[0]
+        print(
+            "Primeiro dependente: "
+            f"{primeiro.get('relationship_name') or primeiro.get('relationshipName') or ''} | "
+            f"CPF: {primeiro.get('cpf') or ''} | "
+            f"Nascimento: {primeiro.get('birth_date') or primeiro.get('birthDate') or ''}"
+        )
     print("")
 
 

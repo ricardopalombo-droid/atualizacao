@@ -329,6 +329,7 @@ export function EmployeeOnboardingForm({
   const currentSections = useMemo(() => getSectionsForAudience(viewer), [viewer])
   const currentSection = currentSections.find((section) => section.id === activeSection) ?? currentSections[0]
   const canSwitchViewer = variant === "client"
+  const canManageDependents = variant === "employee"
   const lookupOptionsByKey = useMemo(
     () => ({
       cargo: buildLookupOptions(lookupCatalog.cargo ?? []),
@@ -744,6 +745,12 @@ export function EmployeeOnboardingForm({
     setActiveSection(getSectionsForAudience(nextViewer)[0]?.id ?? "")
   }
 
+  useEffect(() => {
+    if (!canManageDependents && activeSection === "__dependentes__") {
+      setActiveSection(currentSections[0]?.id ?? "")
+    }
+  }, [activeSection, canManageDependents, currentSections])
+
   function setWorkflow(nextStatus: WorkflowStatus, message: string) {
     setStatus(nextStatus)
     setStatusMessage(message)
@@ -1029,17 +1036,19 @@ export function EmployeeOnboardingForm({
               {section.title}
             </button>
           ))}
-          <button
-            type="button"
-            onClick={() => setActiveSection("__dependentes__")}
-            className={`rounded-full px-4 py-2 text-sm font-semibold transition ${
-              activeSection === "__dependentes__"
-                ? "bg-yellow-400 text-slate-900"
-                : "bg-slate-100 text-slate-700 hover:bg-slate-200"
-            }`}
-          >
-            Dependentes
-          </button>
+          {canManageDependents ? (
+            <button
+              type="button"
+              onClick={() => setActiveSection("__dependentes__")}
+              className={`rounded-full px-4 py-2 text-sm font-semibold transition ${
+                activeSection === "__dependentes__"
+                  ? "bg-yellow-400 text-slate-900"
+                  : "bg-slate-100 text-slate-700 hover:bg-slate-200"
+              }`}
+            >
+              Dependentes
+            </button>
+          ) : null}
         </div>
 
         {activeSection !== "__dependentes__" && currentSection ? (
@@ -1089,18 +1098,18 @@ export function EmployeeOnboardingForm({
               ))}
             </div>
           </section>
-        ) : (
-        <DependentsSectionPhoenix
-          dependentForm={dependentForm}
-          dependents={dependents}
-          readOnly={employeeReadOnly}
-          onFieldChange={updateDependentField}
-          onSave={saveDependent}
+        ) : canManageDependents ? (
+          <DependentsSectionPhoenix
+            dependentForm={dependentForm}
+            dependents={dependents}
+            readOnly={employeeReadOnly}
+            onFieldChange={updateDependentField}
+            onSave={saveDependent}
             onCancelEdit={resetDependentForm}
             onEdit={editDependent}
             onDelete={deleteDependent}
           />
-        )}
+        ) : null}
 
         {employeeReadOnly ? (
           <div className="mt-6 rounded-3xl border border-slate-200 bg-slate-50 p-6 text-sm font-medium text-slate-600">
