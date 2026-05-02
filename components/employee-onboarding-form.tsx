@@ -329,7 +329,7 @@ export function EmployeeOnboardingForm({
   const currentSections = useMemo(() => getSectionsForAudience(viewer), [viewer])
   const currentSection = currentSections.find((section) => section.id === activeSection) ?? currentSections[0]
   const canSwitchViewer = variant === "client"
-  const canManageDependents = variant === "employee"
+  const canManageDependents = viewer === "employee"
   const lookupOptionsByKey = useMemo(
     () => ({
       cargo: buildLookupOptions(lookupCatalog.cargo ?? []),
