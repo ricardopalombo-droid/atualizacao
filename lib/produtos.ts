@@ -43,7 +43,7 @@ export const PRODUTOS: ProdutoSite[] = [
     preco: 39.9,
     ref: "ecac-001",
     descricao:
-      "Automatize consultas e obtenção de recibos para rotinas ligadas ao eCAC, REINF e DCTFWeb.",
+      "Automatize consultas e obtenção de recibos para rotinas ligadas ao eCAC, REINF e DCTFWeb. Uma alternativa prática para escritórios que preferem não contratar o Integra Contador da RFB e ainda assim desejam mais agilidade, padronização e ganho de tempo nas rotinas fiscais.",
     icone: Building2,
     status: "disponivel",
   },

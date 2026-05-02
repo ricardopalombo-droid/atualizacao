@@ -776,6 +776,48 @@ def normalizar_naturalidade_dependente(valor):
     return re.sub(r"\s*-\s*[A-Z]{2}$", "", texto, flags=re.IGNORECASE).strip()
 
 
+def preencher_campo_dependente(valor):
+    if valor_vazio(valor):
+        pyautogui.press("tab")
+        dormir_controlado(0.25)
+        return
+
+    texto = limpar_texto(valor)
+    pyautogui.hotkey("ctrl", "a")
+    dormir_controlado(0.08)
+    pyautogui.press("backspace")
+    dormir_controlado(0.08)
+    digitar_lento(texto, intervalo=0.05)
+    dormir_controlado(0.2)
+    pyautogui.press("tab")
+    dormir_controlado(0.25)
+
+
+def codigo_parentesco_dependente(valor):
+    texto = limpar_texto(valor).strip()
+    if not texto:
+        return 0
+
+    match = re.match(r"^\s*(\d+)", texto)
+    if not match:
+        return 0
+
+    try:
+        return int(match.group(1))
+    except Exception:
+        return 0
+
+
+def estados_padrao_dependente_por_parentesco(codigo_parentesco):
+    if codigo_parentesco in {1, 2, 3, 4, 5, 6, 8, 14, 15, 16, 17, 18, 19}:
+        return True, True, False, False
+    if codigo_parentesco in {7, 9, 10, 11, 12, 13, 20, 21, 22, 28}:
+        return True, False, False, False
+    if codigo_parentesco in {25, 26}:
+        return False, True, False, False
+    return False, False, False, False
+
+
 def preencher_dependentes_apos_rg():
     dependentes = obter_dependentes_payload()
     if not dependentes:
@@ -822,6 +864,13 @@ def preencher_dependentes_apos_rg():
         elif flag_pensao:
             flag_irrf = False
 
+        codigo_parentesco = codigo_parentesco_dependente(tipo_parentesco)
+        padrao_irrf, padrao_salario_familia, padrao_pensao, padrao_convenio = estados_padrao_dependente_por_parentesco(codigo_parentesco)
+
+        log(
+            f"Dependente {indice} campos: cartorio={cartorio} | registro={registro} | livro={livro} | folha={folha} | data_inicio={data_inicio}"
+        )
+
         pyautogui.hotkey("alt", "i")
         dormir_controlado(0.35)
         pyautogui.hotkey("ctrl", "a")
@@ -843,15 +892,14 @@ def preencher_dependentes_apos_rg():
         pyautogui.press("tab")
         dormir_controlado(0.2)
 
-        preencher_ou_tab(naturalidade)
-        preencher_ou_tab(cpf)
-        preencher_ou_tab(cartorio)
-        preencher_ou_tab(registro)
-        preencher_ou_tab(livro)
-        preencher_ou_tab(folha)
-
-        pyautogui.hotkey("alt", "g")
-        dormir_controlado(0.5)
+        preencher_campo_dependente(naturalidade)
+        preencher_campo_dependente(cpf)
+        preencher_campo_dependente(cartorio)
+        preencher_campo_dependente(registro)
+        preencher_campo_dependente(livro)
+        preencher_campo_dependente(folha)
+        pyautogui.press("enter")
+        dormir_controlado(0.35)
 
         pyautogui.hotkey("shift", "tab")
         dormir_controlado(0.2)
@@ -859,19 +907,27 @@ def preencher_dependentes_apos_rg():
         dormir_controlado(0.35)
 
         preencher_ou_tab(data_inicio)
-        pyautogui.press("tab")
-        dormir_controlado(0.2)
-        pyautogui.press("tab")
+        pyautogui.press("enter")
         dormir_controlado(0.2)
 
         selecionar_combo_por_codigo_sem_tab(tipo_parentesco)
-        pyautogui.press("tab")
-        dormir_controlado(0.2)
 
-        preencher_ou_tab(motivo_situacao)
+        if valor_vazio(motivo_situacao):
+            pyautogui.press("enter")
+            dormir_controlado(0.2)
+        else:
+            escrever(motivo_situacao)
+            dormir_controlado(0.2)
+            pyautogui.press("enter")
+            dormir_controlado(0.2)
 
-        for marcado in (flag_irrf, flag_salario_familia, flag_pensao, flag_convenio):
-            if marcado:
+        for marcado, padrao in (
+            (flag_irrf, padrao_irrf),
+            (flag_salario_familia, padrao_salario_familia),
+            (flag_pensao, padrao_pensao),
+            (flag_convenio, padrao_convenio),
+        ):
+            if bool(marcado) != bool(padrao):
                 pyautogui.press("space")
                 dormir_controlado(0.15)
             pyautogui.press("tab")
@@ -879,6 +935,12 @@ def preencher_dependentes_apos_rg():
 
         pyautogui.hotkey("alt", "g")
         dormir_controlado(0.5)
+        pyautogui.hotkey("alt", "f4")
+        dormir_controlado(0.4)
+        pyautogui.hotkey("alt", "g")
+        dormir_controlado(0.5)
+        pyautogui.hotkey("alt", "s")
+        dormir_controlado(0.35)
 
     pyautogui.hotkey("alt", "f4")
     dormir_controlado(0.5)
@@ -1309,6 +1371,46 @@ def selecionar_orgao_emissor(valor):
     dormir_controlado(0.4)
 
 
+def selecionar_orgao_emissor_rg(valor):
+    texto = limpar_texto(valor).strip().upper()
+    if texto == "":
+        return
+
+    match = re.match(r"^\s*(\d{1,2})", texto)
+    codigo = match.group(1) if match else ""
+
+    if not codigo:
+        mapa = {
+            "AERONAUTICA": "1",
+            "EXERCITO": "2",
+            "MARINHA": "3",
+            "SECRETARIA DE SEGURANCA PUBLICA": "4",
+            "SECRETARIA DE SEGURANÇA PÚBLICA": "4",
+            "MODELO 19": "5",
+            "ESTRANGEIRA": "5",
+            "OUTROS": "6",
+        }
+
+        for chave, valor_codigo in mapa.items():
+            if chave in texto:
+                codigo = valor_codigo
+                break
+
+    if not codigo:
+        log(f"Órgão emissor RG não reconhecido: {texto}")
+        return
+
+    verificar_controle()
+    pyautogui.hotkey("ctrl", "a")
+    dormir_controlado(0.1)
+    pyautogui.press("backspace")
+    dormir_controlado(0.1)
+    digitar_lento(codigo, intervalo=0.05)
+    dormir_controlado(0.2)
+    pyautogui.press("enter")
+    dormir_controlado(0.4)
+
+
 def selecionar_sp():
     verificar_controle()
     pyautogui.hotkey("ctrl", "a")
@@ -1597,6 +1699,8 @@ def preencher_sistema(dados: dict, empresa_habilitada: str, empresa_rateio: str)
     col_extra_ctps_serie = limpar_texto(dados.get("EXTRA_CTPS_SERIE", ""))
     col_extra_ctps_uf = limpar_texto(dados.get("EXTRA_CTPS_UF", ""))
     col_extra_ctps_data_expedicao = formatar_data_sem_barras(dados.get("EXTRA_CTPS_DATA_EXPEDICAO", ""))
+    col_extra_uf_rg = limpar_texto(dados.get("EXTRA_UF_RG", ""))
+    col_extra_rg_data_expedicao = formatar_data_sem_barras(dados.get("EXTRA_RG_DATA_EXPEDICAO", ""))
     col_extra_cargo_codigo = limpar_texto(dados.get("EXTRA_CARGO_CODIGO", ""))
     col_extra_cargo_descricao = limpar_texto(dados.get("EXTRA_CARGO_DESCRICAO", ""))
     col_extra_horario_codigo = limpar_texto(dados.get("EXTRA_HORARIO_CODIGO", ""))
@@ -1624,6 +1728,9 @@ def preencher_sistema(dados: dict, empresa_habilitada: str, empresa_rateio: str)
     col_at = formatar_data_sem_barras(dados["AT"])
     col_au = limpar_texto(dados["AU"])
     col_av = formatar_data_sem_barras(dados["AV"])
+    col_dc = limpar_texto(dados["DC"])
+    col_de = limpar_texto(dados["DE"])
+    col_df = formatar_data_sem_barras(dados["DF"])
     col_dn = limpar_texto(dados["DN"])
     col_do = limpar_texto(dados["DO"])
     col_dp = limpar_texto(dados["DP"])
@@ -2103,13 +2210,11 @@ def preencher_sistema(dados: dict, empresa_habilitada: str, empresa_rateio: str)
         pyautogui.press("tab")
         dormir_controlado(0.25)
 
-        pyautogui.press("4")
+        selecionar_orgao_emissor_rg(col_dc)
+        selecionar_sigla_uf_sem_enter(col_de or col_extra_uf_rg)
+        escrever(col_df or col_extra_rg_data_expedicao)
         dormir_controlado(0.2)
-        pyautogui.press("enter")
-        dormir_controlado(0.3)
-
-        selecionar_sp()
-        pyautogui.press("enter")
+        pyautogui.press("tab")
         dormir_controlado(0.25)
 
         preencher_dependentes_apos_rg()
@@ -2137,6 +2242,39 @@ def selecionar_sigla_uf(valor):
     digitar_lento(sigla, intervalo=0.05)
     dormir_controlado(0.2)
     pyautogui.press("enter")
+    dormir_controlado(0.25)
+
+
+def selecionar_sigla_uf_sem_enter(valor):
+    texto = limpar_texto(valor).strip().upper()
+    if not texto:
+        pyautogui.press("tab")
+        dormir_controlado(0.25)
+        return
+
+    sigla = texto[:2]
+    ordem_ufs = [
+        "AC", "AL", "AM", "AP", "BA", "CE", "DF", "ES", "GO", "MA", "MG", "MS", "MT",
+        "PA", "PB", "PE", "PI", "PR", "RJ", "RN", "RO", "RR", "RS", "SC", "SE", "SP", "TO",
+    ]
+
+    verificar_controle()
+    if sigla in ordem_ufs:
+        pyautogui.press("home")
+        dormir_controlado(0.15)
+        indice = ordem_ufs.index(sigla) + 1
+        for _ in range(indice):
+            pyautogui.press("down")
+            dormir_controlado(0.05)
+    else:
+        pyautogui.hotkey("ctrl", "a")
+        dormir_controlado(0.1)
+        pyautogui.press("backspace")
+        dormir_controlado(0.1)
+        digitar_lento(sigla, intervalo=0.05)
+        dormir_controlado(0.2)
+
+    pyautogui.press("tab")
     dormir_controlado(0.25)
 
 

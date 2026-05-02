@@ -96,6 +96,8 @@ def build_legacy_columns(payload: dict, overrides_file: str | None = None):
             "EXTRA_CTPS_SERIE": "" if form_data.get("ctps_serie") is None else str(form_data.get("ctps_serie")),
             "EXTRA_CTPS_UF": "" if form_data.get("ctps_uf") is None else str(form_data.get("ctps_uf")),
             "EXTRA_CTPS_DATA_EXPEDICAO": "" if form_data.get("ctps_data_expedicao") is None else str(form_data.get("ctps_data_expedicao")),
+            "EXTRA_UF_RG": "" if form_data.get("uf_rg") is None else str(form_data.get("uf_rg")),
+            "EXTRA_RG_DATA_EXPEDICAO": "" if form_data.get("rg_data_expedicao") is None else str(form_data.get("rg_data_expedicao")),
             "EXTRA_CARGO_CODIGO": "" if form_data.get("cargo") is None else str(form_data.get("cargo")),
             "EXTRA_CARGO_DESCRICAO": "" if form_data.get("cargo_descricao") is None else str(form_data.get("cargo_descricao")),
             "EXTRA_HORARIO_CODIGO": "" if form_data.get("horario") is None else str(form_data.get("horario")),

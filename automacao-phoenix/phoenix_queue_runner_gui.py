@@ -493,7 +493,103 @@ class PhoenixQueueRunnerApp:
                 nome = first.get("relationship_name") or first.get("relationshipName") or ""
                 cpf = first.get("cpf") or ""
                 nascimento = first.get("birth_date") or first.get("birthDate") or ""
-                self.root.after(0, lambda: self.add_log(f"Primeiro dependente: {nome} | CPF: {cpf} | Nascimento: {nascimento}"))
+                naturalidade = (
+                    first.get("naturality")
+                    or first.get("naturalidade")
+                    or (first.get("full_payload") or {}).get("naturality")
+                    or (first.get("full_payload") or {}).get("naturalidade")
+                    or ""
+                )
+                cartorio = (
+                    first.get("registryOffice")
+                    or first.get("cartorio")
+                    or (first.get("full_payload") or {}).get("registryOffice")
+                    or (first.get("full_payload") or {}).get("cartorio")
+                    or ""
+                )
+                registro = (
+                    first.get("registryNumber")
+                    or first.get("registro")
+                    or (first.get("full_payload") or {}).get("registryNumber")
+                    or (first.get("full_payload") or {}).get("registro")
+                    or ""
+                )
+                livro = (
+                    first.get("bookNumber")
+                    or first.get("livro")
+                    or (first.get("full_payload") or {}).get("bookNumber")
+                    or (first.get("full_payload") or {}).get("livro")
+                    or ""
+                )
+                folha = (
+                    first.get("sheetNumber")
+                    or first.get("folha")
+                    or (first.get("full_payload") or {}).get("sheetNumber")
+                    or (first.get("full_payload") or {}).get("folha")
+                    or ""
+                )
+                data_inicio = (
+                    first.get("situationStartDate")
+                    or first.get("data_inicio_situacao")
+                    or (first.get("full_payload") or {}).get("situationStartDate")
+                    or (first.get("full_payload") or {}).get("data_inicio_situacao")
+                    or ""
+                )
+                parentesco = (
+                    first.get("relationship_degree")
+                    or first.get("relationshipDegree")
+                    or first.get("grau_parentesco")
+                    or (first.get("full_payload") or {}).get("relationshipDegree")
+                    or (first.get("full_payload") or {}).get("grau_parentesco")
+                    or ""
+                )
+                motivo = (
+                    first.get("situationMotive")
+                    or first.get("motivo_situacao")
+                    or (first.get("full_payload") or {}).get("situationMotive")
+                    or (first.get("full_payload") or {}).get("motivo_situacao")
+                    or ""
+                )
+                flag_irrf = bool(
+                    first.get("irrf")
+                    or (first.get("full_payload") or {}).get("irrf")
+                )
+                flag_salario_familia = bool(
+                    first.get("familySalary")
+                    or first.get("salario_familia")
+                    or (first.get("full_payload") or {}).get("familySalary")
+                    or (first.get("full_payload") or {}).get("salario_familia")
+                )
+                flag_pensao = bool(
+                    first.get("alimony")
+                    or first.get("pensao_alimenticia")
+                    or (first.get("full_payload") or {}).get("alimony")
+                    or (first.get("full_payload") or {}).get("pensao_alimenticia")
+                )
+                flag_convenio = bool(
+                    first.get("healthPlan")
+                    or first.get("convenio_assistencia_saude")
+                    or (first.get("full_payload") or {}).get("healthPlan")
+                    or (first.get("full_payload") or {}).get("convenio_assistencia_saude")
+                )
+                self.root.after(
+                    0,
+                    lambda: self.add_log(
+                        f"Primeiro dependente: {nome} | CPF: {cpf} | Nascimento: {nascimento} | Naturalidade: {naturalidade}"
+                    ),
+                )
+                self.root.after(
+                    0,
+                    lambda: self.add_log(
+                        f"Cartório: {cartorio} | Registro: {registro} | Livro: {livro} | Folha: {folha} | Data início: {data_inicio}"
+                    ),
+                )
+                self.root.after(
+                    0,
+                    lambda: self.add_log(
+                        f"Parentesco: {parentesco} | Motivo: {motivo} | IRRF: {'Sim' if flag_irrf else 'Não'} | Salário família: {'Sim' if flag_salario_familia else 'Não'} | Pensão: {'Sim' if flag_pensao else 'Não'} | Convênio: {'Sim' if flag_convenio else 'Não'}"
+                    ),
+                )
             run_employee(
                 base_url=self.base_url_var.get().strip(),
                 email=self.email_var.get().strip(),
