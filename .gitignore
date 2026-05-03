@@ -10,6 +10,13 @@
 # production
 /build
 
+# runner Phoenix
+/automacao-phoenix/__pycache__/
+/automacao-phoenix/build/
+/automacao-phoenix/dist/
+/automacao-phoenix/installer/
+*.pyc
+
 # debug
 npm-debug.log*
 yarn-debug.log*
