@@ -101,7 +101,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Não foi possível processar sua solicitação." }, { status: 500 })
   }
 
-  if (user?.is_active) {
+  if (user) {
     const token = createInviteToken()
     const tokenHash = sha256Hex(token)
     const expiresAt = new Date(Date.now() + 1000 * 60 * 60 * 2).toISOString()

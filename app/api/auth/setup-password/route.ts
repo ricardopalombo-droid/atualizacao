@@ -51,6 +51,7 @@ export async function POST(request: Request) {
   const { error: updateError } = await supabase
     .from("app_users")
     .update({
+      is_active: true,
       password_hash: hashed.hash,
       password_salt: hashed.salt,
       activation_token_hash: null,
