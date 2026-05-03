@@ -88,7 +88,7 @@ export const PRODUTOS: ProdutoSite[] = [
     preco: 79.9,
     ref: "funcionarios-001",
     descricao:
-      "O escritório acessa o painel, cadastra seus clientes e usa o runner para levar os dados ao sistema da folha com mais agilidade.",
+      "O colaborador preenche o cadastro inicial por link, a empresa revisa e completa as informações internas, e o escritório recebe tudo pronto no painel para importar no sistema da folha com mais rapidez e organização.",
     icone: Users,
     status: "disponivel",
   },
