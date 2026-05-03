@@ -52,7 +52,7 @@ export const PRODUTOS: ProdutoSite[] = [
     preco: 49.9,
     ref: "whats-001",
     descricao:
-      "Envie documentos aos clientes com mais rapidez por meio de fluxos automáticos no WhatsApp.",
+      "Acompanha a pasta configurada, reconhece automaticamente o PDF disponível e envia o arquivo ao contato cadastrado pelo WhatsApp. Uma alternativa prática para escritórios que querem automatizar envios sem depender da API oficial do WhatsApp.",
     icone: MessageCircle,
     status: "disponivel",
   },
@@ -61,7 +61,7 @@ export const PRODUTOS: ProdutoSite[] = [
     preco: 49.9,
     ref: "email-001",
     descricao:
-      "Facilite o disparo de arquivos e comunicações com processos automáticos por e-mail.",
+      "Organize o envio de documentos com mais agilidade: o sistema localiza os PDFs na pasta definida, identifica o destinatário e dispara o arquivo por e-mail para o contato cadastrado, reduzindo trabalho manual na rotina do escritório.",
     icone: Mail,
     status: "disponivel",
   },
