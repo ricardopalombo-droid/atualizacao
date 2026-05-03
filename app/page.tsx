@@ -33,6 +33,16 @@ const beneficios = [
   },
 ]
 
+function getVideoUrl(ref: string) {
+  if (ref === "whats-001") return "https://www.youtube.com/watch?v=-E7dx82H91E"
+  if (ref === "email-001") return "https://www.youtube.com/watch?v=dGGHX6In-vs"
+  if (ref === "dre-001") return "https://www.youtube.com/watch?v=EJy_oIlakBw"
+  if (ref === "fgts-001") return "https://www.youtube.com/watch?v=SBBBMZVABLQ"
+  if (ref === "ecac-001") return "https://www.youtube.com/watch?v=lovnQ4FBrzw"
+  if (ref === "funcionarios-001") return "https://www.youtube.com/watch?v=LW7mJt-iEFk"
+  return null
+}
+
 export default function HomePage() {
   return (
     <div className="min-h-screen bg-slate-50 text-slate-800">
@@ -285,6 +295,7 @@ export default function HomePage() {
           <div className="mt-10 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             {PRODUTOS.map((produto) => {
               const Icone = produto.icone
+              const videoUrl = getVideoUrl(produto.ref)
 
               return (
                 <div
@@ -308,6 +319,17 @@ export default function HomePage() {
                   </h3>
 
                   <p className="mt-3 leading-7 text-slate-600">{produto.descricao}</p>
+
+                  {videoUrl ? (
+                    <a
+                      href={videoUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="mt-4 inline-flex items-center justify-center rounded-xl border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+                    >
+                      Ver demonstração
+                    </a>
+                  ) : null}
                 </div>
               )
             })}
