@@ -7,12 +7,26 @@ type AssinaturaRow = {
   status?: string
 }
 
-const SUPABASE_URL = process.env.SUPABASE_URL
-const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY
+const SUPABASE_URL = String(
+  process.env.BILLING_SUPABASE_URL ||
+    process.env.SUPABASE_URL ||
+    process.env.NEXT_PUBLIC_SUPABASE_URL ||
+    ""
+)
+  .trim()
+  .replace(/\/+$/, "")
+
+const SUPABASE_SERVICE_ROLE_KEY = String(
+  process.env.BILLING_SUPABASE_SERVICE_ROLE_KEY ||
+    process.env.SUPABASE_SERVICE_ROLE_KEY ||
+    ""
+).trim()
 
 function getSupabaseHeaders() {
   if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
-    throw new Error("Supabase não configurado")
+    throw new Error(
+      "Supabase de assinaturas não configurado. Defina BILLING_SUPABASE_URL e BILLING_SUPABASE_SERVICE_ROLE_KEY."
+    )
   }
 
   return {
@@ -24,17 +38,7 @@ function getSupabaseHeaders() {
 }
 
 export async function salvarAssinatura(row: AssinaturaRow) {
-  console.log("=== salvarAssinatura ===")
-  console.log("SUPABASE_URL:", SUPABASE_URL)
-  console.log("subscription_id:", row.subscription_id)
-  console.log("nome_cliente:", row.nome_cliente)
-  console.log("email_cliente:", row.email_cliente)
-  console.log("produto_ref:", row.produto_ref)
-  console.log("produto_nome:", row.produto_nome)
-  console.log("status:", row.status)
-
   const endpoint = `${SUPABASE_URL}/rest/v1/assinaturas_mp?on_conflict=subscription_id`
-  console.log("Endpoint salvarAssinatura:", endpoint)
 
   const response = await fetch(endpoint, {
     method: "POST",
@@ -57,9 +61,6 @@ export async function salvarAssinatura(row: AssinaturaRow) {
 
   const data = await response.json().catch(() => null)
 
-  console.log("Status HTTP salvarAssinatura:", response.status)
-  console.log("Resposta salvarAssinatura:", data)
-
   if (!response.ok) {
     throw new Error(`Erro ao salvar assinatura: ${JSON.stringify(data)}`)
   }
@@ -68,12 +69,7 @@ export async function salvarAssinatura(row: AssinaturaRow) {
 }
 
 export async function buscarAssinaturaPorSubscriptionId(subscriptionId: string) {
-  console.log("=== buscarAssinaturaPorSubscriptionId ===")
-  console.log("SUPABASE_URL:", SUPABASE_URL)
-  console.log("subscriptionId:", subscriptionId)
-
   const endpoint = `${SUPABASE_URL}/rest/v1/assinaturas_mp?subscription_id=eq.${encodeURIComponent(subscriptionId)}&select=*`
-  console.log("Endpoint buscarAssinatura:", endpoint)
 
   const response = await fetch(endpoint, {
     method: "GET",
@@ -81,9 +77,6 @@ export async function buscarAssinaturaPorSubscriptionId(subscriptionId: string) 
   })
 
   const data = await response.json().catch(() => null)
-
-  console.log("Status HTTP buscarAssinatura:", response.status)
-  console.log("Resposta buscarAssinatura:", data)
 
   if (!response.ok) {
     throw new Error(`Erro ao buscar assinatura: ${JSON.stringify(data)}`)
@@ -96,11 +89,6 @@ export async function buscarAssinaturaPorEmailEProduto(
   email: string,
   produtoRef: string
 ) {
-  console.log("=== buscarAssinaturaPorEmailEProduto ===")
-  console.log("SUPABASE_URL:", SUPABASE_URL)
-  console.log("email:", email)
-  console.log("produtoRef:", produtoRef)
-
   const endpoint =
     `${SUPABASE_URL}/rest/v1/assinaturas_mp` +
     `?email_cliente=eq.${encodeURIComponent(email)}` +
@@ -109,17 +97,12 @@ export async function buscarAssinaturaPorEmailEProduto(
     `&limit=1` +
     `&select=*`
 
-  console.log("Endpoint buscarAssinaturaPorEmailEProduto:", endpoint)
-
   const response = await fetch(endpoint, {
     method: "GET",
     headers: getSupabaseHeaders(),
   })
 
   const data = await response.json().catch(() => null)
-
-  console.log("Status HTTP buscarAssinaturaPorEmailEProduto:", response.status)
-  console.log("Resposta buscarAssinaturaPorEmailEProduto:", data)
 
   if (!response.ok) {
     throw new Error(`Erro ao buscar assinatura por email e produto: ${JSON.stringify(data)}`)
@@ -129,13 +112,7 @@ export async function buscarAssinaturaPorEmailEProduto(
 }
 
 export async function atualizarStatusAssinatura(subscriptionId: string, status: string) {
-  console.log("=== atualizarStatusAssinatura ===")
-  console.log("SUPABASE_URL:", SUPABASE_URL)
-  console.log("subscriptionId:", subscriptionId)
-  console.log("novo status:", status)
-
   const endpoint = `${SUPABASE_URL}/rest/v1/assinaturas_mp?subscription_id=eq.${encodeURIComponent(subscriptionId)}`
-  console.log("Endpoint atualizarStatus:", endpoint)
 
   const response = await fetch(endpoint, {
     method: "PATCH",
@@ -147,9 +124,6 @@ export async function atualizarStatusAssinatura(subscriptionId: string, status: 
   })
 
   const data = await response.json().catch(() => null)
-
-  console.log("Status HTTP atualizarStatus:", response.status)
-  console.log("Resposta atualizarStatus:", data)
 
   if (!response.ok) {
     throw new Error(`Erro ao atualizar status: ${JSON.stringify(data)}`)
