@@ -9,6 +9,18 @@ const PRODUTOS_LIBERADOS = new Set([
   "funcionarios-001",
 ])
 
+function getSiteUrl() {
+  const fallback = "https://www.palsys.com.br"
+  const raw = String(process.env.NEXT_PUBLIC_SITE_URL ?? fallback).trim()
+  const normalized = raw.replace(/\/+$/, "")
+
+  if (!normalized || !/^https?:\/\//i.test(normalized)) {
+    return fallback
+  }
+
+  return normalized
+}
+
 export async function POST(req: Request) {
   try {
     console.log("🔥 CREATE SUBSCRIPTION EXECUTADO 🔥")
@@ -58,6 +70,8 @@ export async function POST(req: Request) {
       )
     }
 
+    const siteUrl = getSiteUrl()
+
     const response = await fetch("https://api.mercadopago.com/preapproval", {
       method: "POST",
       headers: {
@@ -74,7 +88,7 @@ export async function POST(req: Request) {
           transaction_amount: Number(body.price),
           currency_id: "BRL",
         },
-        back_url: `${process.env.NEXT_PUBLIC_SITE_URL}/compra/sucesso`,
+        back_url: `${siteUrl}/compra/sucesso`,
         status: "pending",
       }),
     })

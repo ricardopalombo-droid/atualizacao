@@ -1,17 +1,27 @@
 import { NextResponse } from "next/server"
 
-console.log("🔥 CREATE PREFERENCE CHAMADO 🔥")
+console.log("CREATE PREFERENCE CHAMADO")
+
+function getSiteUrl() {
+  const fallback = "https://www.palsys.com.br"
+  const raw = String(process.env.NEXT_PUBLIC_SITE_URL ?? fallback).trim()
+  const normalized = raw.replace(/\/+$/, "")
+
+  if (!normalized || !/^https?:\/\//i.test(normalized)) {
+    return fallback
+  }
+
+  return normalized
+}
 
 export async function POST(req: Request) {
   try {
     const body = await req.json()
     const accessToken = String(process.env.MERCADOPAGO_ACCESS_TOKEN ?? "").trim()
+    const siteUrl = getSiteUrl()
 
     if (!body.title || !body.price || !body.email) {
-      return NextResponse.json(
-        { error: "Dados incompletos" },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: "Dados incompletos" }, { status: 400 })
     }
 
     if (!accessToken) {
@@ -41,11 +51,11 @@ export async function POST(req: Request) {
           email: body.email,
         },
         external_reference: body.externalReference,
-        notification_url: `${process.env.NEXT_PUBLIC_SITE_URL}/api/mercadopago/webhook`,
+        notification_url: `${siteUrl}/api/mercadopago/webhook`,
         back_urls: {
-          success: `${process.env.NEXT_PUBLIC_SITE_URL}/compra/sucesso`,
-          failure: `${process.env.NEXT_PUBLIC_SITE_URL}/compra/falha`,
-          pending: `${process.env.NEXT_PUBLIC_SITE_URL}/compra/pendente`,
+          success: `${siteUrl}/compra/sucesso`,
+          failure: `${siteUrl}/compra/falha`,
+          pending: `${siteUrl}/compra/pendente`,
         },
         auto_return: "approved",
       }),
