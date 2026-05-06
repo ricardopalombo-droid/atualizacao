@@ -162,7 +162,7 @@ export async function POST(req: Request) {
     console.log("Entity:", entity)
     console.log("ID:", id)
 
-    const ACCESS_TOKEN = process.env.MERCADOPAGO_ACCESS_TOKEN
+    const ACCESS_TOKEN = String(process.env.MERCADOPAGO_ACCESS_TOKEN ?? "").trim()
 
     if (!ACCESS_TOKEN) {
       console.error("MERCADOPAGO_ACCESS_TOKEN não configurado")

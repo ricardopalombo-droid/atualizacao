@@ -21,7 +21,8 @@ export async function POST(req: Request) {
       "SUPABASE_SERVICE_ROLE_KEY OK:",
       !!process.env.SUPABASE_SERVICE_ROLE_KEY
     )
-    console.log("MP TOKEN OK:", !!process.env.MERCADOPAGO_ACCESS_TOKEN)
+    const accessToken = String(process.env.MERCADOPAGO_ACCESS_TOKEN ?? "").trim()
+    console.log("MP TOKEN OK:", !!accessToken)
 
     if (
       !body.reason ||
@@ -50,11 +51,18 @@ export async function POST(req: Request) {
 
     console.log("📤 Enviando criação de assinatura para o Mercado Pago")
 
+    if (!accessToken) {
+      return NextResponse.json(
+        { error: "Token do Mercado Pago não configurado." },
+        { status: 500 }
+      )
+    }
+
     const response = await fetch("https://api.mercadopago.com/preapproval", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${process.env.MERCADOPAGO_ACCESS_TOKEN}`,
+        Authorization: `Bearer ${accessToken}`,
       },
       body: JSON.stringify({
         reason: body.reason,
@@ -77,6 +85,16 @@ export async function POST(req: Request) {
 
     if (!response.ok) {
       console.error("Erro Mercado Pago:", JSON.stringify(data, null, 2))
+      if (response.status === 401) {
+        return NextResponse.json(
+          {
+            error:
+              "Não foi possível autenticar com o Mercado Pago. Revise o MERCADOPAGO_ACCESS_TOKEN do ambiente.",
+            details: data,
+          },
+          { status: 400 }
+        )
+      }
       return NextResponse.json(
         { error: "Erro ao criar assinatura", details: data },
         { status: 400 }

@@ -5,6 +5,7 @@ console.log("🔥 CREATE PREFERENCE CHAMADO 🔥")
 export async function POST(req: Request) {
   try {
     const body = await req.json()
+    const accessToken = String(process.env.MERCADOPAGO_ACCESS_TOKEN ?? "").trim()
 
     if (!body.title || !body.price || !body.email) {
       return NextResponse.json(
@@ -13,11 +14,18 @@ export async function POST(req: Request) {
       )
     }
 
+    if (!accessToken) {
+      return NextResponse.json(
+        { error: "Token do Mercado Pago não configurado." },
+        { status: 500 }
+      )
+    }
+
     const response = await fetch("https://api.mercadopago.com/checkout/preferences", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${process.env.MERCADOPAGO_ACCESS_TOKEN}`,
+        Authorization: `Bearer ${accessToken}`,
       },
       body: JSON.stringify({
         items: [
