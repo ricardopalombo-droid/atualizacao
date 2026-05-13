@@ -1,6 +1,7 @@
 import {
   atualizarStatusAssinatura,
   buscarAssinaturaPorEmailEProduto,
+  buscarAssinaturasRecentesPorEmail,
   buscarAssinaturaPorSubscriptionId,
 } from "@/lib/assinaturas-store"
 import { gerarLinkDownloadS3 } from "@/lib/s3-download"
@@ -25,7 +26,8 @@ type RespostaLicenca = {
   [key: string]: unknown
 }
 
-const LICENSE_SERVER_URL = "https://license-server-production-ee3a.up.railway.app/webhook/mercadopago"
+const LICENSE_SERVER_URL =
+  "https://license-server-production-ee3a.up.railway.app/webhook/mercadopago"
 const LICENSE_API_TOKEN = process.env.LICENSE_API_TOKEN || ""
 const HORAS_VALIDADE_DOWNLOAD = 6
 const PRODUTO_CADASTRO_FUNCIONARIOS = "funcionarios-001"
@@ -35,11 +37,11 @@ async function buscarComRetry(subscriptionId: string, tentativas = 5) {
     const cadastro = await buscarAssinaturaPorSubscriptionId(subscriptionId)
 
     if (cadastro) {
-      console.log(`✅ Assinatura encontrada na tentativa ${i + 1}`)
+      console.log(`Assinatura encontrada na tentativa ${i + 1}`)
       return cadastro
     }
 
-    console.log(`⏳ Tentativa ${i + 1} - assinatura ainda não encontrada...`)
+    console.log(`Tentativa ${i + 1} - assinatura ainda não encontrada...`)
     await new Promise((r) => setTimeout(r, 1500))
   }
 
@@ -61,7 +63,7 @@ function mapearProdutoParaServidor(produtoRef: string) {
 }
 
 async function liberarLicenca(dados: DadosLicenca): Promise<RespostaLicenca> {
-  console.log("🚀 LIBERAR LICENÇA REAL")
+  console.log("LIBERAR LICENCA")
   console.log("Assinatura ID:", dados.assinaturaId)
   console.log("Pagamento ID:", dados.pagamentoId)
   console.log("Produto original:", dados.produto)
@@ -89,7 +91,7 @@ async function liberarLicenca(dados: DadosLicenca): Promise<RespostaLicenca> {
   })
 
   const text = await response.text()
-  console.log("📡 Resposta servidor licença:", text)
+  console.log("Resposta servidor licença:", text)
 
   let data: RespostaLicenca = {}
   try {
@@ -106,7 +108,7 @@ async function liberarLicenca(dados: DadosLicenca): Promise<RespostaLicenca> {
 }
 
 async function suspenderLicenca(dados: DadosLicenca) {
-  console.log("⛔ SUSPENDER LICENÇA")
+  console.log("SUSPENDER LICENCA")
 
   const produtoServidor = mapearProdutoParaServidor(dados.produto)
 
@@ -127,7 +129,7 @@ async function suspenderLicenca(dados: DadosLicenca) {
   })
 
   const text = await response.text()
-  console.log("📡 Resposta servidor licença (suspensão):", text)
+  console.log("Resposta servidor licença (suspensão):", text)
 
   if (!response.ok) {
     throw new Error(`Erro ao suspender licença: ${response.status} - ${text}`)
@@ -140,7 +142,7 @@ export async function GET() {
 
 export async function POST(req: Request) {
   try {
-    console.log("🔥 WEBHOOK MERCADO PAGO CHEGOU 🔥")
+    console.log("WEBHOOK MERCADO PAGO CHEGOU")
 
     const url = new URL(req.url)
     const queryType = url.searchParams.get("type")
@@ -184,7 +186,7 @@ export async function POST(req: Request) {
 
       const subscription = await response.json()
 
-      console.log("📦 DADOS COMPLETOS DA ASSINATURA:")
+      console.log("DADOS COMPLETOS DA ASSINATURA:")
       console.log(JSON.stringify(subscription, null, 2))
       console.log("Status assinatura:", subscription?.status)
       console.log("Reference assinatura:", subscription?.external_reference)
@@ -195,7 +197,7 @@ export async function POST(req: Request) {
       const cadastro = await buscarComRetry(assinaturaId)
 
       if (!cadastro) {
-        console.log("❌ Assinatura não encontrada após várias tentativas.")
+        console.log("Assinatura não encontrada após várias tentativas.")
         return Response.json({ ok: true })
       }
 
@@ -210,13 +212,13 @@ export async function POST(req: Request) {
       }
 
       if (status === "authorized") {
-        console.log("✅ ASSINATURA ATIVA - LIBERANDO LICENÇA")
+        console.log("ASSINATURA ATIVA - LIBERANDO LICENCA")
         await liberarLicenca(dadosLicenca)
       } else if (status === "paused" || status === "cancelled") {
-        console.log("⛔ ASSINATURA INATIVA - SUSPENDENDO LICENÇA")
+        console.log("ASSINATURA INATIVA - SUSPENDENDO LICENCA")
         await suspenderLicenca(dadosLicenca)
       } else {
-        console.log("ℹ️ Status sem ação automática:", status)
+        console.log("Status sem ação automática:", status)
       }
 
       return Response.json({ ok: true })
@@ -236,14 +238,19 @@ export async function POST(req: Request) {
 
       const payment = await response.json()
 
-      console.log("💳 DADOS COMPLETOS DO PAGAMENTO:")
+      console.log("DADOS COMPLETOS DO PAGAMENTO:")
       console.log(JSON.stringify(payment, null, 2))
       console.log("Status pagamento:", payment?.status)
       console.log("Email pagamento:", payment?.payer?.email)
       console.log("Reference pagamento:", payment?.external_reference)
+      console.log("metadata.preapproval_id:", payment?.metadata?.preapproval_id)
+      console.log("subscription_id:", payment?.subscription_id)
+      console.log("order.id:", payment?.order?.id)
 
       const pagamentoId = String(payment?.id || id)
       const statusPagamento = String(payment?.status || "")
+      const emailPagamento = String(payment?.payer?.email || "").trim().toLowerCase()
+      const produtoRef = String(payment?.external_reference || "").trim()
 
       let assinaturaId =
         payment?.metadata?.preapproval_id ||
@@ -256,32 +263,62 @@ export async function POST(req: Request) {
       if (assinaturaId) {
         assinaturaId = String(assinaturaId)
         console.log("Assinatura ID obtido do pagamento:", assinaturaId)
-
         cadastro = await buscarComRetry(assinaturaId)
       }
 
-      if (!cadastro) {
-        const emailPagamento = payment?.payer?.email
-        const produtoRef = payment?.external_reference
+      if (!cadastro && emailPagamento && produtoRef) {
+        console.log("Tentando localizar assinatura por email + produto...")
+        cadastro = await buscarAssinaturaPorEmailEProduto(emailPagamento, produtoRef)
 
-        if (emailPagamento && produtoRef) {
-          console.log("🔎 Tentando localizar assinatura por email + produto...")
-          cadastro = await buscarAssinaturaPorEmailEProduto(emailPagamento, produtoRef)
+        if (cadastro) {
+          assinaturaId = String(cadastro.subscription_id)
+          console.log("Assinatura encontrada por email + produto:", assinaturaId)
+        }
+      }
 
-          if (cadastro) {
-            assinaturaId = String(cadastro.subscription_id)
-            console.log("✅ Assinatura encontrada por email + produto:", assinaturaId)
+      if (!cadastro && emailPagamento) {
+        console.log("Tentando localizar assinatura por e-mail apenas...")
+        const candidatas = await buscarAssinaturasRecentesPorEmail(emailPagamento, 5)
+
+        console.log(
+          "Candidatas encontradas por e-mail:",
+          JSON.stringify(
+            candidatas.map((item) => ({
+              subscription_id: item.subscription_id,
+              produto_ref: item.produto_ref,
+              status: item.status,
+              created_at: item.created_at,
+              updated_at: item.updated_at,
+            })),
+            null,
+            2
+          )
+        )
+
+        if (produtoRef) {
+          const porProduto = candidatas.find((item) => item.produto_ref === produtoRef)
+
+          if (porProduto) {
+            cadastro = porProduto
+            assinaturaId = String(porProduto.subscription_id)
+            console.log("Assinatura encontrada por e-mail na lista do produto:", assinaturaId)
           }
+        }
+
+        if (!cadastro && candidatas.length === 1) {
+          cadastro = candidatas[0]
+          assinaturaId = String(candidatas[0].subscription_id)
+          console.log("Assinatura encontrada por e-mail único:", assinaturaId)
         }
       }
 
       if (!cadastro || !assinaturaId) {
-        console.log("❌ Não foi possível identificar a assinatura a partir do pagamento")
+        console.log("Não foi possível identificar a assinatura a partir do pagamento")
         return Response.json({ ok: true })
       }
 
       if (statusPagamento === "approved" && cadastro.status === "approved") {
-        console.log("⚠️ Pagamento já processado anteriormente. Ignorando duplicidade.")
+        console.log("Pagamento já processado anteriormente. Ignorando duplicidade.")
         return Response.json({ ok: true })
       }
 
@@ -295,7 +332,7 @@ export async function POST(req: Request) {
       }
 
       if (statusPagamento === "approved") {
-        console.log("✅ PAGAMENTO APROVADO - LIBERANDO LICENÇA E ENVIANDO ENTREGA")
+        console.log("PAGAMENTO APROVADO - LIBERANDO LICENCA E ENVIANDO ENTREGA")
 
         const licenca = await liberarLicenca(dadosLicenca)
         const licenseKey = licenca?.license_key
@@ -344,15 +381,15 @@ export async function POST(req: Request) {
           setupPasswordUrl: accessPayload?.setupPasswordUrl ?? null,
         })
 
-        console.log("📧 E-mail de entrega enviado com sucesso")
+        console.log("E-mail de entrega enviado com sucesso")
       } else {
-        console.log("ℹ️ Pagamento sem ação automática:", statusPagamento)
+        console.log("Pagamento sem ação automática:", statusPagamento)
       }
 
       return Response.json({ ok: true })
     }
 
-    console.log("ℹ️ Evento recebido sem tratamento específico:", tipo)
+    console.log("Evento recebido sem tratamento específico:", tipo)
     return Response.json({ ok: true })
   } catch (error) {
     console.error("Erro no webhook:", error)

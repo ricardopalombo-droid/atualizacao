@@ -7,6 +7,12 @@ type AssinaturaRow = {
   status?: string
 }
 
+type AssinaturaLookupRow = AssinaturaRow & {
+  id?: string | number
+  created_at?: string
+  updated_at?: string
+}
+
 const SUPABASE_URL = String(
   process.env.BILLING_SUPABASE_URL ||
     process.env.SUPABASE_URL ||
@@ -108,7 +114,29 @@ export async function buscarAssinaturaPorEmailEProduto(
     throw new Error(`Erro ao buscar assinatura por email e produto: ${JSON.stringify(data)}`)
   }
 
-  return Array.isArray(data) && data.length > 0 ? data[0] : null
+  return Array.isArray(data) && data.length > 0 ? (data[0] as AssinaturaLookupRow) : null
+}
+
+export async function buscarAssinaturasRecentesPorEmail(email: string, limit = 5) {
+  const endpoint =
+    `${SUPABASE_URL}/rest/v1/assinaturas_mp` +
+    `?email_cliente=eq.${encodeURIComponent(email)}` +
+    `&order=created_at.desc` +
+    `&limit=${limit}` +
+    `&select=*`
+
+  const response = await fetch(endpoint, {
+    method: "GET",
+    headers: getSupabaseHeaders(),
+  })
+
+  const data = await response.json().catch(() => null)
+
+  if (!response.ok) {
+    throw new Error(`Erro ao buscar assinaturas recentes por email: ${JSON.stringify(data)}`)
+  }
+
+  return Array.isArray(data) ? (data as AssinaturaLookupRow[]) : []
 }
 
 export async function atualizarStatusAssinatura(subscriptionId: string, status: string) {
