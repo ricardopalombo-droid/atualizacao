@@ -15,17 +15,18 @@ export default function PalSysAssinaturaPage() {
   const [activeProduct, setActiveProduct] = useState<string | null>(null)
   const [nome, setNome] = useState("")
   const [email, setEmail] = useState("")
-  const [videoAberto, setVideoAberto] = useState<string | null>(null)
+  // Para reativar os vídeos na página de assinatura no futuro:
+  // const [videoAberto, setVideoAberto] = useState<string | null>(null)
 
-  function getVideoId(ref: string) {
-    if (ref === "whats-001") return "-E7dx82H91E"
-    if (ref === "email-001") return "dGGHX6In-vs"
-    if (ref === "dre-001") return "EJy_oIlakBw"
-    if (ref === "fgts-001") return "ZJDynMKmX-Y"
-    if (ref === "ecac-001") return "lovnQ4FBrzw"
-    if (ref === "funcionarios-001") return "LW7mJt-iEFk"
-    return null
-  }
+  // function getVideoId(ref: string) {
+  //   if (ref === "whats-001") return "-E7dx82H91E"
+  //   if (ref === "email-001") return "dGGHX6In-vs"
+  //   if (ref === "dre-001") return "EJy_oIlakBw"
+  //   if (ref === "fgts-001") return "ZJDynMKmX-Y"
+  //   if (ref === "ecac-001") return "lovnQ4FBrzw"
+  //   if (ref === "funcionarios-001") return "LW7mJt-iEFk"
+  //   return null
+  // }
 
   async function assinarProduto(produto: ProdutoAssinavel) {
     try {
@@ -178,7 +179,7 @@ export default function PalSysAssinaturaPage() {
             const Icone = produto.icone
             const carregando = activeProduct === produto.ref
             const indisponivel = produto.status === "em_breve"
-            const videoId = getVideoId(produto.ref)
+            // const videoId = getVideoId(produto.ref)
 
             return (
               <div
@@ -205,6 +206,7 @@ export default function PalSysAssinaturaPage() {
                   {produto.descricao}
                 </p>
 
+                {/* Para voltar a mostrar a demonstração em assinar, descomente este bloco.
                 {videoId && (
                   <button
                     onClick={() => setVideoAberto(videoId)}
@@ -213,6 +215,7 @@ export default function PalSysAssinaturaPage() {
                     ▶ Ver demonstração
                   </button>
                 )}
+                */}
 
                 <p className="mt-5 text-orange-500 font-bold text-lg">
                   R$ {produto.preco.toFixed(2).replace(".", ",")}/mês
@@ -299,6 +302,7 @@ export default function PalSysAssinaturaPage() {
         WhatsApp
       </a>
 
+      {/* Para voltar a mostrar o modal de vídeo, descomente este bloco.
       {videoAberto && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4">
           <div className="relative w-full max-w-4xl overflow-hidden rounded-2xl bg-black shadow-2xl">
@@ -321,6 +325,7 @@ export default function PalSysAssinaturaPage() {
           </div>
         </div>
       )}
+      */}
     </div>
   )
 }

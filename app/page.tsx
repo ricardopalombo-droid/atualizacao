@@ -33,15 +33,16 @@ const beneficios = [
   },
 ]
 
-function getVideoUrl(ref: string) {
-  if (ref === "whats-001") return "https://www.youtube.com/watch?v=-E7dx82H91E"
-  if (ref === "email-001") return "https://www.youtube.com/watch?v=dGGHX6In-vs"
-  if (ref === "dre-001") return "https://www.youtube.com/watch?v=EJy_oIlakBw"
-  if (ref === "fgts-001") return "https://www.youtube.com/watch?v=SBBBMZVABLQ"
-  if (ref === "ecac-001") return "https://www.youtube.com/watch?v=lovnQ4FBrzw"
-  if (ref === "funcionarios-001") return "https://www.youtube.com/watch?v=LW7mJt-iEFk"
-  return null
-}
+// Para reativar os botões de demonstração no catálogo no futuro, volte este helper:
+// function getVideoUrl(ref: string) {
+//   if (ref === "whats-001") return "https://www.youtube.com/watch?v=-E7dx82H91E"
+//   if (ref === "email-001") return "https://www.youtube.com/watch?v=dGGHX6In-vs"
+//   if (ref === "dre-001") return "https://www.youtube.com/watch?v=EJy_oIlakBw"
+//   if (ref === "fgts-001") return "https://www.youtube.com/watch?v=ZJDynMKmX-Y"
+//   if (ref === "ecac-001") return "https://www.youtube.com/watch?v=lovnQ4FBrzw"
+//   if (ref === "funcionarios-001") return "https://www.youtube.com/watch?v=LW7mJt-iEFk"
+//   return null
+// }
 
 export default function HomePage() {
   return (
@@ -295,7 +296,7 @@ export default function HomePage() {
           <div className="mt-10 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             {PRODUTOS.map((produto) => {
               const Icone = produto.icone
-              const videoUrl = getVideoUrl(produto.ref)
+              // const videoUrl = getVideoUrl(produto.ref)
 
               return (
                 <div
@@ -320,6 +321,7 @@ export default function HomePage() {
 
                   <p className="mt-3 leading-7 text-slate-600">{produto.descricao}</p>
 
+                  {/* Para voltar a mostrar a demonstração na home, descomente este bloco.
                   {videoUrl ? (
                     <a
                       href={videoUrl}
@@ -330,6 +332,7 @@ export default function HomePage() {
                       Ver demonstração
                     </a>
                   ) : null}
+                  */}
                 </div>
               )
             })}
