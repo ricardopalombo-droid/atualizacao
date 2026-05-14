@@ -44,7 +44,23 @@ const beneficios = [
 //   return null
 // }
 
+function getVideoUrl(ref: string) {
+  if (ref === "whats-001") return "https://www.youtube.com/watch?v=-E7dx82H91E"
+  if (ref === "email-001") return "https://www.youtube.com/watch?v=dGGHX6In-vs"
+  if (ref === "dre-001") return "https://www.youtube.com/watch?v=EJy_oIlakBw"
+  if (ref === "fgts-001") return "https://www.youtube.com/watch?v=ZJDynMKmX-Y"
+  if (ref === "ecac-001") return "https://www.youtube.com/watch?v=lovnQ4FBrzw"
+  if (ref === "funcionarios-001") return "https://www.youtube.com/watch?v=LW7mJt-iEFk"
+  return null
+}
+
 export default function HomePage() {
+  const produtosCatalogo = PRODUTOS.filter(
+    (produto) => !["dre-001", "ecac-001", "extratos-001"].includes(produto.ref),
+  )
+  // Para voltar a mostrar esses produtos no catálogo, remova os refs acima:
+  // "dre-001", "ecac-001", "extratos-001"
+
   return (
     <div className="min-h-screen bg-slate-50 text-slate-800">
       <header className="sticky top-0 z-40 border-b bg-white/95 backdrop-blur">
@@ -294,9 +310,9 @@ export default function HomePage() {
           </div>
 
           <div className="mt-10 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {PRODUTOS.map((produto) => {
+            {produtosCatalogo.map((produto) => {
               const Icone = produto.icone
-              // const videoUrl = getVideoUrl(produto.ref)
+              const videoUrl = getVideoUrl(produto.ref)
 
               return (
                 <div
@@ -321,7 +337,6 @@ export default function HomePage() {
 
                   <p className="mt-3 leading-7 text-slate-600">{produto.descricao}</p>
 
-                  {/* Para voltar a mostrar a demonstração na home, descomente este bloco.
                   {videoUrl ? (
                     <a
                       href={videoUrl}
@@ -332,7 +347,6 @@ export default function HomePage() {
                       Ver demonstração
                     </a>
                   ) : null}
-                  */}
                 </div>
               )
             })}
