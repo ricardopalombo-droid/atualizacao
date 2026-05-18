@@ -29,10 +29,10 @@ export default function PalSysAssinaturaPage() {
   }
 
   const produtosAssinatura = PRODUTOS.filter(
-    (produto) => !["dre-001", "ecac-001", "extratos-001"].includes(produto.ref),
+    (produto) => !["dre-001", "extratos-001"].includes(produto.ref),
   )
   // Para voltar a mostrar esses produtos em assinar, remova os refs acima:
-  // "dre-001", "ecac-001", "extratos-001"
+  // "dre-001", "extratos-001"
 
   async function assinarProduto(produto: ProdutoAssinavel) {
     try {

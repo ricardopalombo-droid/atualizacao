@@ -56,10 +56,10 @@ function getVideoUrl(ref: string) {
 
 export default function HomePage() {
   const produtosCatalogo = PRODUTOS.filter(
-    (produto) => !["dre-001", "ecac-001", "extratos-001"].includes(produto.ref),
+    (produto) => !["dre-001", "extratos-001"].includes(produto.ref),
   )
   // Para voltar a mostrar esses produtos no catálogo, remova os refs acima:
-  // "dre-001", "ecac-001", "extratos-001"
+  // "dre-001", "extratos-001"
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-800">
