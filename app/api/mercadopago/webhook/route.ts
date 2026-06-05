@@ -57,6 +57,7 @@ function mapearProdutoParaServidor(produtoRef: string) {
     "email-001": "11",
     "extratos-001": "8",
     "funcionarios-001": "14",
+    "pdf-monitor-001": "14",
   }
 
   return mapa[produtoRef] || produtoRef

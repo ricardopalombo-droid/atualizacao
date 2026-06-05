@@ -25,6 +25,7 @@ export default function PalSysAssinaturaPage() {
     if (ref === "fgts-001") return "SuQao5qEEow"
     if (ref === "ecac-001") return "lovnQ4FBrzw"
     if (ref === "funcionarios-001") return "LW7mJt-iEFk"
+    if (ref === "pdf-monitor-001") return "bZ4QLAoork0"
     return null
   }
 

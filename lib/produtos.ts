@@ -6,6 +6,7 @@ import {
   Mail,
   Receipt,
   Users,
+  FileText,
 } from "lucide-react"
 
 export type StatusProduto = "disponivel" | "em_breve"
@@ -90,6 +91,15 @@ export const PRODUTOS: ProdutoSite[] = [
     descricao:
       "O colaborador preenche o cadastro inicial por link, a empresa revisa e completa as informações internas, e o escritório recebe tudo pronto no painel para importar no sistema da folha com mais rapidez e organização.",
     icone: Users,
+    status: "disponivel",
+  },
+  {
+    nome: "PDF Monitor",
+    preco: 29.9,
+    ref: "pdf-monitor-001",
+    descricao:
+      "Monitora a pasta definida, identifica os PDFs e renomeia os arquivos automaticamente com mais organização e menos trabalho manual no dia a dia do escritório.",
+    icone: FileText,
     status: "disponivel",
   },
 ]

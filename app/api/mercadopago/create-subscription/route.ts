@@ -7,6 +7,7 @@ const PRODUTOS_LIBERADOS = new Set([
   "whats-001",
   "email-001",
   "funcionarios-001",
+  "pdf-monitor-001",
 ])
 
 function getSiteUrl() {
