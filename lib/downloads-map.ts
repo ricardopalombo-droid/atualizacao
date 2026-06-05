@@ -5,4 +5,5 @@ export const DOWNLOADS_MAP: Record<string, string> = {
   "email-001": "Instalador_EnvioEmail.exe",
   "dre-001": "Instalador_DRE.exe",
   "funcionarios-001": "PalSysRunnerPhoenix-Setup.exe",
+  "pdf-monitor-001": "Instalador_PalSysPDFMonitor.exe",
 }
