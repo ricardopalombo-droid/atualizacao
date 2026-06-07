@@ -58,6 +58,7 @@ function mapearProdutoParaServidor(produtoRef: string) {
     "extratos-001": "8",
     "funcionarios-001": "14",
     "pdf-monitor-001": "14",
+    "consolida-impostos-001": "15",
   }
 
   return mapa[produtoRef] || produtoRef

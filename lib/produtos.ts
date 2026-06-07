@@ -7,6 +7,7 @@ import {
   Receipt,
   Users,
   FileText,
+  Calculator,
 } from "lucide-react"
 
 export type StatusProduto = "disponivel" | "em_breve"
@@ -100,6 +101,15 @@ export const PRODUTOS: ProdutoSite[] = [
     descricao:
       "Monitora a pasta definida, identifica os PDFs e renomeia os arquivos automaticamente com mais organização e menos trabalho manual no dia a dia do escritório.",
     icone: FileText,
+    status: "disponivel",
+  },
+  {
+    nome: "Consolida Impostos",
+    preco: 29.9,
+    ref: "consolida-impostos-001",
+    descricao:
+      "Automatiza a geração e a consolidação de relatórios fiscais da Contmatic G5 em planilhas e PDFs, com mais organização, agilidade e menos trabalho manual.",
+    icone: Calculator,
     status: "disponivel",
   },
 ]

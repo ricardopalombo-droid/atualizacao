@@ -52,6 +52,7 @@ function getVideoUrl(ref: string) {
   if (ref === "ecac-001") return "https://www.youtube.com/watch?v=lovnQ4FBrzw"
   if (ref === "funcionarios-001") return "https://www.youtube.com/watch?v=LW7mJt-iEFk"
   if (ref === "pdf-monitor-001") return "https://www.youtube.com/watch?v=bZ4QLAoork0"
+  if (ref === "consolida-impostos-001") return "https://www.youtube.com/watch?v=s6JIZzwhTok"
   return null
 }
 
