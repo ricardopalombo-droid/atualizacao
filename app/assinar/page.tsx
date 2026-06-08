@@ -26,7 +26,7 @@ export default function PalSysAssinaturaPage() {
     if (ref === "ecac-001") return "lovnQ4FBrzw"
     if (ref === "funcionarios-001") return "LW7mJt-iEFk"
     if (ref === "pdf-monitor-001") return "bZ4QLAoork0"
-    if (ref === "consolida-impostos-001") return "s6JIZzwhTok"
+    if (ref === "consolida-impostos-001") return "tAHFeYmP6BY"
     return null
   }
 
