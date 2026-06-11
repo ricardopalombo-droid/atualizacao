@@ -7,4 +7,5 @@ export const DOWNLOADS_MAP: Record<string, string> = {
   "funcionarios-001": "PalSysRunnerPhoenix-Setup.exe",
   "pdf-monitor-001": "Instalador_PalSysPDFMonitor.exe",
   "consolida-impostos-001": "Instalador_PalSys_Conciliador_de_Impostos.exe",
+  "consolidador-folhas-001": "Instalador_PalSys_Consolidador_de_Folha.exe",
 }

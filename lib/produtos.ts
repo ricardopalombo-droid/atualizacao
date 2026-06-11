@@ -8,6 +8,7 @@ import {
   Users,
   FileText,
   Calculator,
+  Files,
 } from "lucide-react"
 
 export type StatusProduto = "disponivel" | "em_breve"
@@ -110,6 +111,15 @@ export const PRODUTOS: ProdutoSite[] = [
     descricao:
       "Automatiza a geração e a consolidação de relatórios fiscais da Contmatic G5 em planilhas e PDFs, com mais organização, agilidade e menos trabalho manual.",
     icone: Calculator,
+    status: "disponivel",
+  },
+  {
+    nome: "Consolidador de Folhas",
+    preco: 24.9,
+    ref: "consolidador-folhas-001",
+    descricao:
+      "Consolida relatórios de folha em PDF, somando eventos e encargos entre competências, com geração organizada em PDF e Excel.",
+    icone: Files,
     status: "disponivel",
   },
 ]

@@ -53,6 +53,7 @@ function getVideoUrl(ref: string) {
   if (ref === "funcionarios-001") return "https://www.youtube.com/watch?v=LW7mJt-iEFk"
   if (ref === "pdf-monitor-001") return "https://www.youtube.com/watch?v=bZ4QLAoork0"
   if (ref === "consolida-impostos-001") return "https://www.youtube.com/watch?v=tAHFeYmP6BY"
+  if (ref === "consolidador-folhas-001") return "https://www.youtube.com/watch?v=3bs2H7Mewo4"
   return null
 }
 

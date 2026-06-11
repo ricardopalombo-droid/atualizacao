@@ -9,6 +9,7 @@ const PRODUTOS_LIBERADOS = new Set([
   "funcionarios-001",
   "pdf-monitor-001",
   "consolida-impostos-001",
+  "consolidador-folhas-001",
 ])
 
 function getSiteUrl() {
