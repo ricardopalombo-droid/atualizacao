@@ -46,7 +46,7 @@ const beneficios = [
 
 function getVideoUrl(ref: string) {
   if (ref === "whats-001") return "https://www.youtube.com/watch?v=-E7dx82H91E"
-  if (ref === "email-001") return "https://www.youtube.com/watch?v=dGGHX6In-vs"
+  if (ref === "email-001") return "https://www.youtube.com/watch?v=xAvIlFxByP8"
   if (ref === "dre-001") return "https://www.youtube.com/watch?v=EJy_oIlakBw"
   if (ref === "fgts-001") return "https://www.youtube.com/watch?v=SuQao5qEEow"
   if (ref === "ecac-001") return "https://www.youtube.com/watch?v=lovnQ4FBrzw"
