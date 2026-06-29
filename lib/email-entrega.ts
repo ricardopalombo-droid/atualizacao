@@ -52,9 +52,19 @@ export async function enviarEmailEntrega({
 }: EnviarEmailEntregaParams) {
   const nomeExibicao = nome?.trim() || email
   const { transporter, from } = getTransporter()
+  const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL || "https://www.palsys.com.br").replace(/\/+$/, "")
+  const logoUrl = `${siteUrl}/logo-palsys.png`
 
   const html = `
     <div style="font-family:Arial,Helvetica,sans-serif;max-width:640px;margin:0 auto;padding:24px;color:#111">
+      <div style="margin-bottom:24px;text-align:center;">
+        <img
+          src="${logoUrl}"
+          alt="PalSys"
+          style="max-width:220px;width:100%;height:auto;display:inline-block;"
+        />
+      </div>
+
       <h2 style="margin-bottom:16px;">Compra aprovada com sucesso</h2>
 
       <p>Olá, <strong>${escapeHtml(nomeExibicao)}</strong>.</p>
