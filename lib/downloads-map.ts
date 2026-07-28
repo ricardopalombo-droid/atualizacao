@@ -8,4 +8,5 @@ export const DOWNLOADS_MAP: Record<string, string> = {
   "pdf-monitor-001": "Instalador_PalSysPDFMonitor.exe",
   "consolida-impostos-001": "Instalador_PalSys_Conciliador_de_Impostos.exe",
   "consolidador-folhas-001": "Instalador_PalSys_Consolidador_de_Folha.exe",
+  "dctfweb-integra-001": "Instalador_PalSys_Consulta_DCTFWeb.exe",
 }

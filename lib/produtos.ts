@@ -51,6 +51,15 @@ export const PRODUTOS: ProdutoSite[] = [
     status: "disponivel",
   },
   {
+    nome: "PalSys - Consulta DCTFWeb - Integra Contador",
+    preco: 39.9,
+    ref: "dctfweb-integra-001",
+    descricao:
+      "Faz a busca da declaração, do recibo e da guia da DCTFWeb usando o Integra Contador da RFB, com mais agilidade e organização na rotina do escritório.",
+    icone: Building2,
+    status: "disponivel",
+  },
+  {
     nome: "Envio Automático de Documentos por WhatsApp",
     preco: 49.9,
     ref: "whats-001",

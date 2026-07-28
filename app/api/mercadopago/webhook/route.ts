@@ -53,6 +53,7 @@ function mapearProdutoParaServidor(produtoRef: string) {
     "dre-001": "7",
     "fgts-001": "12",
     "ecac-001": "13",
+    "dctfweb-integra-001": "19",
     "whats-001": "9",
     "email-001": "11",
     "extratos-001": "8",
