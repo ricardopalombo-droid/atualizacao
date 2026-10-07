@@ -25,6 +25,7 @@ export default function PalSysAssinaturaPage() {
     if (ref === "whats-001") return "lFXViQerYxQ"
     if (ref === "email-001") return "xAvIlFxByP8"
     if (ref === "central-documentos-001") return "McAZDftTzmM"
+    if (ref === "buscador-xml-001") return "LCkGH_FFKvc"
     if (ref === "dre-001") return "EJy_oIlakBw"
     if (ref === "fgts-001") return "SuQao5qEEow"
     if (ref === "ecac-001") return "lovnQ4FBrzw"

@@ -87,6 +87,15 @@ export const PRODUTOS: ProdutoSite[] = [
     status: "disponivel",
   },
   {
+    nome: "PalSys Documentos Fiscais",
+    preco: 299,
+    ref: "buscador-xml-001",
+    descricao:
+      "Automatize a consulta, o download e a organização de NF-e, NFC-e, CT-e e NFS-e em escritórios contábeis, com empresas e certificados A1 centralizados, buscas diárias, XMLs organizados por empresa, período e tipo, importação de acervos e controle de NSU. Valor para escritórios contábeis, sem limite de CNPJ. Para empresas, contratação sob consulta.",
+    icone: FileText,
+    status: "disponivel",
+  },
+  {
     nome: "Leitura de Extratos e geração de lançamentos",
     preco: 59.9,
     ref: "extratos-001",

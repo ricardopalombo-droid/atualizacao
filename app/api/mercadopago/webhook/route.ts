@@ -57,6 +57,7 @@ function mapearProdutoParaServidor(produtoRef: string) {
     "whats-001": "9",
     "email-001": "11",
     "central-documentos-001": "17",
+    "buscador-xml-001": "20",
     "extratos-001": "8",
     "funcionarios-001": "16",
     "pdf-monitor-001": "15",
