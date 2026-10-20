@@ -73,7 +73,7 @@ export const PRODUTOS: ProdutoSite[] = [
     preco: 149.9,
     ref: "central-documentos-001",
     descricao:
-      "Centralize e organize documentos para envio pelo WhatsApp, com mais controle das entregas entre escritório, empresas e colaboradores. Durante os envios, o computador permanece livre para você continuar usando normalmente.",
+      "Organize seus documentos em pastas no Google Drive e automatize os envios pelo WhatsApp, mantendo o computador livre para o trabalho.",
     icone: Files,
     status: "disponivel",
   },
