@@ -28,7 +28,6 @@ export default function PalSysAssinaturaPage() {
     if (ref === "buscador-xml-001") return "LCkGH_FFKvc"
     if (ref === "dre-001") return "EJy_oIlakBw"
     if (ref === "fgts-001") return "SuQao5qEEow"
-    if (ref === "ecac-001") return "lovnQ4FBrzw"
     if (ref === "dctfweb-integra-001") return "IkpKPZHazCk"
     if (ref === "funcionarios-001") return "LW7mJt-iEFk"
     if (ref === "pdf-monitor-001") return "PwCItzETcg4"

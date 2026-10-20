@@ -2,7 +2,6 @@ import { NextResponse } from "next/server"
 import { salvarAssinatura } from "@/lib/assinaturas-store"
 
 const PRODUTOS_LIBERADOS = new Set([
-  "ecac-001",
   "dctfweb-integra-001",
   "fgts-001",
   "whats-001",

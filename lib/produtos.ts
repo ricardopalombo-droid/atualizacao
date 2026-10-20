@@ -42,15 +42,6 @@ export const PRODUTOS: ProdutoSite[] = [
     status: "disponivel",
   },
   {
-    nome: "eCAC / Recibos REINF e DCTFWeb",
-    preco: 39.9,
-    ref: "ecac-001",
-    descricao:
-      "Automatize consultas e obtenção de recibos para rotinas ligadas ao eCAC, REINF e DCTFWeb. Uma alternativa prática para escritórios que preferem não contratar o Integra Contador da RFB e ainda assim desejam mais agilidade, padronização e ganho de tempo nas rotinas fiscais.",
-    icone: Building2,
-    status: "disponivel",
-  },
-  {
     nome: "PalSys - Consulta DCTFWeb - Integra Contador",
     preco: 39.9,
     ref: "dctfweb-integra-001",
@@ -102,15 +93,6 @@ export const PRODUTOS: ProdutoSite[] = [
     descricao:
       "Transforme informações de extratos em lançamentos com mais velocidade e menos retrabalho.",
     icone: Receipt,
-    status: "em_breve",
-  },
-  {
-    nome: "Cadastros de funcionários via planilha",
-    preco: 39.9,
-    ref: "funcionarios-planilha-001",
-    descricao:
-      "Importação de dados por planilha para rotinas de cadastro de funcionários, em uma versão anterior que será disponibilizada em breve.",
-    icone: Users,
     status: "em_breve",
   },
   {
