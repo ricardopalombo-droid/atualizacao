@@ -92,12 +92,16 @@ create table if not exists public.reference_catalog_items (
 create or replace function public.set_updated_at()
 returns trigger
 language plpgsql
+set search_path = ''
 as $$
 begin
   new.updated_at = now();
   return new;
 end;
 $$;
+
+revoke execute on function public.set_updated_at() from public, anon, authenticated;
+grant execute on function public.set_updated_at() to service_role;
 
 drop trigger if exists subscribers_set_updated_at on public.subscribers;
 create trigger subscribers_set_updated_at
@@ -146,6 +150,24 @@ alter table public.clients enable row level security;
 alter table public.employees enable row level security;
 alter table public.dependents enable row level security;
 alter table public.reference_catalog_items enable row level security;
+
+revoke all privileges on table
+  public.subscribers,
+  public.app_users,
+  public.clients,
+  public.employees,
+  public.dependents,
+  public.reference_catalog_items
+from anon, authenticated;
+
+grant select, insert, update, delete on table
+  public.subscribers,
+  public.app_users,
+  public.clients,
+  public.employees,
+  public.dependents,
+  public.reference_catalog_items
+to service_role;
 
 create policy "service role full subscribers"
 on public.subscribers
