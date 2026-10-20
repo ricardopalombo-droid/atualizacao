@@ -73,7 +73,7 @@ export const PRODUTOS: ProdutoSite[] = [
     preco: 149.9,
     ref: "central-documentos-001",
     descricao:
-      "Centralize documentos em uma plataforma organizada para facilitar o envio, a consulta e o controle das entregas entre escritório, empresas e colaboradores.",
+      "Centralize e organize documentos para envio pelo WhatsApp, com mais controle das entregas entre escritório, empresas e colaboradores. Durante os envios, o computador permanece livre para você continuar usando normalmente.",
     icone: Files,
     status: "disponivel",
   },
