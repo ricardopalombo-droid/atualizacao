@@ -5,6 +5,7 @@ import {
   formulaIdentifiers,
   getTemplate,
   knownFormulaIdentifiers,
+  normalizeText,
   searchCatalog,
   validateEvent,
 } from "./engine"
@@ -26,6 +27,9 @@ Não há dicionário validado de enums fiscais. Uma alteração fiscal solicitad
 comprovada pelos dados deve ir para pendencias; nunca escolha um código por suposição.
 Se faltar base de cálculo, percentual, incidência solicitada ou outra decisão essencial que não
 possa ser inferida de um exemplo realmente semelhante, liste uma pergunta simples em pendencias.
+Considere confirmações em linguagem natural como explícitas. Por exemplo, "terá incidência de
+INSS, FGTS e IRRF" confirma as três incidências: use uma configuração equivalente observada nos
+exemplos e não pergunte novamente sobre elas.
 Não crie pendência apenas porque o nome do exemplo é diferente e não mencione referências,
 códigos internos, campos ou fórmulas nas perguntas ao usuário. Não ignore condições. Para uma
 alteração use a linguagem Phoenix dos exemplos, nunca Python. Porcentagem, quando o modelo usa
@@ -127,6 +131,42 @@ const FISCAL_FIELDS = new Set([
   "CodigoHomologNet",
 ])
 
+const PLAIN_LANGUAGE_FIELD_TERMS: Record<string, string[]> = {
+  INSSNumero: ["inss"],
+  BaseINSS: ["inss"],
+  FGTSNumero: ["fgts"],
+  BaseFGTS: ["fgts"],
+  IRRFNumero: ["irrf"],
+  DirfNumero: ["irrf", "dirf"],
+  DedNumero: ["irrf", "deducao"],
+  IsencaoDedIrrf: ["irrf", "isencao"],
+  BaseIRRF: ["irrf"],
+  Pis: ["pis", "pasep"],
+  BasePisPasep: ["pis", "pasep"],
+  Rais: ["rais"],
+  SalFam: ["salario familia"],
+  DsrNumero: ["dsr"],
+  CompoeSal: ["compoe salario", "compor salario"],
+  Proporcional: ["proporcional"],
+  Escopo: ["folha", "ferias", "rescisao", "decimo terceiro"],
+  EscopoEvtoFol1: ["folha", "ferias", "rescisao", "decimo terceiro"],
+  BaseSindical: ["sindical"],
+  RubricaESocial: ["esocial", "rubrica"],
+  CodigoTRCT: ["trct"],
+  CodigoHomologNet: ["homolognet"],
+}
+
+function sameValue(left: unknown, right: unknown) {
+  return JSON.stringify(left) === JSON.stringify(right)
+}
+
+function requestMentionsField(request: string, field: string) {
+  const normalizedRequest = normalizeText(request)
+  return (PLAIN_LANGUAGE_FIELD_TERMS[field] ?? []).some((term) =>
+    normalizedRequest.includes(term),
+  )
+}
+
 function parseAnswer(value: unknown, allowedCodes: Set<number>) {
   if (!value || typeof value !== "object" || Array.isArray(value)) {
     throw new Error("A API não devolveu uma proposta válida.")
@@ -150,6 +190,8 @@ function parseAnswer(value: unknown, allowedCodes: Set<number>) {
 
 function applyAnswer(request: string, allowedCodes: Set<number>, rawAnswer: unknown) {
   const answer = parseAnswer(rawAnswer, allowedCodes)
+  const referenceEvents = [...allowedCodes].map((code) => buildProposal({ code }).evento)
+  const selectedReference = buildProposal({ code: answer.base_codigo }).evento
   const changes: Record<string, unknown> = {}
   const explanations: Record<string, string> = {}
   const protectedIdentifiers = new Set(["CodEventoId", "CodUsuario"])
@@ -204,6 +246,14 @@ function applyAnswer(request: string, allowedCodes: Set<number>, rawAnswer: unkn
   }
   if (answer.formula !== null) changes.Formula = answer.formula
 
+  // O modelo às vezes repete valores já presentes no exemplo. Eles não são mudanças e não
+  // devem acionar confirmações desnecessárias para o usuário.
+  for (const field of Object.keys(changes)) {
+    if (!sameValue(changes[field], selectedReference[field])) continue
+    delete changes[field]
+    delete explanations[field]
+  }
+
   const proposal = buildProposal({
     code: answer.base_codigo,
     description: answer.descricao,
@@ -218,10 +268,17 @@ function applyAnswer(request: string, allowedCodes: Set<number>, rawAnswer: unkn
     const literal = JSON.stringify(value)
     const escapedField = field.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
     const escapedLiteral = literal.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
-    const explicit = new RegExp(`\\b${escapedField}\\s*[:=]\\s*${escapedLiteral}(?![\\w.])`, "i").test(request)
-    if (!explicit) {
+    const explicitTechnicalValue = new RegExp(
+      `\\b${escapedField}\\s*[:=]\\s*${escapedLiteral}(?![\\w.])`,
+      "i",
+    ).test(request)
+    const valueObservedInExamples = referenceEvents.some((event) => sameValue(event[field], value))
+    const confirmedInPlainLanguage = requestMentionsField(request, field) && valueObservedInExamples
+    if (!explicitTechnicalValue && !confirmedInPlainLanguage) {
       proposal.bloqueios.push(
-        "Não foi possível confirmar automaticamente as incidências deste evento. Informe no pedido como devem ser tratados INSS, FGTS e IRRF.",
+        requestMentionsField(request, field)
+          ? "A incidência foi informada, mas não foi encontrada uma configuração equivalente nos exemplos disponíveis."
+          : "Não foi possível confirmar automaticamente todas as configurações deste evento. Informe no pedido as incidências e os contextos de cálculo desejados.",
       )
     }
   }

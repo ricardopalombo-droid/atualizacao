@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useRef, useState } from "react"
-import { Download, FileJson, LoaderCircle, Sparkles, Upload } from "lucide-react"
+import { CircleHelp, Download, FileJson, LoaderCircle, Sparkles, Upload, X } from "lucide-react"
 import type { PublicEventProposal } from "@/lib/contmatic-events/types"
 
 type StatusResponse = {
@@ -39,6 +39,8 @@ export function ContmaticEventCreator() {
   const [pedido, setPedido] = useState("")
   const [modelo, setModelo] = useState("")
   const [proposal, setProposal] = useState<PublicEventProposal | null>(null)
+  const [questionDialogOpen, setQuestionDialogOpen] = useState(false)
+  const [answers, setAnswers] = useState<string[]>([])
   const [revisado, setRevisado] = useState(false)
   const [busy, setBusy] = useState(false)
   const [message, setMessage] = useState("")
@@ -61,6 +63,8 @@ export function ContmaticEventCreator() {
 
   function showProposal(next: PublicEventProposal, successMessage: string) {
     setProposal(next)
+    setAnswers(next.pendencias.map(() => ""))
+    setQuestionDialogOpen(next.pendencias.length > 0)
     setRevisado(false)
     setError("")
     setMessage(successMessage)
@@ -90,6 +94,37 @@ export function ContmaticEventCreator() {
     }
     const next = await postJson<PublicEventProposal>("/api/eventos/template", { evento: parsed })
     showProposal(next, "Evento carregado. Revise os dados antes de gerar outro arquivo.")
+  }
+
+  async function generateProposal(fullRequest: string) {
+    const next = await postJson<PublicEventProposal>("/api/eventos/gerar", {
+      pedido: fullRequest,
+      modelo,
+    })
+    showProposal(
+      next,
+      next.pendencias.length
+        ? "A proposta foi criada, mas precisa de algumas respostas."
+        : "Novo evento preparado. Confira todos os dados antes de exportar.",
+    )
+  }
+
+  async function handleQuestionAnswers() {
+    if (!proposal?.pendencias.length) return
+    if (answers.some((answer) => !answer.trim())) {
+      throw new Error("Responda todas as perguntas antes de continuar.")
+    }
+
+    const additionalInformation = proposal.pendencias
+      .map((question, index) => `Pergunta: ${question}\nResposta: ${answers[index].trim()}`)
+      .join("\n\n")
+    const supplementedRequest = `${pedido.trim()}\n\nInformações adicionais fornecidas pelo usuário:\n${additionalInformation}`
+    if (supplementedRequest.length > 12_000) {
+      throw new Error("O pedido e as respostas ultrapassaram o limite permitido.")
+    }
+
+    setPedido(supplementedRequest)
+    await generateProposal(supplementedRequest)
   }
 
   async function handleExport() {
@@ -145,18 +180,7 @@ export function ContmaticEventCreator() {
             type="button"
             disabled={busy || !pedido.trim() || !status?.chaveConfigurada}
             onClick={() =>
-              run(async () => {
-                const next = await postJson<PublicEventProposal>("/api/eventos/gerar", {
-                  pedido,
-                  modelo,
-                })
-                showProposal(
-                  next,
-                  next.pendencias.length
-                    ? "A proposta foi criada, mas precisa de informações adicionais."
-                    : "Novo evento preparado. Confira todos os dados antes de exportar.",
-                )
-              })
+              run(() => generateProposal(pedido))
             }
             className="inline-flex items-center justify-center gap-2 rounded-xl bg-slate-900 px-5 py-3 font-bold text-white hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50"
           >
@@ -234,10 +258,19 @@ export function ContmaticEventCreator() {
 
           {proposal.pendencias.length ? (
             <div className="mt-6 rounded-2xl border border-red-200 bg-red-50 p-5 text-red-900">
-              <h3 className="font-bold">Complete o pedido e gere novamente</h3>
+              <h3 className="font-bold">Precisamos de algumas respostas</h3>
               <ul className="mt-3 list-disc space-y-2 pl-5 text-sm leading-6">
                 {proposal.pendencias.map((item) => <li key={item}>{item}</li>)}
               </ul>
+              <button
+                type="button"
+                disabled={busy}
+                onClick={() => setQuestionDialogOpen(true)}
+                className="mt-4 inline-flex items-center justify-center gap-2 rounded-xl bg-red-800 px-5 py-3 font-bold text-white hover:bg-red-700 disabled:opacity-50"
+              >
+                <CircleHelp size={19} />
+                Responder perguntas
+              </button>
             </div>
           ) : null}
 
@@ -248,28 +281,117 @@ export function ContmaticEventCreator() {
             </ul>
           </div>
 
-          <label className="mt-6 flex items-start gap-3 rounded-2xl bg-slate-50 p-4 leading-6 text-slate-700">
-            <input
-              type="checkbox"
-              checked={revisado}
-              onChange={(event) => setRevisado(event.target.checked)}
-              className="mt-1 h-4 w-4"
-            />
-            <span>Revisei o cálculo e as configurações do novo evento.</span>
-          </label>
+          {!proposal.pendencias.length ? (
+            <>
+              <label className="mt-6 flex items-start gap-3 rounded-2xl bg-slate-50 p-4 leading-6 text-slate-700">
+                <input
+                  type="checkbox"
+                  checked={revisado}
+                  onChange={(event) => setRevisado(event.target.checked)}
+                  className="mt-1 h-4 w-4"
+                />
+                <span>Revisei as informações do novo evento.</span>
+              </label>
 
-          <div className="mt-5">
-            <button
-              type="button"
-              disabled={busy || !revisado || proposal.pendencias.length > 0}
-              onClick={() => run(handleExport)}
-              className="inline-flex items-center justify-center gap-2 rounded-xl bg-yellow-400 px-5 py-3 font-bold text-slate-900 hover:brightness-95 disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              <Download size={19} />
-              3. Gerar arquivo para importação
-            </button>
-          </div>
+              <div className="mt-5">
+                <button
+                  type="button"
+                  disabled={busy || !revisado}
+                  onClick={() => run(handleExport)}
+                  className="inline-flex items-center justify-center gap-2 rounded-xl bg-yellow-400 px-5 py-3 font-bold text-slate-900 hover:brightness-95 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  <Download size={19} />
+                  3. Gerar arquivo para importação
+                </button>
+              </div>
+            </>
+          ) : null}
         </section>
+      ) : null}
+
+      {questionDialogOpen && proposal?.pendencias.length ? (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 p-4"
+          role="presentation"
+          onMouseDown={(event) => {
+            if (event.currentTarget === event.target && !busy) setQuestionDialogOpen(false)
+          }}
+        >
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="event-questions-title"
+            className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-3xl bg-white p-6 shadow-2xl md:p-8"
+          >
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <h2 id="event-questions-title" className="text-2xl font-bold text-slate-900">
+                  Complete as informações
+                </h2>
+                <p className="mt-2 leading-7 text-slate-600">
+                  Responda em linguagem simples. Suas respostas serão acrescentadas ao pedido original.
+                </p>
+              </div>
+              <button
+                type="button"
+                aria-label="Fechar perguntas"
+                disabled={busy}
+                onClick={() => setQuestionDialogOpen(false)}
+                className="rounded-xl p-2 text-slate-500 hover:bg-slate-100 disabled:opacity-50"
+              >
+                <X size={22} />
+              </button>
+            </div>
+
+            <div className="mt-6 grid gap-5">
+              {proposal.pendencias.map((question, index) => (
+                <div key={`${question}-${index}`}>
+                  <label htmlFor={`event-answer-${index}`} className="block font-bold leading-6 text-slate-800">
+                    {index + 1}. {question}
+                  </label>
+                  <textarea
+                    id={`event-answer-${index}`}
+                    rows={3}
+                    value={answers[index] ?? ""}
+                    onChange={(event) =>
+                      setAnswers((current) => current.map((answer, answerIndex) =>
+                        answerIndex === index ? event.target.value : answer
+                      ))
+                    }
+                    placeholder="Digite sua resposta..."
+                    className="mt-2 w-full resize-y rounded-2xl border border-slate-300 px-4 py-3 leading-6 text-slate-900 outline-none focus:border-yellow-400 focus:ring-2 focus:ring-yellow-200"
+                  />
+                </div>
+              ))}
+            </div>
+
+            {error ? (
+              <div role="alert" className="mt-5 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-800">
+                {error}
+              </div>
+            ) : null}
+
+            <div className="mt-7 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+              <button
+                type="button"
+                disabled={busy}
+                onClick={() => setQuestionDialogOpen(false)}
+                className="rounded-xl border border-slate-300 px-5 py-3 font-bold text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+              >
+                Responder depois
+              </button>
+              <button
+                type="button"
+                disabled={busy || answers.some((answer) => !answer.trim())}
+                onClick={() => run(handleQuestionAnswers)}
+                className="inline-flex items-center justify-center gap-2 rounded-xl bg-slate-900 px-5 py-3 font-bold text-white hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {busy ? <LoaderCircle className="animate-spin" size={19} /> : <Sparkles size={19} />}
+                {busy ? "Gerando novamente..." : "Usar respostas e gerar novamente"}
+              </button>
+            </div>
+          </div>
+        </div>
       ) : null}
 
       <p className="px-1 text-sm leading-6 text-slate-500">
