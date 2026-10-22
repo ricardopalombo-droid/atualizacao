@@ -1,12 +1,14 @@
 import "server-only"
 
 import { z } from "zod"
+import { PAYROLL_TABLES_REFERENCE } from "@/lib/payroll-tables"
 
 const moneySchema = z.number().finite().nullable()
 
 export const receiptAnalysisSchema = z.object({
   documento_valido: z.boolean(),
   tipo_documento: z.enum(["holerite", "ferias", "rescisao", "desconhecido"]),
+  documentos_considerados: z.array(z.string()),
   competencia: z.string(),
   titulo: z.string(),
   resumo: z.object({
@@ -54,6 +56,7 @@ const RESPONSE_SCHEMA = {
       type: "string",
       enum: ["holerite", "ferias", "rescisao", "desconhecido"],
     },
+    documentos_considerados: { type: "array", items: { type: "string" } },
     competencia: { type: "string" },
     titulo: { type: "string" },
     resumo: {
@@ -122,6 +125,7 @@ const RESPONSE_SCHEMA = {
   required: [
     "documento_valido",
     "tipo_documento",
+    "documentos_considerados",
     "competencia",
     "titulo",
     "resumo",
@@ -149,10 +153,12 @@ INSS, IRRF, FGTS, férias e verbas rescisórias quando existirem. Para cálculos
 etapa por faixa com base alcançada naquela faixa, alíquota e valor descontado. Não invente base,
 alíquota, período trabalhado, aviso prévio, motivo de desligamento ou quantidade de avos.
 
-Para competências de 2026, a tabela mensal do INSS do empregado é progressiva: até R$ 1.621,00 a
-7,5%; de R$ 1.621,01 a R$ 2.902,84 a 9%; de R$ 2.902,85 a R$ 4.354,27 a 12%; de R$ 4.354,28 a
-R$ 8.475,55 a 14%. Para outra competência, só use uma tabela identificável no próprio documento;
-caso contrário, explique os valores impressos e crie uma pendência para conferir a tabela daquele ano.
+Considere todos os arquivos enviados em conjunto. Identifique o recibo/termo principal e use
+demonstrativos de médias, faltas ou outras memórias como anexos complementares. Liste, sem dados
+pessoais, os tipos de documentos efetivamente considerados. Não some novamente totais que aparecem
+repetidos em mais de um arquivo.
+
+${PAYROLL_TABLES_REFERENCE}
 
 Se o documento estiver ilegível, não for um dos três tipos aceitos ou faltar algo indispensável,
 não adivinhe. Faça perguntas curtas e leigas em pendencias. Considere as respostas adicionais do
@@ -236,11 +242,15 @@ function addArithmeticWarnings(analysis: ReceiptAnalysis) {
     warnings.push("Vencimentos menos descontos não coincide com o valor líquido informado.")
   }
 
-  return { ...analysis, alertas: [...new Set(warnings)] }
+  return {
+    ...analysis,
+    itens: analysis.itens.filter((item) => Math.abs(item.valor) > 0.004),
+    alertas: [...new Set(warnings)],
+  }
 }
 
 export async function analyzeReceipt(args: {
-  file: File
+  files: File[]
   answers: string
 }) {
   const apiKey = String(process.env.OPENAI_API_KEY ?? "").trim()
@@ -249,11 +259,13 @@ export async function analyzeReceipt(args: {
     throw new Error("A análise ainda não foi configurada no servidor.")
   }
 
-  const bytes = Buffer.from(await args.file.arrayBuffer())
-  const fileData = `data:${args.file.type};base64,${bytes.toString("base64")}`
-  const documentPart = args.file.type === "application/pdf"
-    ? { type: "input_file", filename: args.file.name, file_data: fileData }
-    : { type: "input_image", image_url: fileData, detail: "high" }
+  const documentParts = await Promise.all(args.files.map(async (file) => {
+    const bytes = Buffer.from(await file.arrayBuffer())
+    const fileData = `data:${file.type};base64,${bytes.toString("base64")}`
+    return file.type === "application/pdf"
+      ? { type: "input_file", filename: file.name, file_data: fileData }
+      : { type: "input_image", image_url: fileData, detail: "high" }
+  }))
 
   let response: Response
   try {
@@ -277,7 +289,7 @@ export async function analyzeReceipt(args: {
                   ? `Analise o documento. Respostas complementares do usuário: ${args.answers}`
                   : "Analise o documento e explique os cálculos de forma simples.",
               },
-              documentPart,
+              ...documentParts,
             ],
           },
         ],

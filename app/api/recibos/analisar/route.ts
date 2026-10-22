@@ -35,20 +35,25 @@ export async function POST(request: Request) {
   let requestId = ""
   try {
     const form = await request.formData()
-    const file = form.get("arquivo")
+    const files = form.getAll("arquivos").filter((item): item is File => item instanceof File)
+    const legacyFile = form.get("arquivo")
+    if (!files.length && legacyFile instanceof File) files.push(legacyFile)
     const answers = String(form.get("respostas") ?? "").trim()
     const consent = String(form.get("consentimento") ?? "") === "true"
     const turnstileToken = String(form.get("turnstileToken") ?? "").trim()
 
-    if (!(file instanceof File)) throw new Error("Selecione um arquivo para analisar.")
+    if (!files.length) throw new Error("Selecione pelo menos um arquivo para analisar.")
+    if (files.length > 5) throw new Error("Envie no máximo 5 arquivos por análise.")
     if (!consent) throw new Error("Confirme o consentimento para analisar o documento.")
-    if (!ALLOWED_TYPES.has(file.type)) {
+    if (files.some((file) => !ALLOWED_TYPES.has(file.type))) {
       throw new Error("Envie um arquivo PDF, JPG ou PNG.")
     }
-    if (!file.size || file.size > MAX_FILE_SIZE) {
-      throw new Error("O arquivo deve ter no máximo 4 MB.")
+    const totalSize = files.reduce((total, file) => total + file.size, 0)
+    if (files.some((file) => !file.size) || totalSize > MAX_FILE_SIZE) {
+      throw new Error("Os arquivos devem somar no máximo 4 MB.")
     }
-    if (!(await hasValidSignature(file))) {
+    const signatures = await Promise.all(files.map(hasValidSignature))
+    if (signatures.some((valid) => !valid)) {
       throw new Error("O conteúdo do arquivo não corresponde ao formato informado.")
     }
     if (answers.length > 2_000) {
@@ -57,9 +62,9 @@ export async function POST(request: Request) {
 
     const address = getRequestAddress(request)
     await verifyTurnstile(turnstileToken, address)
-    requestId = await beginReceiptAnalysis(hashRequestAddress(address), file.size)
+    requestId = await beginReceiptAnalysis(hashRequestAddress(address), totalSize)
 
-    const analysis = await analyzeReceipt({ file, answers })
+    const analysis = await analyzeReceipt({ files, answers })
     await finishReceiptAnalysis(requestId, "completed", analysis.tipo_documento)
     return NextResponse.json({ analise: analysis })
   } catch (error) {

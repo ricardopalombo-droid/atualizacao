@@ -17,6 +17,7 @@ import {
 type Analysis = {
   documento_valido: boolean
   tipo_documento: "holerite" | "ferias" | "rescisao" | "desconhecido"
+  documentos_considerados: string[]
   competencia: string
   titulo: string
   resumo: {
@@ -80,7 +81,7 @@ const documentLabels = {
 }
 
 export function ReceiptAnalyzer({ turnstileSiteKey }: { turnstileSiteKey: string }) {
-  const [file, setFile] = useState<File | null>(null)
+  const [files, setFiles] = useState<File[]>([])
   const [answers, setAnswers] = useState("")
   const [consent, setConsent] = useState(false)
   const [analysis, setAnalysis] = useState<Analysis | null>(null)
@@ -94,8 +95,10 @@ export function ReceiptAnalyzer({ turnstileSiteKey }: { turnstileSiteKey: string
   async function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
     setError("")
-    if (!file) return setError("Selecione o holerite, recibo de férias ou termo de rescisão.")
-    if (file.size > 4 * 1024 * 1024) return setError("O arquivo deve ter no máximo 4 MB.")
+    if (!files.length) return setError("Selecione o holerite, recibo de férias ou termo de rescisão.")
+    if (files.length > 5) return setError("Selecione no máximo 5 arquivos.")
+    const totalSize = files.reduce((total, file) => total + file.size, 0)
+    if (totalSize > 4 * 1024 * 1024) return setError("Os arquivos devem somar no máximo 4 MB.")
     if (!consent) return setError("Marque o consentimento antes de continuar.")
     const browserForm = new FormData(event.currentTarget)
     const securityToken = process.env.NODE_ENV === "development"
@@ -106,7 +109,7 @@ export function ReceiptAnalyzer({ turnstileSiteKey }: { turnstileSiteKey: string
     setLoading(true)
     try {
       const form = new FormData()
-      form.set("arquivo", file)
+      files.forEach((file) => form.append("arquivos", file))
       form.set("respostas", answers)
       form.set("consentimento", "true")
       form.set("turnstileToken", securityToken)
@@ -146,21 +149,26 @@ export function ReceiptAnalyzer({ turnstileSiteKey }: { turnstileSiteKey: string
             >
               <Upload className="mb-4 h-9 w-9 text-slate-500" />
               <strong className="text-slate-900">
-                {file ? file.name : "Clique para escolher um PDF ou uma imagem"}
+                {files.length
+                  ? `${files.length} ${files.length === 1 ? "arquivo selecionado" : "arquivos selecionados"}`
+                  : "Clique para escolher um ou mais arquivos"}
               </strong>
-              <span className="mt-2 text-sm text-slate-500">PDF, JPG ou PNG · até 4 MB</span>
-              {file && (
-                <span className="mt-1 text-xs text-slate-400">
-                  {(file.size / 1024 / 1024).toFixed(2).replace(".", ",")} MB
+              <span className="mt-2 text-sm text-slate-500">Até 5 PDFs, JPGs ou PNGs · 4 MB no total</span>
+              {files.length > 0 && (
+                <span className="mt-2 max-w-full text-xs leading-5 text-slate-500">
+                  {files.map((file) => file.name).join(" · ")}
+                  <br />
+                  {(files.reduce((total, file) => total + file.size, 0) / 1024 / 1024).toFixed(2).replace(".", ",")} MB no total
                 </span>
               )}
               <input
                 id="receipt-file"
                 type="file"
                 accept="application/pdf,image/jpeg,image/png"
+                multiple
                 className="sr-only"
                 onChange={(event) => {
-                  setFile(event.target.files?.[0] ?? null)
+                  setFiles(Array.from(event.target.files ?? []))
                   setAnalysis(null)
                   setError("")
                 }}
@@ -248,6 +256,8 @@ function AnalysisResult({ analysis }: { analysis: Analysis }) {
     ["Total de descontos", analysis.resumo.total_descontos, "text-red-700"],
     ["Valor líquido", analysis.resumo.valor_liquido, "text-slate-950"],
   ] as const
+  const visibleSummaries = summaries.filter(([, value]) => value !== null && Math.abs(value) > 0.004)
+  const visibleItems = analysis.itens.filter((item) => Math.abs(item.valor) > 0.004)
 
   return (
     <section id="resultado-analise" className="mt-10 space-y-6 print:mt-0">
@@ -263,6 +273,11 @@ function AnalysisResult({ analysis }: { analysis: Analysis }) {
                 {analysis.competencia ? ` · ${analysis.competencia}` : ""}
               </span>
               <h2 className="mt-1 text-2xl font-bold text-slate-950">{analysis.titulo}</h2>
+              {analysis.documentos_considerados.length > 0 && (
+                <p className="mt-2 text-sm text-slate-500">
+                  Documentos considerados: {analysis.documentos_considerados.join(", ")}
+                </p>
+              )}
             </div>
           </div>
           <button
@@ -281,18 +296,18 @@ function AnalysisResult({ analysis }: { analysis: Analysis }) {
           </div>
         )}
 
-        <div className="mt-7 grid gap-4 sm:grid-cols-3">
-          {summaries.map(([label, value, color]) => (
+        {visibleSummaries.length > 0 && <div className="mt-7 grid gap-4 sm:grid-cols-3">
+          {visibleSummaries.map(([label, value, color]) => (
             <div key={label} className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
               <p className="text-sm text-slate-500">{label}</p>
               <p className={`mt-2 text-2xl font-bold ${color}`}>
-                {value === null ? "Não identificado" : currency.format(value)}
+                {currency.format(value!)}
               </p>
             </div>
           ))}
-        </div>
+        </div>}
 
-        {analysis.itens.length > 0 && (
+        {visibleItems.length > 0 && (
           <div className="mt-8 overflow-hidden rounded-2xl border border-slate-200">
             <div className="border-b border-slate-200 bg-slate-50 px-5 py-4">
               <h3 className="font-bold text-slate-900">Valores encontrados no documento</h3>
@@ -308,7 +323,7 @@ function AnalysisResult({ analysis }: { analysis: Analysis }) {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
-                  {analysis.itens.map((item, index) => (
+                  {visibleItems.map((item, index) => (
                     <tr key={`${item.descricao}-${index}`}>
                       <td className="px-5 py-3 font-medium text-slate-800">{item.descricao}</td>
                       <td className="px-5 py-3 text-slate-500">{item.referencia || "—"}</td>

@@ -38,7 +38,7 @@ export default function ExplainReceiptPage() {
             impostos e o valor líquido — sem depender do departamento pessoal e sem criar cadastro.
           </p>
           <div className="mt-7 flex flex-wrap justify-center gap-3 text-sm font-semibold text-slate-600">
-            <span className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-4 py-2"><FileCheck2 className="h-4 w-4" /> PDF ou imagem</span>
+            <span className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-4 py-2"><FileCheck2 className="h-4 w-4" /> Até 5 documentos relacionados</span>
             <span className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-4 py-2"><ShieldCheck className="h-4 w-4" /> Arquivo não salvo pela PalSys</span>
           </div>
         </div>
