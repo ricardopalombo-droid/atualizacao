@@ -23,9 +23,17 @@ Se faltar base de cálculo, percentual, contexto ou outra informação essencial
 pendencias. Não ignore condições. formula=null significa preservar a fórmula original. Para uma
 alteração use a linguagem Phoenix dos exemplos, nunca Python. Porcentagem, quando o modelo usa
 ParamValorRef, é dado lançado na folha e não vira automaticamente percentual fixo no cadastro.
-alteracoes contém somente campos solicitados cuja correspondência é conhecida. Não altere IDs.
+alteracoes contém somente campos solicitados cuja correspondência é conhecida. Nunca inclua
+CodEventoId, CodUsuario, Descricao ou Formula em alteracoes: use os campos descricao e formula
+do nível principal para esses dois últimos. Não altere IDs.
 Descrição deve ter no máximo 30 caracteres. Não inclua metadados no evento. As referências são
 internas: não peça códigos ao usuário, não os liste e não reproduza scripts como demonstração.`
+
+const RESERVED_CHANGE_FIELDS = new Set(["CodEventoId", "CodUsuario", "Descricao", "Formula"])
+const ALLOWED_CHANGE_FIELDS = Object.keys(getTemplate()).filter(
+  (field) => !RESERVED_CHANGE_FIELDS.has(field),
+)
+const ALLOWED_CHANGE_FIELD_SET = new Set(ALLOWED_CHANGE_FIELDS)
 
 const RESPONSE_SCHEMA = {
   type: "object",
@@ -38,7 +46,7 @@ const RESPONSE_SCHEMA = {
       items: {
         type: "object",
         properties: {
-          campo: { type: "string" },
+          campo: { type: "string", enum: ALLOWED_CHANGE_FIELDS },
           valor_json: { type: "string" },
           justificativa: { type: "string" },
         },
@@ -114,7 +122,8 @@ function applyAnswer(request: string, allowedCodes: Set<number>, rawAnswer: unkn
   const answer = parseAnswer(rawAnswer, allowedCodes)
   const changes: Record<string, unknown> = {}
   const explanations: Record<string, string> = {}
-  const protectedFields = new Set(["CodEventoId", "CodUsuario", "Descricao", "Formula"])
+  const protectedIdentifiers = new Set(["CodEventoId", "CodUsuario"])
+  const topLevelFields = new Set(["Descricao", "Formula"])
 
   for (const change of answer.alteracoes) {
     if (
@@ -122,17 +131,33 @@ function applyAnswer(request: string, allowedCodes: Set<number>, rawAnswer: unkn
       typeof change !== "object" ||
       typeof change.campo !== "string" ||
       typeof change.valor_json !== "string" ||
-      typeof change.justificativa !== "string" ||
-      protectedFields.has(change.campo) ||
-      change.campo in changes
+      typeof change.justificativa !== "string"
     ) {
-      throw new Error("A IA tentou alterar um campo reservado, repetido ou inválido.")
+      throw new Error("A IA devolveu uma alteração em formato inválido.")
     }
+
+    // Versões anteriores do contrato permitiam que o modelo repetisse estes campos
+    // em `alteracoes`. O valor válido já vem no nível principal da resposta.
+    if (topLevelFields.has(change.campo)) continue
+    if (protectedIdentifiers.has(change.campo)) {
+      throw new Error("A IA tentou alterar um identificador reservado do evento.")
+    }
+    if (!ALLOWED_CHANGE_FIELD_SET.has(change.campo)) {
+      throw new Error(`A IA tentou alterar um campo desconhecido: ${change.campo}.`)
+    }
+
+    let parsedValue: unknown
     try {
-      changes[change.campo] = JSON.parse(change.valor_json)
+      parsedValue = JSON.parse(change.valor_json)
     } catch {
       throw new Error(`A IA devolveu JSON inválido para ${change.campo}.`)
     }
+
+    if (change.campo in changes) {
+      if (JSON.stringify(changes[change.campo]) === JSON.stringify(parsedValue)) continue
+      throw new Error(`A IA repetiu ${change.campo} com valores diferentes.`)
+    }
+    changes[change.campo] = parsedValue
     explanations[change.campo] = change.justificativa
   }
   if (answer.formula !== null) changes.Formula = answer.formula
