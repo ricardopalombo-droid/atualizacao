@@ -38,7 +38,8 @@ do nível principal para esses dois últimos. Não altere IDs.
 Descrição deve ter no máximo 30 caracteres. Não inclua metadados no evento. Em explicacao, descreva
 somente o resultado para o usuário em linguagem simples, sem citar exemplos, referências, códigos,
 campos técnicos ou fórmulas. As referências são internas: não peça códigos ao usuário, não os liste
-e não reproduza scripts como demonstração.`
+e não reproduza scripts como demonstração. base_codigo deve ser exatamente o código de um dos
+exemplos_tecnicos_privados recebidos; nunca invente ou escolha outro código.`
 
 const RESERVED_CHANGE_FIELDS = new Set(["CodEventoId", "CodUsuario", "Descricao", "Formula"])
 const EVENT_TEMPLATE = getTemplate()
@@ -74,6 +75,20 @@ const RESPONSE_SCHEMA = {
   },
   required: ["base_codigo", "descricao", "formula", "alteracoes", "pendencias", "explicacao"],
   additionalProperties: false,
+}
+
+function createResponseSchema(allowedCodes: number[]) {
+  return {
+    ...RESPONSE_SCHEMA,
+    properties: {
+      ...RESPONSE_SCHEMA.properties,
+      base_codigo: {
+        type: "integer",
+        enum: allowedCodes,
+        description: "Código de um dos exemplos técnicos fornecidos nesta solicitação.",
+      },
+    },
+  }
 }
 
 type AiAnswer = {
@@ -272,6 +287,7 @@ export async function generateEventProposal(request: string, requestedModel?: st
     nota_mapeamento:
       "Use exemplos semelhantes como modelo adaptável, não como cópia obrigatória. Campos evtofol1_int_* e evtofol1_flo_* possuem mapeamento inferido; não há dicionário fiscal de enums validado.",
   }
+  const candidateCodes = candidates.map((item) => Number(item.evento.codeventoid))
 
   let response: Response
   try {
@@ -291,7 +307,7 @@ export async function generateEventProposal(request: string, requestedModel?: st
             type: "json_schema",
             name: "proposta_evento",
             strict: true,
-            schema: RESPONSE_SCHEMA,
+            schema: createResponseSchema(candidateCodes),
           },
         },
         max_output_tokens: 16_000,
@@ -314,7 +330,7 @@ export async function generateEventProposal(request: string, requestedModel?: st
   const answer = JSON.parse(extractOutputText(data)) as unknown
   const proposal = applyAnswer(
     request,
-    new Set(candidates.map((item) => Number(item.evento.codeventoid))),
+    new Set(candidateCodes),
     answer,
   )
   proposal.ia = { ...proposal.ia!, modelo: model }
