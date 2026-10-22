@@ -98,3 +98,68 @@ export async function finishReceiptAnalysis(
     .eq("id", id)
 }
 
+type ReceiptAccessRow = {
+  visitor_id: string | null
+  created_at: string
+}
+
+type ReceiptRequestRow = {
+  status: "processing" | "completed" | "failed"
+  document_type: "holerite" | "ferias" | "rescisao" | "desconhecido" | null
+  created_at: string
+}
+
+export async function getReceiptAnalysisAdminSummary() {
+  const supabase = getSupabaseServerClient()
+  const now = new Date()
+  const from30Days = new Date(now)
+  from30Days.setDate(now.getDate() - 30)
+  const from7Days = new Date(now)
+  from7Days.setDate(now.getDate() - 7)
+  const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+
+  const [accessResult, requestResult] = await Promise.all([
+    supabase
+      .from("site_access_events")
+      .select("visitor_id, created_at")
+      .eq("pathname", "/explicar-recibo")
+      .gte("created_at", from30Days.toISOString()),
+    supabase
+      .from("receipt_analysis_requests")
+      .select("status, document_type, created_at")
+      .gte("created_at", from30Days.toISOString()),
+  ])
+
+  if (accessResult.error || requestResult.error) {
+    throw new Error(
+      accessResult.error?.message || requestResult.error?.message || "Não foi possível carregar as estatísticas.",
+    )
+  }
+
+  const accesses = (accessResult.data ?? []) as ReceiptAccessRow[]
+  const requests = (requestResult.data ?? []) as ReceiptRequestRow[]
+  const isSince = (value: string, date: Date) => new Date(value) >= date
+  const completed = requests.filter((request) => request.status === "completed")
+  const finished = requests.filter((request) => request.status !== "processing")
+  const documentTypeMap = new Map<string, number>()
+
+  for (const request of completed) {
+    const type = request.document_type || "desconhecido"
+    documentTypeMap.set(type, (documentTypeMap.get(type) ?? 0) + 1)
+  }
+
+  return {
+    accessesToday: accesses.filter((access) => isSince(access.created_at, startOfToday)).length,
+    accesses7Days: accesses.filter((access) => isSince(access.created_at, from7Days)).length,
+    accesses30Days: accesses.length,
+    uniqueVisitors30Days: new Set(accesses.map((access) => access.visitor_id).filter(Boolean)).size,
+    requests30Days: requests.length,
+    completed30Days: completed.length,
+    failed30Days: requests.filter((request) => request.status === "failed").length,
+    completionRate: finished.length === 0 ? 0 : Math.round((completed.length / finished.length) * 100),
+    documentTypes: [...documentTypeMap.entries()]
+      .sort((a, b) => b[1] - a[1])
+      .map(([type, count]) => ({ type, count })),
+  }
+}
+

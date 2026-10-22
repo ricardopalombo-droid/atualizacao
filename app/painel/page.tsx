@@ -1,12 +1,13 @@
 import Link from "next/link"
 import { redirect } from "next/navigation"
-import { Building2, CheckCircle2, ClipboardList, Database, FileSpreadsheet, Shield, Sparkles, Users } from "lucide-react"
+import { BarChart3, Building2, CheckCircle2, ClipboardList, Database, FileSpreadsheet, Shield, Sparkles, Users } from "lucide-react"
 import { listEmployeeRecords } from "@/lib/cadastro-repository"
 import { workflowStatusLabels, type WorkflowStatus } from "@/lib/employee-form-config"
 import { LogoutButton } from "@/components/logout-button"
 import { getCurrentSession } from "@/lib/auth-session"
 import { getSiteAccessSummary } from "@/lib/site-analytics"
 import { getEventUserAdminSummary } from "@/lib/event-history"
+import { getReceiptAnalysisAdminSummary } from "@/lib/receipt-access"
 
 export default async function PainelPage() {
   const session = await getCurrentSession()
@@ -27,9 +28,13 @@ export default async function PainelPage() {
           clientId: session.clientId,
         })
 
-  const [accessSummary, eventUserSummary] = session.role === "palsys_admin"
-    ? await Promise.all([getSiteAccessSummary(), getEventUserAdminSummary()])
-    : [null, null]
+  const [accessSummary, eventUserSummary, receiptAnalysisSummary] = session.role === "palsys_admin"
+    ? await Promise.all([
+        getSiteAccessSummary(),
+        getEventUserAdminSummary(),
+        getReceiptAnalysisAdminSummary(),
+      ])
+    : [null, null, null]
 
   const funcoes =
     session.role === "palsys_admin"
@@ -282,6 +287,51 @@ export default async function PainelPage() {
           </section>
         ) : null}
 
+        {session.role === "palsys_admin" && receiptAnalysisSummary ? (
+          <section className="mt-8 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+            <div className="flex items-start gap-4">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-blue-100 text-blue-700">
+                <BarChart3 size={24} />
+              </div>
+              <div>
+                <h2 className="text-2xl font-bold text-slate-900">Uso do Explicar recibo</h2>
+                <p className="mt-2 text-slate-600">
+                  Acessos e análises dos últimos 30 dias. Os documentos e os resultados não são armazenados.
+                </p>
+              </div>
+            </div>
+
+            <div className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+              <AdminMetric label="Acessos hoje" value={receiptAnalysisSummary.accessesToday} />
+              <AdminMetric label="Acessos em 7 dias" value={receiptAnalysisSummary.accesses7Days} />
+              <AdminMetric label="Acessos em 30 dias" value={receiptAnalysisSummary.accesses30Days} />
+              <AdminMetric label="Visitantes únicos" value={receiptAnalysisSummary.uniqueVisitors30Days} />
+              <AdminMetric label="Análises iniciadas" value={receiptAnalysisSummary.requests30Days} />
+              <AdminMetric label="Análises concluídas" value={receiptAnalysisSummary.completed30Days} />
+              <AdminMetric label="Análises com falha" value={receiptAnalysisSummary.failed30Days} />
+              <AdminMetric label="Taxa de conclusão" value={`${receiptAnalysisSummary.completionRate}%`} />
+            </div>
+
+            <article className="mt-6 rounded-2xl border border-slate-200 p-5">
+              <h3 className="text-lg font-bold text-slate-900">Documentos analisados com sucesso</h3>
+              <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                {receiptAnalysisSummary.documentTypes.length === 0 ? (
+                  <p className="text-sm text-slate-500">Ainda não há análises concluídas neste período.</p>
+                ) : (
+                  receiptAnalysisSummary.documentTypes.map((item) => (
+                    <div key={item.type} className="flex items-center justify-between rounded-xl bg-slate-50 px-4 py-3">
+                      <span className="font-medium text-slate-700">{formatDocumentType(item.type)}</span>
+                      <span className="rounded-full bg-blue-100 px-3 py-1 text-xs font-bold text-blue-800">
+                        {item.count}
+                      </span>
+                    </div>
+                  ))
+                )}
+              </div>
+            </article>
+          </section>
+        ) : null}
+
         {session.role === "palsys_admin" && accessSummary ? (
           <section className="mt-8 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
             <div className="flex flex-col gap-2">
@@ -390,7 +440,14 @@ function formatRoleLabel(role: string) {
   return "Visitante"
 }
 
-function AdminMetric({ label, value }: { label: string; value: number }) {
+function formatDocumentType(type: string) {
+  if (type === "holerite") return "Holerites"
+  if (type === "ferias") return "Férias"
+  if (type === "rescisao") return "Rescisões"
+  return "Não identificados"
+}
+
+function AdminMetric({ label, value }: { label: string; value: number | string }) {
   return (
     <article className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
       <p className="text-sm font-semibold text-slate-500">{label}</p>
