@@ -35,7 +35,8 @@ códigos internos, campos ou fórmulas nas perguntas ao usuário. Não ignore co
 alteração use a linguagem Phoenix dos exemplos, nunca Python. Porcentagem, quando o modelo usa
 ParamValorRef, é dado lançado na folha e não vira automaticamente percentual fixo no cadastro.
 alteracoes contém somente mudanças realmente solicitadas pelo usuário; não copie campos do exemplo
-que permanecerão iguais. Nunca use null em valor_json: quando um dado do exemplo estiver vazio,
+que permanecerão iguais. Em valor, use diretamente string, número ou booleano conforme o tipo do
+campo. Nunca use null: quando um dado do exemplo estiver vazio,
 omita a alteração e preserve o valor válido do modelo exportado. Nunca inclua
 CodEventoId, CodUsuario, Descricao ou Formula em alteracoes: use os campos descricao e formula
 do nível principal para esses dois últimos. Não altere IDs.
@@ -64,13 +65,13 @@ const RESPONSE_SCHEMA = {
         type: "object",
         properties: {
           campo: { type: "string", enum: ALLOWED_CHANGE_FIELDS },
-          valor_json: {
-            type: "string",
-            description: "Valor JSON primitivo da mudança solicitada. Nunca use null.",
+          valor: {
+            anyOf: [{ type: "string" }, { type: "number" }, { type: "boolean" }],
+            description: "Valor primitivo da mudança solicitada, com o tipo do campo. Nunca use null.",
           },
           justificativa: { type: "string" },
         },
-        required: ["campo", "valor_json", "justificativa"],
+        required: ["campo", "valor", "justificativa"],
         additionalProperties: false,
       },
     },
@@ -99,7 +100,7 @@ type AiAnswer = {
   base_codigo: number
   descricao: string
   formula: string | null
-  alteracoes: Array<{ campo: string; valor_json: string; justificativa: string }>
+  alteracoes: Array<{ campo: string; valor: string | number | boolean; justificativa: string }>
   pendencias: string[]
   explicacao: string
 }
@@ -167,6 +168,29 @@ function requestMentionsField(request: string, field: string) {
   )
 }
 
+function normalizeChangeValue(value: unknown, expectedValue: string | number | boolean) {
+  if (typeof expectedValue === "string" && typeof value === "string") return value
+
+  if (typeof expectedValue === "number") {
+    if (typeof value === "number" && Number.isFinite(value)) return value
+    if (typeof value === "string" && /^-?\d+(?:[.,]\d+)?$/.test(value.trim())) {
+      const parsed = Number(value.trim().replace(",", "."))
+      if (Number.isFinite(parsed)) return parsed
+    }
+  }
+
+  if (typeof expectedValue === "boolean") {
+    if (typeof value === "boolean") return value
+    if (typeof value === "string") {
+      const normalized = normalizeText(value.trim())
+      if (["true", "verdadeiro", "sim"].includes(normalized)) return true
+      if (["false", "falso", "nao"].includes(normalized)) return false
+    }
+  }
+
+  throw new Error("A IA gerou uma configuração incompatível. Tente novamente.")
+}
+
 function parseAnswer(value: unknown, allowedCodes: Set<number>) {
   if (!value || typeof value !== "object" || Array.isArray(value)) {
     throw new Error("A API não devolveu uma proposta válida.")
@@ -202,7 +226,7 @@ function applyAnswer(request: string, allowedCodes: Set<number>, rawAnswer: unkn
       !change ||
       typeof change !== "object" ||
       typeof change.campo !== "string" ||
-      typeof change.valor_json !== "string" ||
+      !("valor" in change) ||
       typeof change.justificativa !== "string"
     ) {
       throw new Error("A IA devolveu uma alteração em formato inválido.")
@@ -218,24 +242,8 @@ function applyAnswer(request: string, allowedCodes: Set<number>, rawAnswer: unkn
       throw new Error(`A IA tentou alterar um campo desconhecido: ${change.campo}.`)
     }
 
-    let parsedValue: unknown
-    try {
-      parsedValue = JSON.parse(change.valor_json)
-    } catch {
-      throw new Error("A IA gerou uma configuração inválida. Tente novamente.")
-    }
-
-    // O catálogo pode conter nulos para colunas ausentes. O formato exportado não aceita
-    // esses nulos; nesse caso mantemos o valor válido do modelo em vez de contaminar o evento.
-    if (parsedValue === null) continue
-
     const expectedValue = EVENT_TEMPLATE[change.campo]
-    const hasExpectedType =
-      typeof parsedValue === typeof expectedValue &&
-      (typeof parsedValue !== "number" || Number.isFinite(parsedValue))
-    if (!hasExpectedType) {
-      throw new Error("A IA gerou uma configuração incompatível. Tente novamente.")
-    }
+    const parsedValue = normalizeChangeValue(change.valor, expectedValue)
 
     if (change.campo in changes) {
       if (JSON.stringify(changes[change.campo]) === JSON.stringify(parsedValue)) continue
