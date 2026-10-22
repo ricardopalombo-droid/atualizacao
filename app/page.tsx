@@ -63,6 +63,67 @@ function getVideoUrl(ref: string) {
   return null
 }
 
+function getVideoEmbedUrl(ref: string) {
+  const videoUrl = getVideoUrl(ref)
+  if (!videoUrl) return null
+
+  const videoId = new URL(videoUrl).searchParams.get("v")
+  return videoId ? `https://www.youtube.com/embed/${videoId}?rel=0` : null
+}
+
+const productHighlights: Record<string, string[]> = {
+  "fgts-001": [
+    "Agiliza a preparação das guias para importação no FGTS Digital.",
+    "Reduz etapas manuais em rotinas realizadas para várias empresas.",
+    "Ajuda o escritório a ganhar produtividade sem depender do Integra Contador.",
+  ],
+  "dctfweb-integra-001": [
+    "Busca a declaração, o recibo e a guia da DCTFWeb.",
+    "Utiliza a integração oficial do Integra Contador da Receita Federal.",
+    "Centraliza os documentos e facilita a organização da rotina fiscal.",
+  ],
+  "whats-001": [
+    "Acompanha automaticamente a pasta definida pelo escritório.",
+    "Reconhece o PDF e localiza o contato cadastrado para o envio.",
+    "Reduz tarefas repetitivas e o risco de documentos esquecidos.",
+  ],
+  "email-001": [
+    "Localiza os PDFs disponíveis na pasta configurada.",
+    "Identifica o destinatário e realiza o envio por e-mail.",
+    "Organiza uma rotina que normalmente exigiria vários envios manuais.",
+  ],
+  "central-documentos-001": [
+    "Organiza documentos em pastas no Google Drive.",
+    "Automatiza os envios pelo WhatsApp a partir da estrutura configurada.",
+    "Mantém o computador disponível enquanto o processo é executado.",
+  ],
+  "buscador-xml-001": [
+    "Consulta e baixa NF-e, NFC-e, CT-e e NFS-e.",
+    "Organiza XMLs por empresa, período e tipo de documento.",
+    "Centraliza certificados A1, acervos e o controle de NSU.",
+  ],
+  "funcionarios-001": [
+    "O colaborador preenche os dados iniciais por um link.",
+    "A empresa revisa e completa as informações internas.",
+    "O escritório recebe os cadastros organizados para importar na folha.",
+  ],
+  "pdf-monitor-001": [
+    "Captura relatórios impressos pelo Contmatic com a impressora PalSys.",
+    "Identifica empresa, tipo de relatório e competência.",
+    "Renomeia e salva os PDFs na pasta definida pelo escritório.",
+  ],
+  "consolida-impostos-001": [
+    "Automatiza a geração de relatórios fiscais da Contmatic G5.",
+    "Consolida as informações em planilhas e arquivos PDF.",
+    "Entrega uma conferência mais organizada e com menos trabalho manual.",
+  ],
+  "consolidador-folhas-001": [
+    "Lê relatórios de folha em PDF entre diferentes competências.",
+    "Soma eventos e encargos para facilitar a conferência.",
+    "Gera resultados organizados em PDF e Excel.",
+  ],
+}
+
 export default function HomePage() {
   const produtosCatalogo = PRODUTOS.filter(
     (produto) => !["dre-001", "extratos-001"].includes(produto.ref),
@@ -391,58 +452,114 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section id="produtos" className="border-y bg-slate-50 py-16">
-        <div className="mx-auto max-w-6xl px-6">
-          <div className="max-w-2xl">
-            <h2 className="text-3xl font-bold text-slate-900 md:text-4xl">Produtos</h2>
-            <p className="mt-4 text-lg text-slate-600">
-              Escolha a automação ideal para a necessidade do seu escritório.
-            </p>
+      <section id="produtos" className="scroll-mt-28 border-y bg-slate-50 py-16">
+        <div className="mx-auto max-w-7xl px-6">
+          <div className="flex flex-col justify-between gap-5 md:flex-row md:items-end">
+            <div className="max-w-3xl">
+              <span className="text-sm font-bold uppercase tracking-[0.16em] text-yellow-700">
+                Automações PalSys
+              </span>
+              <h2 className="mt-3 text-3xl font-bold text-slate-900 md:text-4xl">
+                Veja como cada solução funciona antes de escolher
+              </h2>
+              <p className="mt-4 text-lg leading-8 text-slate-600">
+                Conheça o que cada produto automatiza, os ganhos para a rotina do escritório e assista à demonstração sem sair da página.
+              </p>
+            </div>
+            <span className="inline-flex w-fit rounded-full bg-yellow-100 px-4 py-2 text-sm font-bold text-yellow-800">
+              Vídeos demonstrativos
+            </span>
           </div>
 
-          <div className="mt-10 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          <div className="mt-10 space-y-6">
             {produtosCatalogo.map((produto) => {
               const Icone = produto.icone
-              const videoUrl = getVideoUrl(produto.ref)
+              const videoEmbedUrl = getVideoEmbedUrl(produto.ref)
+              const highlights = productHighlights[produto.ref] ?? []
 
               return (
-                <div
+                <article
                   key={produto.ref}
-                  className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-md"
+                  className="grid overflow-hidden rounded-[2rem] border border-slate-200 bg-white shadow-[0_20px_60px_-44px_rgba(15,23,42,0.38)] lg:grid-cols-[1.06fr_0.94fr]"
                 >
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-slate-100 text-slate-700">
-                      <Icone size={24} />
+                  <div className="p-6 md:p-8 lg:p-10">
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-yellow-100 text-yellow-700">
+                        <Icone size={24} />
+                      </div>
+
+                      {produto.status === "em_breve" && (
+                        <span className="inline-flex items-center rounded-full bg-amber-100 px-3 py-1 text-xs font-bold text-amber-800">
+                          Em breve
+                        </span>
+                      )}
                     </div>
 
-                    {produto.status === "em_breve" && (
-                      <span className="inline-flex items-center rounded-full bg-amber-100 px-3 py-1 text-xs font-bold text-amber-800">
-                        Em breve
-                      </span>
+                    <h3 className="mt-5 text-2xl font-bold leading-tight text-slate-900 md:text-3xl">
+                      {produto.nome}
+                    </h3>
+
+                    <p className="mt-4 text-base leading-7 text-slate-600">{produto.descricao}</p>
+
+                    {highlights.length > 0 ? (
+                      <ul className="mt-6 space-y-3">
+                        {highlights.map((highlight) => (
+                          <li key={highlight} className="flex items-start gap-3 text-sm leading-6 text-slate-700 md:text-base">
+                            <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-emerald-600" />
+                            <span>{highlight}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    ) : null}
+
+                    <div className="mt-6 flex items-start gap-3 rounded-2xl border border-blue-100 bg-blue-50 px-4 py-3 text-sm leading-6 text-blue-900">
+                      <ShieldCheck className="mt-0.5 h-5 w-5 shrink-0" />
+                      <span>{resumoPrivacidadeProduto}</span>
+                    </div>
+
+                    <div className="mt-6 flex flex-wrap gap-3">
+                      <Link
+                        href="/assinar"
+                        className="inline-flex items-center justify-center gap-2 rounded-xl bg-yellow-400 px-5 py-3 font-bold text-slate-900 hover:brightness-95"
+                      >
+                        Conhecer planos
+                        <ArrowRight size={17} />
+                      </Link>
+                      <a
+                        href="#contato"
+                        className="inline-flex items-center justify-center rounded-xl border border-slate-300 px-5 py-3 font-semibold text-slate-700 hover:bg-slate-50"
+                      >
+                        Tirar dúvidas
+                      </a>
+                    </div>
+                  </div>
+
+                  <div className="order-first flex min-h-full items-center bg-slate-950 p-4 sm:p-6 lg:order-none lg:p-8">
+                    {videoEmbedUrl ? (
+                      <div className="w-full overflow-hidden rounded-2xl border border-white/15 bg-slate-900 shadow-2xl">
+                        <div className="aspect-video">
+                          <iframe
+                            className="h-full w-full"
+                            src={videoEmbedUrl}
+                            title={`Demonstração: ${produto.nome}`}
+                            loading="lazy"
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                            referrerPolicy="strict-origin-when-cross-origin"
+                            allowFullScreen
+                          />
+                        </div>
+                        <div className="flex items-center justify-between gap-3 border-t border-white/10 px-4 py-3 text-sm">
+                          <span className="font-semibold text-white">Veja a solução funcionando</span>
+                          <span className="text-slate-400">Demonstração em vídeo</span>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="flex aspect-video w-full items-center justify-center rounded-2xl border border-dashed border-slate-600 text-center text-slate-300">
+                        Demonstração em preparação
+                      </div>
                     )}
                   </div>
-
-                  <h3 className="mt-4 text-xl font-semibold leading-7 text-slate-900">
-                    {produto.nome}
-                  </h3>
-
-                  <p className="mt-3 leading-7 text-slate-600">{produto.descricao}</p>
-
-                  <div className="mt-4 rounded-xl border border-blue-100 bg-blue-50 px-4 py-3 text-sm leading-6 text-blue-900">
-                    {resumoPrivacidadeProduto}
-                  </div>
-
-                  {videoUrl ? (
-                    <a
-                      href={videoUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="mt-4 inline-flex items-center justify-center rounded-xl border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
-                    >
-                      Ver demonstração
-                    </a>
-                  ) : null}
-                </div>
+                </article>
               )
             })}
           </div>
