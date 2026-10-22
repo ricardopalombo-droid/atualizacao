@@ -1,6 +1,6 @@
 import Link from "next/link"
 import { redirect } from "next/navigation"
-import { Building2, CheckCircle2, ClipboardList, Database, FileSpreadsheet, Shield } from "lucide-react"
+import { Building2, CheckCircle2, ClipboardList, Database, FileSpreadsheet, Shield, Sparkles } from "lucide-react"
 import { listEmployeeRecords } from "@/lib/cadastro-repository"
 import { workflowStatusLabels, type WorkflowStatus } from "@/lib/employee-form-config"
 import { LogoutButton } from "@/components/logout-button"
@@ -33,6 +33,13 @@ export default async function PainelPage() {
             href: "/painel/assinantes",
             icone: Shield,
             acao: "Gerenciar assinantes",
+          },
+          {
+            titulo: "Criador de eventos Contmatic",
+            descricao: "Crie e revise eventos de folha para importar no Phoenix.",
+            href: "/painel/eventos",
+            icone: Sparkles,
+            acao: "Criar evento",
           },
         ]
       : session.role === "subscriber_admin"
