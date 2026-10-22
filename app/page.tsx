@@ -73,12 +73,12 @@ export default function HomePage() {
   return (
     <div className="min-h-screen bg-slate-50 text-slate-800">
       <header className="sticky top-0 z-40 border-b bg-white/95 backdrop-blur">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
+        <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
           <Link href="/">
             <Image src="/logo-palsys.png" alt="PalSys" width={180} height={50} priority />
           </Link>
 
-          <nav className="hidden items-center gap-6 text-sm font-medium md:flex">
+          <nav className="hidden items-center gap-3 text-[13px] font-medium md:flex lg:gap-4 lg:text-sm xl:gap-5">
             <Link href="/" className="transition hover:text-yellow-600">
               Início
             </Link>
@@ -88,13 +88,24 @@ export default function HomePage() {
             <a href="#produtos" className="transition hover:text-yellow-600">
               Produtos
             </a>
-            <Link href="/explicar-recibo" className="transition hover:text-yellow-600">
+            <Link
+              href="/explicar-recibo"
+              className="inline-flex items-center gap-2 whitespace-nowrap rounded-xl border border-blue-200 bg-blue-50 px-3 py-2 font-bold text-blue-700 shadow-sm transition hover:border-blue-300 hover:bg-blue-100"
+            >
+              <FileSearch size={16} />
               Entenda seu recibo
             </Link>
-            <a href="#contato" className="transition hover:text-yellow-600">
+            <Link
+              href="/eventos/cadastro"
+              className="inline-flex items-center gap-2 whitespace-nowrap rounded-xl border border-yellow-300 bg-yellow-100 px-3 py-2 font-bold text-yellow-800 shadow-sm transition hover:bg-yellow-200"
+            >
+              <ClipboardList size={16} />
+              Criar eventos
+            </Link>
+            <a href="#contato" className="hidden transition hover:text-yellow-600 xl:inline">
               Contato
             </a>
-            <Link href="/privacidade-dos-sistemas" className="transition hover:text-yellow-600">
+            <Link href="/privacidade-dos-sistemas" className="hidden transition hover:text-yellow-600 xl:inline">
               Privacidade
             </Link>
             <Link
@@ -111,6 +122,22 @@ export default function HomePage() {
             </Link>
           </nav>
         </div>
+        <nav className="grid grid-cols-2 gap-3 border-t border-slate-100 px-4 py-3 md:hidden">
+          <Link
+            href="/explicar-recibo"
+            className="inline-flex items-center justify-center gap-2 rounded-xl border border-blue-200 bg-blue-50 px-3 py-3 text-center text-sm font-bold text-blue-700 shadow-sm"
+          >
+            <FileSearch size={17} />
+            Entenda seu recibo
+          </Link>
+          <Link
+            href="/eventos/cadastro"
+            className="inline-flex items-center justify-center gap-2 rounded-xl border border-yellow-300 bg-yellow-100 px-3 py-3 text-center text-sm font-bold text-yellow-800 shadow-sm"
+          >
+            <ClipboardList size={17} />
+            Criar eventos
+          </Link>
+        </nav>
       </header>
 
       <section className="border-b border-slate-200 bg-gradient-to-b from-white via-slate-50 to-slate-100">
