@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react"
 import { Download, FileJson, LoaderCircle, Sparkles, Upload } from "lucide-react"
-import type { ContmaticEvent, PublicEventProposal } from "@/lib/contmatic-events/types"
+import type { PublicEventProposal } from "@/lib/contmatic-events/types"
 
 type StatusResponse = {
   chaveConfigurada: boolean
@@ -39,7 +39,6 @@ export function ContmaticEventCreator() {
   const [pedido, setPedido] = useState("")
   const [modelo, setModelo] = useState("")
   const [proposal, setProposal] = useState<PublicEventProposal | null>(null)
-  const [eventJson, setEventJson] = useState("")
   const [revisado, setRevisado] = useState(false)
   const [busy, setBusy] = useState(false)
   const [message, setMessage] = useState("")
@@ -62,7 +61,6 @@ export function ContmaticEventCreator() {
 
   function showProposal(next: PublicEventProposal, successMessage: string) {
     setProposal(next)
-    setEventJson(JSON.stringify(next.evento, null, 2))
     setRevisado(false)
     setError("")
     setMessage(successMessage)
@@ -82,26 +80,6 @@ export function ContmaticEventCreator() {
     }
   }
 
-  function parseEditor() {
-    let parsed: unknown
-    try {
-      parsed = JSON.parse(eventJson)
-    } catch {
-      throw new Error("O JSON editado não é válido.")
-    }
-    return parsed as ContmaticEvent
-  }
-
-  async function updateProposal() {
-    if (!proposal) throw new Error("Gere ou carregue um evento primeiro.")
-    const updated = await postJson<PublicEventProposal>("/api/eventos/atualizar", {
-      token: proposal.token,
-      evento: parseEditor(),
-    })
-    showProposal(updated, "Alterações aplicadas. Confira novamente o evento.")
-    return updated
-  }
-
   async function handleUpload(file: File) {
     if (file.size > 2_000_000) throw new Error("O arquivo JSON deve ter no máximo 2 MB.")
     let parsed: unknown
@@ -115,16 +93,16 @@ export function ContmaticEventCreator() {
   }
 
   async function handleExport() {
+    if (!proposal) throw new Error("Gere ou carregue um evento primeiro.")
     if (!revisado) throw new Error("Marque a confirmação de revisão antes de gerar o arquivo.")
-    const updated = await updateProposal()
-    if (updated.pendencias.length) {
+    if (proposal.pendencias.length) {
       throw new Error("Ainda existem informações pendentes. Complete o pedido e gere uma nova proposta.")
     }
 
     const response = await fetch("/api/eventos/exportar", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ token: updated.token, revisado: true }),
+      body: JSON.stringify({ token: proposal.token, revisado: true }),
     })
     if (!response.ok) throw new Error(await readApiError(response))
 
@@ -270,35 +248,6 @@ export function ContmaticEventCreator() {
             </ul>
           </div>
 
-          <details className="mt-6 rounded-2xl border border-slate-200 p-5">
-            <summary className="cursor-pointer font-bold text-slate-800">Dados técnicos do evento criado</summary>
-            <p className="mt-4 text-sm leading-6 text-slate-500">
-              Confira fórmula, incidências, rubrica e escopos. O sistema não executa a linguagem de fórmulas do Phoenix.
-            </p>
-            <label htmlFor="json-evento" className="mt-5 block text-sm font-bold text-slate-700">
-              JSON do novo evento
-            </label>
-            <textarea
-              id="json-evento"
-              rows={25}
-              spellCheck={false}
-              value={eventJson}
-              onChange={(event) => {
-                setEventJson(event.target.value)
-                setRevisado(false)
-              }}
-              className="mt-2 w-full resize-y rounded-2xl border border-slate-300 bg-slate-950 px-4 py-3 font-mono text-sm leading-6 text-slate-100 outline-none focus:border-yellow-400"
-            />
-            <button
-              type="button"
-              disabled={busy}
-              onClick={() => run(async () => { await updateProposal() })}
-              className="mt-4 inline-flex items-center justify-center rounded-xl border border-slate-300 px-5 py-3 font-bold text-slate-700 hover:bg-slate-50 disabled:opacity-50"
-            >
-              Aplicar alterações do JSON
-            </button>
-          </details>
-
           <label className="mt-6 flex items-start gap-3 rounded-2xl bg-slate-50 p-4 leading-6 text-slate-700">
             <input
               type="checkbox"
@@ -309,7 +258,7 @@ export function ContmaticEventCreator() {
             <span>Revisei o cálculo e as configurações do novo evento.</span>
           </label>
 
-          <div className="mt-5 flex flex-col gap-3 sm:flex-row">
+          <div className="mt-5">
             <button
               type="button"
               disabled={busy || !revisado || proposal.pendencias.length > 0}
@@ -318,25 +267,6 @@ export function ContmaticEventCreator() {
             >
               <Download size={19} />
               3. Gerar arquivo para importação
-            </button>
-            <button
-              type="button"
-              disabled={busy}
-              onClick={() =>
-                run(async () => {
-                  const evento = parseEditor()
-                  downloadBlob(
-                    new Blob([JSON.stringify({ evento, pendencias: proposal.pendencias, pedido }, null, 2)], {
-                      type: "text/plain;charset=utf-8",
-                    }),
-                    "rascunho.revisao.txt",
-                  )
-                  setMessage("Rascunho salvo. Ele serve para revisão e não deve ser importado na Contmatic.")
-                })
-              }
-              className="inline-flex items-center justify-center rounded-xl border border-slate-300 px-5 py-3 font-bold text-slate-700 hover:bg-slate-50 disabled:opacity-50"
-            >
-              Salvar rascunho
             </button>
           </div>
         </section>
