@@ -14,6 +14,10 @@ export default async function PainelPage() {
     redirect("/acesso")
   }
 
+  if (session.role === "event_user") {
+    redirect("/painel/eventos")
+  }
+
   const records =
     session.role === "palsys_admin"
       ? []

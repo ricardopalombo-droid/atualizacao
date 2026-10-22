@@ -93,7 +93,7 @@ export async function POST(request: Request) {
   const supabase = getSupabaseServerClient()
   const { data: user, error: userError } = await supabase
     .from("app_users")
-    .select("id, email, full_name, is_active")
+    .select("id, email, full_name, role, is_active, email_verified_at")
     .eq("email", email)
     .maybeSingle()
 
@@ -101,7 +101,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Não foi possível processar sua solicitação." }, { status: 500 })
   }
 
-  if (user) {
+  if (user && (user.role !== "event_user" || user.email_verified_at)) {
     const token = createInviteToken()
     const tokenHash = sha256Hex(token)
     const expiresAt = new Date(Date.now() + 1000 * 60 * 60 * 2).toISOString()

@@ -3,12 +3,12 @@
 import { useState, useTransition } from "react"
 import { useRouter } from "next/navigation"
 
-export function LoginForm() {
+export function LoginForm({ initialMessage = "", initialError = "" }: { initialMessage?: string; initialError?: string }) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [isResetPending, startResetTransition] = useTransition()
-  const [errorMessage, setErrorMessage] = useState("")
-  const [resetMessage, setResetMessage] = useState("")
+  const [errorMessage, setErrorMessage] = useState(initialError)
+  const [resetMessage, setResetMessage] = useState(initialMessage)
   const [resetMode, setResetMode] = useState(false)
   const [credentials, setCredentials] = useState({
     email: "",
@@ -79,7 +79,7 @@ export function LoginForm() {
     <form onSubmit={handleSubmit} className="rounded-3xl border border-slate-200 bg-white p-8 shadow-sm">
       <h2 className="text-2xl font-bold text-slate-900">Entrar</h2>
       <p className="mt-2 text-slate-600">
-        Use o login da PalSys, do assinante ou do cliente para acessar a area correspondente.
+        Use seu e-mail e senha para acessar a área correspondente.
       </p>
 
       <div className="mt-8 grid gap-5">
@@ -126,10 +126,16 @@ export function LoginForm() {
       </button>
 
       <div className="mt-5 border-t border-slate-200 pt-5">
+        <a
+          href="/eventos/cadastro"
+          className="inline-flex w-full items-center justify-center rounded-xl border border-yellow-400 bg-yellow-50 px-5 py-3 font-bold text-slate-900 hover:bg-yellow-100"
+        >
+          Criar conta para solicitar eventos
+        </a>
         <button
           type="button"
           onClick={() => setResetMode((current) => !current)}
-          className="text-sm font-semibold text-slate-700 underline-offset-4 hover:underline"
+          className="mt-5 text-sm font-semibold text-slate-700 underline-offset-4 hover:underline"
         >
           {resetMode ? "Ocultar redefinição de senha" : "Criar ou trocar senha"}
         </button>

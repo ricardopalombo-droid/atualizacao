@@ -1,12 +1,13 @@
 import Link from "next/link"
 import { redirect } from "next/navigation"
 import { ContmaticEventCreator } from "@/components/contmatic-event-creator"
+import { LogoutButton } from "@/components/logout-button"
 import { getCurrentSession } from "@/lib/auth-session"
 
 export default async function EventosPage() {
   const session = await getCurrentSession()
   if (!session) redirect("/acesso")
-  if (session.role !== "palsys_admin") redirect("/painel")
+  if (!["palsys_admin", "event_user"].includes(session.role)) redirect("/painel")
 
   return (
     <main className="min-h-screen bg-slate-50">
@@ -22,12 +23,17 @@ export default async function EventosPage() {
                 Descreva o cálculo, revise somente o evento novo e baixe um JSON para importar no Phoenix.
               </p>
             </div>
-            <Link
-              href="/painel"
-              className="inline-flex shrink-0 items-center justify-center rounded-xl border border-white/20 px-5 py-3 font-bold text-white hover:bg-white/10"
-            >
-              Voltar ao painel
-            </Link>
+            <div className="flex flex-wrap gap-3">
+              {session.role === "palsys_admin" ? (
+                <Link
+                  href="/painel"
+                  className="inline-flex shrink-0 items-center justify-center rounded-xl border border-white/20 px-5 py-3 font-bold text-white hover:bg-white/10"
+                >
+                  Voltar ao painel
+                </Link>
+              ) : null}
+              <LogoutButton />
+            </div>
           </div>
         </div>
       </header>

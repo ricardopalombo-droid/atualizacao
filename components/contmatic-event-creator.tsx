@@ -1,12 +1,21 @@
 "use client"
 
 import { useEffect, useRef, useState } from "react"
-import { CircleHelp, Download, FileJson, LoaderCircle, Sparkles, Upload, X } from "lucide-react"
+import { CircleHelp, Download, FileJson, History, LoaderCircle, Sparkles, Upload, X } from "lucide-react"
 import type { PublicEventProposal } from "@/lib/contmatic-events/types"
 
 type StatusResponse = {
   chaveConfigurada: boolean
-  modelo: string
+}
+
+type EventHistoryItem = {
+  id: string
+  request_text: string
+  event_description: string
+  event_code: number
+  filename: string
+  event_json: Record<string, string | number | boolean>
+  created_at: string
 }
 
 async function readApiError(response: Response) {
@@ -37,7 +46,6 @@ export function ContmaticEventCreator() {
   const uploadRef = useRef<HTMLInputElement>(null)
   const [status, setStatus] = useState<StatusResponse | null>(null)
   const [pedido, setPedido] = useState("")
-  const [modelo, setModelo] = useState("")
   const [proposal, setProposal] = useState<PublicEventProposal | null>(null)
   const [questionDialogOpen, setQuestionDialogOpen] = useState(false)
   const [answers, setAnswers] = useState<string[]>([])
@@ -45,6 +53,15 @@ export function ContmaticEventCreator() {
   const [busy, setBusy] = useState(false)
   const [message, setMessage] = useState("")
   const [error, setError] = useState("")
+  const [history, setHistory] = useState<EventHistoryItem[]>([])
+  const [historyError, setHistoryError] = useState("")
+
+  async function loadHistory() {
+    const response = await fetch("/api/eventos/historico", { cache: "no-store" })
+    if (!response.ok) throw new Error(await readApiError(response))
+    const data = (await response.json()) as { items: EventHistoryItem[] }
+    setHistory(data.items)
+  }
 
   useEffect(() => {
     fetch("/api/eventos/status", { cache: "no-store" })
@@ -54,11 +71,16 @@ export function ContmaticEventCreator() {
       })
       .then((data) => {
         setStatus(data)
-        setModelo(data.modelo)
       })
       .catch((reason: unknown) => {
         setError(reason instanceof Error ? reason.message : "Não foi possível consultar a configuração.")
       })
+
+    loadHistory().catch((reason: unknown) => {
+      setHistoryError(reason instanceof Error ? reason.message : "Não foi possível carregar o histórico.")
+    })
+    // A carga ocorre uma única vez ao abrir a ferramenta.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   function showProposal(next: PublicEventProposal, successMessage: string) {
@@ -99,7 +121,6 @@ export function ContmaticEventCreator() {
   async function generateProposal(fullRequest: string) {
     const next = await postJson<PublicEventProposal>("/api/eventos/gerar", {
       pedido: fullRequest,
-      modelo,
     })
     showProposal(
       next,
@@ -144,6 +165,7 @@ export function ContmaticEventCreator() {
     const disposition = response.headers.get("Content-Disposition") ?? ""
     const filename = disposition.match(/filename="([^"]+)"/)?.[1] ?? "evento-contmatic.json"
     downloadBlob(await response.blob(), filename)
+    await loadHistory()
     setMessage("Arquivo gerado. Confira a importação e o cálculo em um ambiente de teste do Phoenix.")
   }
 
@@ -209,26 +231,11 @@ export function ContmaticEventCreator() {
           />
         </div>
 
-        <details className="mt-6 rounded-2xl border border-slate-200 bg-slate-50 p-4">
-          <summary className="cursor-pointer font-bold text-slate-700">Configuração da geração</summary>
-          <div className="mt-4 grid gap-2">
-            <label htmlFor="modelo-evento" className="text-sm font-semibold text-slate-700">
-              Modelo da API
-            </label>
-            <input
-              id="modelo-evento"
-              value={modelo}
-              onChange={(event) => setModelo(event.target.value)}
-              placeholder="Modelo configurado no servidor"
-              className="rounded-xl border border-slate-300 bg-white px-4 py-3 outline-none focus:border-yellow-400"
-            />
-            <p className="text-sm leading-6 text-slate-500">
-              {status?.chaveConfigurada
-                ? "A chave da API está configurada no servidor. O pedido e até oito referências técnicas internas são enviados à API."
-                : "A chave da API ainda não está configurada no servidor. O carregamento de um JSON próprio continua disponível."}
-            </p>
-          </div>
-        </details>
+        {!status?.chaveConfigurada ? (
+          <p className="mt-5 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm font-medium text-amber-900">
+            A geração automática está temporariamente indisponível. Você ainda pode continuar a partir de um JSON próprio.
+          </p>
+        ) : null}
       </section>
 
       {error ? (
@@ -393,6 +400,50 @@ export function ContmaticEventCreator() {
           </div>
         </div>
       ) : null}
+
+      <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm md:p-8">
+        <div className="flex items-start gap-4">
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-slate-100 text-slate-700">
+            <History size={23} />
+          </div>
+          <div>
+            <h2 className="text-2xl font-bold text-slate-900">Meus eventos gerados</h2>
+            <p className="mt-2 leading-7 text-slate-600">Aqui ficam os pedidos concluídos e seus respectivos arquivos JSON.</p>
+          </div>
+        </div>
+
+        {historyError ? <p className="mt-5 text-sm font-semibold text-red-700">{historyError}</p> : null}
+        {!historyError && history.length === 0 ? (
+          <div className="mt-6 rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-5 text-slate-600">
+            Nenhum evento concluído ainda.
+          </div>
+        ) : null}
+        {history.length ? (
+          <div className="mt-6 grid gap-4">
+            {history.map((item) => (
+              <article key={item.id} className="rounded-2xl border border-slate-200 p-5">
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                  <div>
+                    <h3 className="font-bold text-slate-900">{item.event_description}</h3>
+                    <p className="mt-1 text-sm text-slate-500">
+                      Código {item.event_code} · {new Intl.DateTimeFormat("pt-BR", { dateStyle: "short", timeStyle: "short" }).format(new Date(item.created_at))}
+                    </p>
+                    <p className="mt-3 line-clamp-3 text-sm leading-6 text-slate-600">{item.request_text}</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => downloadBlob(new Blob([`${JSON.stringify(item.event_json, null, 2)}\n`], { type: "application/json" }), item.filename)}
+                    className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl border border-slate-300 px-4 py-2.5 font-bold text-slate-700 hover:bg-slate-50"
+                  >
+                    <Download size={18} />
+                    Baixar novamente
+                  </button>
+                </div>
+              </article>
+            ))}
+          </div>
+        ) : null}
+      </section>
 
       <p className="px-1 text-sm leading-6 text-slate-500">
         No Phoenix: Arquivos → Eventos → Eventos Usuário → Importar evento. Use um arquivo JSON por vez e valide primeiro em ambiente de teste.

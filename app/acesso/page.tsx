@@ -1,7 +1,14 @@
 import Link from "next/link"
 import { LoginForm } from "@/components/login-form"
 
-export default function AcessoPage() {
+export default async function AcessoPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ confirmacao?: string }>
+}) {
+  const params = await searchParams
+  const confirmationOk = params.confirmacao === "ok"
+  const confirmationInvalid = params.confirmacao === "invalida"
   return (
     <main className="min-h-screen bg-slate-50 px-6 py-10">
       <div className="mx-auto grid max-w-5xl gap-6 md:grid-cols-[1.1fr_0.9fr]">
@@ -25,7 +32,10 @@ export default function AcessoPage() {
           </div>
         </section>
 
-        <LoginForm />
+        <LoginForm
+          initialMessage={confirmationOk ? "E-mail confirmado. Você já pode entrar." : ""}
+          initialError={confirmationInvalid ? "O link de confirmação é inválido ou expirou." : ""}
+        />
       </div>
     </main>
   )

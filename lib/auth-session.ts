@@ -6,7 +6,7 @@ import { cookies } from "next/headers"
 export type AppSession = {
   userId: string
   email: string
-  role: "palsys_admin" | "subscriber_admin" | "client_user"
+  role: "palsys_admin" | "subscriber_admin" | "client_user" | "event_user"
   subscriberId: string | null
   clientId: string | null
   displayName: string
@@ -48,7 +48,7 @@ export function decodeSession(value: string): AppSession | null {
     if (
       !parsed.userId ||
       !parsed.email ||
-      !["palsys_admin", "subscriber_admin", "client_user"].includes(parsed.role)
+      !["palsys_admin", "subscriber_admin", "client_user", "event_user"].includes(parsed.role)
     ) {
       return null
     }

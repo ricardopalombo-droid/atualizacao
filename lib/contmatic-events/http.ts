@@ -8,8 +8,8 @@ export async function requireEventSession() {
   if (!session) {
     throw new EventHttpError("Faça login para acessar o criador de eventos.", 401)
   }
-  if (session.role !== "palsys_admin") {
-    throw new EventHttpError("Este módulo ainda está liberado somente para a administração PalSys.", 403)
+  if (!["palsys_admin", "event_user"].includes(session.role)) {
+    throw new EventHttpError("Seu perfil não possui acesso ao criador de eventos.", 403)
   }
   return session
 }

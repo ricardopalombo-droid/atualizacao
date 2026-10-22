@@ -25,13 +25,15 @@ create table if not exists public.app_users (
   id uuid primary key default gen_random_uuid(),
   email text not null unique,
   full_name text not null,
-  role text not null check (role in ('palsys_admin', 'subscriber_admin', 'client_user')),
+  role text not null check (role in ('palsys_admin', 'subscriber_admin', 'client_user', 'event_user')),
   subscriber_id uuid references public.subscribers(id) on delete cascade,
   client_id uuid references public.clients(id) on delete cascade,
   password_hash text not null default '',
   password_salt text not null default '',
   activation_token_hash text,
   activation_token_expires_at timestamptz,
+  phone text,
+  email_verified_at timestamptz,
   can_view_personal_data boolean not null default false,
   is_active boolean not null default true,
   created_at timestamptz not null default now(),
@@ -40,7 +42,22 @@ create table if not exists public.app_users (
     (role = 'palsys_admin' and subscriber_id is null and client_id is null)
     or (role = 'subscriber_admin' and subscriber_id is not null and client_id is null)
     or (role = 'client_user' and subscriber_id is not null and client_id is not null)
+    or (role = 'event_user' and subscriber_id is null and client_id is null)
   )
+);
+
+create table if not exists public.event_requests (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references public.app_users(id) on delete cascade,
+  export_hash text not null,
+  request_text text not null,
+  event_description text not null,
+  event_code integer not null,
+  filename text not null,
+  event_json jsonb not null,
+  model text,
+  created_at timestamptz not null default now(),
+  constraint event_requests_user_export_unique unique (user_id, export_hash)
 );
 
 create table if not exists public.employees (
@@ -137,6 +154,7 @@ create index if not exists clients_subscriber_id_idx on public.clients(subscribe
 create index if not exists app_users_subscriber_id_idx on public.app_users(subscriber_id);
 create index if not exists app_users_client_id_idx on public.app_users(client_id);
 create index if not exists app_users_role_idx on public.app_users(role);
+create index if not exists event_requests_user_created_idx on public.event_requests(user_id, created_at desc);
 create index if not exists employees_client_id_idx on public.employees(client_id);
 create index if not exists employees_subscriber_id_idx on public.employees(subscriber_id);
 create index if not exists employees_workflow_status_idx on public.employees(workflow_status);
@@ -150,6 +168,7 @@ alter table public.clients enable row level security;
 alter table public.employees enable row level security;
 alter table public.dependents enable row level security;
 alter table public.reference_catalog_items enable row level security;
+alter table public.event_requests enable row level security;
 
 revoke all privileges on table
   public.subscribers,
@@ -157,7 +176,8 @@ revoke all privileges on table
   public.clients,
   public.employees,
   public.dependents,
-  public.reference_catalog_items
+  public.reference_catalog_items,
+  public.event_requests
 from anon, authenticated;
 
 grant select, insert, update, delete on table
@@ -166,7 +186,8 @@ grant select, insert, update, delete on table
   public.clients,
   public.employees,
   public.dependents,
-  public.reference_catalog_items
+  public.reference_catalog_items,
+  public.event_requests
 to service_role;
 
 create policy "service role full subscribers"
@@ -206,6 +227,13 @@ with check (true);
 
 create policy "service role full reference_catalog_items"
 on public.reference_catalog_items
+for all
+to service_role
+using (true)
+with check (true);
+
+create policy "service role full event_requests"
+on public.event_requests
 for all
 to service_role
 using (true)

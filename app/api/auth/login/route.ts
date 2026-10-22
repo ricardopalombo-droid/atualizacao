@@ -5,10 +5,10 @@ import { getSupabaseServerClient } from "@/lib/supabase-server"
 
 export async function POST(request: Request) {
   const body = (await request.json()) as { email?: string; password?: string }
-  const email = String(body.email ?? "")
+  const email = String(body.email ?? "").trim().toLowerCase()
   const password = String(body.password ?? "")
 
-  const expectedEmail = process.env.APP_LOGIN_EMAIL
+  const expectedEmail = process.env.APP_LOGIN_EMAIL?.trim().toLowerCase()
   const expectedPassword = process.env.APP_LOGIN_PASSWORD
 
   if (expectedEmail && expectedPassword && email === expectedEmail && password === expectedPassword) {
@@ -39,12 +39,16 @@ export async function POST(request: Request) {
   const supabase = getSupabaseServerClient()
   const { data: user, error } = await supabase
     .from("app_users")
-    .select("id, email, full_name, role, subscriber_id, client_id, is_active, password_hash, password_salt")
+    .select("id, email, full_name, role, subscriber_id, client_id, is_active, email_verified_at, password_hash, password_salt")
     .eq("email", email)
     .maybeSingle()
 
   if (error) {
     return NextResponse.json({ error: "Não foi possível validar o login." }, { status: 500 })
+  }
+
+  if (user?.role === "event_user" && !user.email_verified_at) {
+    return NextResponse.json({ error: "Confirme seu e-mail antes de entrar." }, { status: 403 })
   }
 
   if (!user || !user.is_active) {
