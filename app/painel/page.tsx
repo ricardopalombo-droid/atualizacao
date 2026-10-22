@@ -1,11 +1,12 @@
 import Link from "next/link"
 import { redirect } from "next/navigation"
-import { Building2, CheckCircle2, ClipboardList, Database, FileSpreadsheet, Shield, Sparkles } from "lucide-react"
+import { Building2, CheckCircle2, ClipboardList, Database, FileSpreadsheet, Shield, Sparkles, Users } from "lucide-react"
 import { listEmployeeRecords } from "@/lib/cadastro-repository"
 import { workflowStatusLabels, type WorkflowStatus } from "@/lib/employee-form-config"
 import { LogoutButton } from "@/components/logout-button"
 import { getCurrentSession } from "@/lib/auth-session"
 import { getSiteAccessSummary } from "@/lib/site-analytics"
+import { getEventUserAdminSummary } from "@/lib/event-history"
 
 export default async function PainelPage() {
   const session = await getCurrentSession()
@@ -26,7 +27,9 @@ export default async function PainelPage() {
           clientId: session.clientId,
         })
 
-  const accessSummary = session.role === "palsys_admin" ? await getSiteAccessSummary() : null
+  const [accessSummary, eventUserSummary] = session.role === "palsys_admin"
+    ? await Promise.all([getSiteAccessSummary(), getEventUserAdminSummary()])
+    : [null, null]
 
   const funcoes =
     session.role === "palsys_admin"
@@ -160,6 +163,62 @@ export default async function PainelPage() {
             )
           })}
         </div>
+
+        {session.role === "palsys_admin" && eventUserSummary ? (
+          <section className="mt-8 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+            <div className="flex items-start gap-4">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-yellow-100 text-yellow-700">
+                <Users size={24} />
+              </div>
+              <div>
+                <h2 className="text-2xl font-bold text-slate-900">Usuários do criador de eventos</h2>
+                <p className="mt-2 text-slate-600">
+                  Pessoas cadastradas e quantidade de arquivos de eventos concluídos por cada conta.
+                </p>
+              </div>
+            </div>
+
+            <div className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+              <AdminMetric label="Pessoas cadastradas" value={eventUserSummary.totalUsers} />
+              <AdminMetric label="E-mails confirmados" value={eventUserSummary.verifiedUsers} />
+              <AdminMetric label="Pessoas que criaram eventos" value={eventUserSummary.usersWithEvents} />
+              <AdminMetric label="Eventos concluídos" value={eventUserSummary.totalEvents} />
+            </div>
+
+            {eventUserSummary.users.length === 0 ? (
+              <div className="mt-6 rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-6 text-slate-600">
+                Ainda não há usuários cadastrados no criador de eventos.
+              </div>
+            ) : (
+              <div className="mt-6 overflow-x-auto rounded-2xl border border-slate-200">
+                <table className="min-w-full divide-y divide-slate-200">
+                  <thead className="bg-slate-50">
+                    <tr className="text-left text-sm font-semibold text-slate-700">
+                      <th className="px-4 py-3">Nome</th>
+                      <th className="px-4 py-3">E-mail</th>
+                      <th className="px-4 py-3">Telefone</th>
+                      <th className="px-4 py-3 text-center">Eventos criados</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-200 bg-white">
+                    {eventUserSummary.users.map((user) => (
+                      <tr key={user.id} className="text-sm text-slate-700">
+                        <td className="whitespace-nowrap px-4 py-3 font-semibold text-slate-900">{user.name}</td>
+                        <td className="whitespace-nowrap px-4 py-3">{user.email}</td>
+                        <td className="whitespace-nowrap px-4 py-3">{user.phone || "Não informado"}</td>
+                        <td className="px-4 py-3 text-center">
+                          <span className="inline-flex min-w-9 justify-center rounded-full bg-yellow-100 px-3 py-1 font-bold text-yellow-800">
+                            {user.eventCount}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </section>
+        ) : null}
 
         {session.role !== "palsys_admin" ? (
           <section className="mt-8 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
@@ -329,4 +388,13 @@ function formatRoleLabel(role: string) {
   if (role === "subscriber_admin") return "Assinante"
   if (role === "client_user") return "Cliente"
   return "Visitante"
+}
+
+function AdminMetric({ label, value }: { label: string; value: number }) {
+  return (
+    <article className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
+      <p className="text-sm font-semibold text-slate-500">{label}</p>
+      <p className="mt-2 text-3xl font-bold text-slate-900">{value}</p>
+    </article>
+  )
 }

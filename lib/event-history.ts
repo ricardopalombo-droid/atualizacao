@@ -13,6 +13,16 @@ export type EventHistoryItem = {
   created_at: string
 }
 
+export type EventUserAdminItem = {
+  id: string
+  name: string
+  email: string
+  phone: string
+  eventCount: number
+  emailVerified: boolean
+  createdAt: string
+}
+
 export async function listEventHistory(userId: string) {
   const { data, error } = await getSupabaseServerClient()
     .from("event_requests")
@@ -52,4 +62,33 @@ export async function saveEventHistory(input: {
     )
 
   if (error) throw error
+}
+
+export async function getEventUserAdminSummary() {
+  const { data, error } = await getSupabaseServerClient()
+    .from("app_users")
+    .select("id, full_name, email, phone, email_verified_at, created_at, event_requests(count)")
+    .eq("role", "event_user")
+
+  if (error) throw error
+
+  const users: EventUserAdminItem[] = (data ?? []).map((user) => ({
+    id: String(user.id),
+    name: String(user.full_name ?? ""),
+    email: String(user.email ?? ""),
+    phone: String(user.phone ?? ""),
+    eventCount: Number(user.event_requests?.[0]?.count ?? 0),
+    emailVerified: Boolean(user.email_verified_at),
+    createdAt: String(user.created_at),
+  }))
+
+  users.sort((left, right) => right.eventCount - left.eventCount || left.name.localeCompare(right.name, "pt-BR"))
+
+  return {
+    users,
+    totalUsers: users.length,
+    verifiedUsers: users.filter((user) => user.emailVerified).length,
+    usersWithEvents: users.filter((user) => user.eventCount > 0).length,
+    totalEvents: users.reduce((total, user) => total + user.eventCount, 0),
+  }
 }
