@@ -2,7 +2,7 @@
 
 import Script from "next/script"
 import Link from "next/link"
-import { useCallback, useRef, useState } from "react"
+import { useState } from "react"
 import {
   AlertTriangle,
   CheckCircle2,
@@ -62,7 +62,7 @@ declare global {
           language: string
         },
       ) => string
-      reset: (widgetId: string) => void
+      reset: (widgetId?: string) => void
     }
   }
 }
@@ -83,30 +83,12 @@ export function ReceiptAnalyzer({ turnstileSiteKey }: { turnstileSiteKey: string
   const [file, setFile] = useState<File | null>(null)
   const [answers, setAnswers] = useState("")
   const [consent, setConsent] = useState(false)
-  const [token, setToken] = useState(process.env.NODE_ENV === "development" ? "development" : "")
   const [analysis, setAnalysis] = useState<Analysis | null>(null)
   const [error, setError] = useState("")
   const [loading, setLoading] = useState(false)
-  const turnstileElement = useRef<HTMLDivElement | null>(null)
-  const widgetId = useRef("")
-
-  const renderTurnstile = useCallback(() => {
-    if (!turnstileSiteKey || !turnstileElement.current || !window.turnstile || widgetId.current) {
-      return
-    }
-    widgetId.current = window.turnstile.render(turnstileElement.current, {
-      sitekey: turnstileSiteKey,
-      callback: setToken,
-      "expired-callback": () => setToken(""),
-      "error-callback": () => setToken(""),
-      theme: "light",
-      language: "pt-BR",
-    })
-  }, [turnstileSiteKey])
 
   function resetTurnstile() {
-    if (widgetId.current && window.turnstile) window.turnstile.reset(widgetId.current)
-    if (process.env.NODE_ENV !== "development") setToken("")
+    if (window.turnstile) window.turnstile.reset()
   }
 
   async function submit(event: React.FormEvent<HTMLFormElement>) {
@@ -115,7 +97,11 @@ export function ReceiptAnalyzer({ turnstileSiteKey }: { turnstileSiteKey: string
     if (!file) return setError("Selecione o holerite, recibo de férias ou termo de rescisão.")
     if (file.size > 4 * 1024 * 1024) return setError("O arquivo deve ter no máximo 4 MB.")
     if (!consent) return setError("Marque o consentimento antes de continuar.")
-    if (!token) return setError("Conclua a verificação de segurança.")
+    const browserForm = new FormData(event.currentTarget)
+    const securityToken = process.env.NODE_ENV === "development"
+      ? "development"
+      : String(browserForm.get("cf-turnstile-response") ?? "").trim()
+    if (!securityToken) return setError("Conclua a verificação de segurança.")
 
     setLoading(true)
     try {
@@ -123,7 +109,7 @@ export function ReceiptAnalyzer({ turnstileSiteKey }: { turnstileSiteKey: string
       form.set("arquivo", file)
       form.set("respostas", answers)
       form.set("consentimento", "true")
-      form.set("turnstileToken", token)
+      form.set("turnstileToken", securityToken)
       const response = await fetch("/api/recibos/analisar", { method: "POST", body: form })
       const body = (await response.json()) as { analise?: Analysis; erro?: string }
       if (!response.ok || !body.analise) {
@@ -143,9 +129,8 @@ export function ReceiptAnalyzer({ turnstileSiteKey }: { turnstileSiteKey: string
     <>
       {turnstileSiteKey && (
         <Script
-          src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit"
+          src="https://challenges.cloudflare.com/turnstile/v0/api.js"
           strategy="afterInteractive"
-          onLoad={renderTurnstile}
         />
       )}
 
@@ -217,7 +202,15 @@ export function ReceiptAnalyzer({ turnstileSiteKey }: { turnstileSiteKey: string
         <div className="mt-6 flex flex-col items-start justify-between gap-5 md:flex-row md:items-end">
           <div>
             {turnstileSiteKey ? (
-              <div ref={turnstileElement} aria-label="Verificação de segurança" />
+              <div
+                className="cf-turnstile"
+                data-sitekey={turnstileSiteKey}
+                data-theme="light"
+                data-language="pt-BR"
+                data-refresh-expired="auto"
+                data-retry="auto"
+                aria-label="Verificação de segurança"
+              />
             ) : process.env.NODE_ENV === "production" ? (
               <p className="text-sm font-semibold text-red-700">
                 A verificação de segurança ainda não foi configurada.
