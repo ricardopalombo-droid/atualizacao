@@ -75,6 +75,26 @@ export function normalizeText(value: unknown) {
     .toLowerCase()
 }
 
+const SEARCH_STOP_WORDS = new Set([
+  "a", "ao", "aos", "as", "com", "como", "copiar", "criar", "crie", "da", "das",
+  "de", "deve", "diretamente", "do", "dos", "e", "em", "evento", "folha", "funcionar",
+  "informado", "mais", "na", "nas", "no", "nos", "o", "os", "para", "pelo", "por",
+  "preserve", "quero", "sera", "teste", "um", "uma", "usuario",
+])
+
+function canonicalSearchToken(token: string) {
+  if (/^\d+(?:[.,]\d+)?$/.test(token)) return token.replace(",", ".")
+  if (token.length > 4 && token.endsWith("s")) return token.slice(0, -1)
+  return token
+}
+
+function searchTokens(value: unknown) {
+  const normalized = normalizeText(value).replace(/\bd[\s.]*s[\s.]*r\b/g, " dsr ")
+  return (normalized.match(/[a-z0-9]+(?:[.,][0-9]+)?/g) ?? [])
+    .filter((token) => token.length >= 3 && !SEARCH_STOP_WORDS.has(token))
+    .map(canonicalSearchToken)
+}
+
 export function validateEvent(event: unknown) {
   const errors: string[] = []
 
@@ -133,41 +153,34 @@ export function validateEvent(event: unknown) {
 }
 
 export function searchCatalog(query: string, limit = 8) {
-  const stopWords = new Set([
-    "criar",
-    "crie",
-    "um",
-    "uma",
-    "de",
-    "do",
-    "da",
-    "para",
-    "evento",
-    "com",
-    "como",
-    "copiar",
-    "quero",
-    "por",
-    "o",
-    "a",
-  ])
-  const terms = new Set(
-    (normalizeText(query).match(/[a-z0-9]+/g) ?? []).filter((term) => !stopWords.has(term)),
-  )
+  const terms = new Set(searchTokens(query))
 
   const ranked: Array<{ score: number; code: number; item: CatalogRow }> = []
   for (const item of catalog.eventos) {
     const code = Number(item.evento.codeventoid)
-    if (code < 1 || code > 999) continue
+    if (!Number.isInteger(code) || code < 1) continue
 
     const description = normalizeText(item.evento.descricao ?? "")
-    const words = new Set(description.match(/[a-z0-9]+/g) ?? [])
+    const descriptionTerms = new Set(searchTokens(description))
+    const parameterTerms = new Set(searchTokens(item.evento.descparam ?? ""))
     let score = 0
     for (const term of terms) {
-      score += words.has(term) ? 4 : description.includes(term) ? 1 : 0
+      if (descriptionTerms.has(term)) score += 12
+      else if (
+        term.length >= 4 &&
+        [...descriptionTerms].some((word) => word.startsWith(term) || term.startsWith(word))
+      ) {
+        score += 4
+      }
+      if (parameterTerms.has(term)) score += 2
       if (String(code) === term) score += 100
     }
-    if (!terms.size || score) ranked.push({ score, code, item })
+    const descriptiveTerms = [...descriptionTerms].filter((term) => !/^\d/.test(term))
+    const unmatchedDescriptiveTerms = descriptiveTerms.filter((term) => !terms.has(term))
+    score -= unmatchedDescriptiveTerms.length * 6
+    if (descriptiveTerms.length && unmatchedDescriptiveTerms.length === 0) score += 8
+    score -= [...descriptionTerms].filter((term) => /^\d/.test(term) && !terms.has(term)).length
+    if (!terms.size || score > 0) ranked.push({ score, code, item })
   }
 
   return ranked
@@ -281,12 +294,11 @@ export function buildProposal(options: {
   if (errors.length) throw new Error(errors.join("\n"))
 
   const warnings = [
-    "A estrutura JSON foi validada; a importação e o cálculo na Contmatic ainda precisam ser testados.",
-    "Incidências, escopos e prioridade são valores técnicos herdados; o sistema não presume seu significado.",
+    "O arquivo foi validado estruturalmente. Confirme a importação e o cálculo em um ambiente de teste da Contmatic.",
   ]
   if (pending.length) {
     warnings.push(
-      `Revise campos inferidos, nulos ou herdados do exemplo: ${[...new Set(pending)].sort().join(", ")}`,
+      "Algumas configurações sem correspondência direta foram preservadas a partir dos exemplos técnicos.",
     )
   }
 
@@ -313,7 +325,7 @@ export function knownFormulaIdentifiers() {
   const result = new Set<string>()
   for (const item of catalog.eventos) {
     const code = Number(item.evento.codeventoid)
-    if (code < 1 || code > 999) continue
+    if (!Number.isInteger(code) || code < 1) continue
     for (const identifier of formulaIdentifiers(String(item.evento.formula ?? ""))) {
       result.add(identifier)
     }
