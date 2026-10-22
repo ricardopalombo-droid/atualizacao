@@ -30,7 +30,9 @@ Não crie pendência apenas porque o nome do exemplo é diferente e não mencion
 códigos internos, campos ou fórmulas nas perguntas ao usuário. Não ignore condições. Para uma
 alteração use a linguagem Phoenix dos exemplos, nunca Python. Porcentagem, quando o modelo usa
 ParamValorRef, é dado lançado na folha e não vira automaticamente percentual fixo no cadastro.
-alteracoes contém somente campos solicitados cuja correspondência é conhecida. Nunca inclua
+alteracoes contém somente mudanças realmente solicitadas pelo usuário; não copie campos do exemplo
+que permanecerão iguais. Nunca use null em valor_json: quando um dado do exemplo estiver vazio,
+omita a alteração e preserve o valor válido do modelo exportado. Nunca inclua
 CodEventoId, CodUsuario, Descricao ou Formula em alteracoes: use os campos descricao e formula
 do nível principal para esses dois últimos. Não altere IDs.
 Descrição deve ter no máximo 30 caracteres. Não inclua metadados no evento. Em explicacao, descreva
@@ -39,7 +41,8 @@ campos técnicos ou fórmulas. As referências são internas: não peça código
 e não reproduza scripts como demonstração.`
 
 const RESERVED_CHANGE_FIELDS = new Set(["CodEventoId", "CodUsuario", "Descricao", "Formula"])
-const ALLOWED_CHANGE_FIELDS = Object.keys(getTemplate()).filter(
+const EVENT_TEMPLATE = getTemplate()
+const ALLOWED_CHANGE_FIELDS = Object.keys(EVENT_TEMPLATE).filter(
   (field) => !RESERVED_CHANGE_FIELDS.has(field),
 )
 const ALLOWED_CHANGE_FIELD_SET = new Set(ALLOWED_CHANGE_FIELDS)
@@ -56,7 +59,10 @@ const RESPONSE_SCHEMA = {
         type: "object",
         properties: {
           campo: { type: "string", enum: ALLOWED_CHANGE_FIELDS },
-          valor_json: { type: "string" },
+          valor_json: {
+            type: "string",
+            description: "Valor JSON primitivo da mudança solicitada. Nunca use null.",
+          },
           justificativa: { type: "string" },
         },
         required: ["campo", "valor_json", "justificativa"],
@@ -159,12 +165,24 @@ function applyAnswer(request: string, allowedCodes: Set<number>, rawAnswer: unkn
     try {
       parsedValue = JSON.parse(change.valor_json)
     } catch {
-      throw new Error(`A IA devolveu JSON inválido para ${change.campo}.`)
+      throw new Error("A IA gerou uma configuração inválida. Tente novamente.")
+    }
+
+    // O catálogo pode conter nulos para colunas ausentes. O formato exportado não aceita
+    // esses nulos; nesse caso mantemos o valor válido do modelo em vez de contaminar o evento.
+    if (parsedValue === null) continue
+
+    const expectedValue = EVENT_TEMPLATE[change.campo]
+    const hasExpectedType =
+      typeof parsedValue === typeof expectedValue &&
+      (typeof parsedValue !== "number" || Number.isFinite(parsedValue))
+    if (!hasExpectedType) {
+      throw new Error("A IA gerou uma configuração incompatível. Tente novamente.")
     }
 
     if (change.campo in changes) {
       if (JSON.stringify(changes[change.campo]) === JSON.stringify(parsedValue)) continue
-      throw new Error(`A IA repetiu ${change.campo} com valores diferentes.`)
+      throw new Error("A IA gerou configurações contraditórias. Tente novamente.")
     }
     changes[change.campo] = parsedValue
     explanations[change.campo] = change.justificativa
