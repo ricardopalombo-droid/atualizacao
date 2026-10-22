@@ -38,6 +38,8 @@ export const receiptAnalysisSchema = z.object({
         }),
       ),
       total: moneySchema,
+      valor_documento: moneySchema,
+      diferenca: moneySchema,
       status: z.enum(["confere", "diverge", "informativo"]),
     }),
   ),
@@ -109,12 +111,14 @@ const RESPONSE_SCHEMA = {
             },
           },
           total: { type: ["number", "null"] },
+          valor_documento: { type: ["number", "null"] },
+          diferenca: { type: ["number", "null"] },
           status: {
             type: "string",
             enum: ["confere", "diverge", "informativo"],
           },
         },
-        required: ["titulo", "explicacao", "etapas", "total", "status"],
+        required: ["titulo", "explicacao", "etapas", "total", "valor_documento", "diferenca", "status"],
         additionalProperties: false,
       },
     },
@@ -152,6 +156,19 @@ descontos chegam ao líquido. Explique em blocos separados salário, horas extra
 INSS, IRRF, FGTS, férias e verbas rescisórias quando existirem. Para cálculos progressivos, mostre uma
 etapa por faixa com base alcançada naquela faixa, alíquota e valor descontado. Não invente base,
 alíquota, período trabalhado, aviso prévio, motivo de desligamento ou quantidade de avos.
+
+Simplifique a resposta: omita completamente verbas ausentes, zeradas ou que serviriam apenas para
+dizer que não houve valor. Não crie blocos sobre horas extras, adicionais, comissões, faltas ou qualquer
+outro item com valor zero. Para cada verba não zerada que possa ser calculada, crie um bloco em calculos
+com pelo menos uma etapa, mesmo que a conta seja simples. Exemplos: salário mensal / 30 x dias; salário
+/ 12 x avos; férias + um terço; quantidade x valor unitário. Não se limite a dizer que o documento não
+trouxe memória: reconstrua a conta quando os números necessários estiverem legíveis.
+
+Em cada cálculo, valor_documento é o valor impresso, total é o valor refeito e diferenca é o valor
+absoluto entre ambos. Diferença de até R$ 1,00 é tolerância normal de arredondamento ou truncamento:
+use status confere, não mencione a diferença e não crie alerta. Somente quando a diferença for maior
+que R$ 1,00 use status diverge e explique claramente o valor calculado, o valor do documento e a
+diferença. Use status informativo apenas quando não houver dados suficientes para uma comparação.
 
 Considere todos os arquivos enviados em conjunto. Identifique o recibo/termo principal e use
 demonstrativos de médias, faltas ou outras memórias como anexos complementares. Liste, sem dados
@@ -209,7 +226,37 @@ function redactAnalysis(analysis: ReceiptAnalysis): ReceiptAnalysis {
 }
 
 function addArithmeticWarnings(analysis: ReceiptAnalysis) {
-  const warnings = [...analysis.alertas]
+  const calculations = analysis.calculos
+    .filter((calculation) =>
+      (calculation.total !== null && Math.abs(calculation.total) > 0.004) ||
+      (calculation.valor_documento !== null && Math.abs(calculation.valor_documento) > 0.004) ||
+      calculation.etapas.some((step) => Math.abs(step.valor) > 0.004),
+    )
+    .map((calculation) => {
+      const difference = calculation.diferenca ?? (
+        calculation.total !== null && calculation.valor_documento !== null
+          ? Math.abs(calculation.total - calculation.valor_documento)
+          : null
+      )
+      const significantDifference = difference !== null && difference > 1
+      return {
+        ...calculation,
+        diferenca: difference,
+        status: significantDifference
+          ? "diverge" as const
+          : calculation.status === "diverge"
+            ? "confere" as const
+            : calculation.status,
+      }
+    })
+  const hasSignificantDifference = calculations.some(
+    (calculation) => calculation.diferenca !== null && calculation.diferenca > 1,
+  )
+  const warnings = hasSignificantDifference
+    ? [...analysis.alertas]
+    : analysis.alertas.filter(
+        (warning) => !/diferen.{0,30}(centav|arredond)|centav|arredond/i.test(warning),
+      )
   const credits = analysis.itens
     .filter((item) => item.categoria === "vencimento")
     .reduce((total, item) => total + item.valor, 0)
@@ -219,13 +266,13 @@ function addArithmeticWarnings(analysis: ReceiptAnalysis) {
 
   if (
     analysis.resumo.total_vencimentos !== null &&
-    Math.abs(credits - analysis.resumo.total_vencimentos) > 0.02
+    Math.abs(credits - analysis.resumo.total_vencimentos) > 1
   ) {
     warnings.push("A soma das verbas lidas não coincide com o total de vencimentos impresso.")
   }
   if (
     analysis.resumo.total_descontos !== null &&
-    Math.abs(debits - analysis.resumo.total_descontos) > 0.02
+    Math.abs(debits - analysis.resumo.total_descontos) > 1
   ) {
     warnings.push("A soma dos descontos lidos não coincide com o total de descontos impresso.")
   }
@@ -237,7 +284,7 @@ function addArithmeticWarnings(analysis: ReceiptAnalysis) {
       analysis.resumo.total_vencimentos -
         analysis.resumo.total_descontos -
         analysis.resumo.valor_liquido,
-    ) > 0.02
+    ) > 1
   ) {
     warnings.push("Vencimentos menos descontos não coincide com o valor líquido informado.")
   }
@@ -245,6 +292,7 @@ function addArithmeticWarnings(analysis: ReceiptAnalysis) {
   return {
     ...analysis,
     itens: analysis.itens.filter((item) => Math.abs(item.valor) > 0.004),
+    calculos: calculations,
     alertas: [...new Set(warnings)],
   }
 }

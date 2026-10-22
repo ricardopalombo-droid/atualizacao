@@ -42,6 +42,8 @@ type Analysis = {
       valor: number
     }>
     total: number | null
+    valor_documento: number | null
+    diferenca: number | null
     status: "confere" | "diverge" | "informativo"
   }>
   pendencias: string[]
@@ -379,6 +381,26 @@ function AnalysisResult({ analysis }: { analysis: Analysis }) {
           )}
           {calculation.total !== null && (
             <p className="mt-5 text-right font-bold text-slate-950">Total: {currency.format(calculation.total)}</p>
+          )}
+          {calculation.diferenca !== null && calculation.diferenca > 1 && (
+            <div className="mt-5 grid gap-3 rounded-2xl border border-red-200 bg-red-50 p-4 text-sm sm:grid-cols-3">
+              <div>
+                <span className="text-red-700">Calculado pelo sistema</span>
+                <strong className="mt-1 block text-base text-red-950">
+                  {calculation.total === null ? "Não identificado" : currency.format(calculation.total)}
+                </strong>
+              </div>
+              <div>
+                <span className="text-red-700">Valor no documento</span>
+                <strong className="mt-1 block text-base text-red-950">
+                  {calculation.valor_documento === null ? "Não identificado" : currency.format(calculation.valor_documento)}
+                </strong>
+              </div>
+              <div>
+                <span className="text-red-700">Diferença encontrada</span>
+                <strong className="mt-1 block text-base text-red-950">{currency.format(calculation.diferenca)}</strong>
+              </div>
+            </div>
           )}
         </article>
       ))}
