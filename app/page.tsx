@@ -5,6 +5,7 @@ import {
   CheckCircle2,
   ClipboardList,
   Cog,
+  FileSearch,
   ShieldCheck,
   Target,
   UsersRound,
@@ -87,6 +88,9 @@ export default function HomePage() {
             <a href="#produtos" className="transition hover:text-yellow-600">
               Produtos
             </a>
+            <Link href="/explicar-recibo" className="transition hover:text-yellow-600">
+              Entenda seu recibo
+            </Link>
             <a href="#contato" className="transition hover:text-yellow-600">
               Contato
             </a>
@@ -279,6 +283,28 @@ export default function HomePage() {
               </div>
             </div>
           </div>
+        </div>
+      </section>
+
+      <section className="mx-auto max-w-6xl px-6 py-12">
+        <div className="grid items-center gap-7 overflow-hidden rounded-[1.75rem] bg-slate-900 p-8 text-white shadow-xl md:grid-cols-[auto_1fr_auto] md:p-10">
+          <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-yellow-400 text-slate-950">
+            <FileSearch size={28} />
+          </div>
+          <div>
+            <span className="text-sm font-bold uppercase tracking-wider text-yellow-300">Novo autoatendimento</span>
+            <h2 className="mt-2 text-2xl font-bold md:text-3xl">Não entendeu seu holerite, férias ou rescisão?</h2>
+            <p className="mt-3 max-w-2xl leading-7 text-slate-300">
+              Envie o documento e receba uma explicação simples dos valores e cálculos, sem cadastro.
+            </p>
+          </div>
+          <Link
+            href="/explicar-recibo"
+            className="inline-flex items-center justify-center gap-2 rounded-xl bg-yellow-400 px-6 py-3 font-bold text-slate-950 hover:brightness-95"
+          >
+            Explicar meu documento
+            <ArrowRight size={18} />
+          </Link>
         </div>
       </section>
 

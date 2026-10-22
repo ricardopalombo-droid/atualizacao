@@ -3,6 +3,11 @@ import Link from "next/link"
 
 const itensPrivacidade = [
   {
+    titulo: "Explicador de holerites, férias e rescisões",
+    texto:
+      "Nesta ferramenta pública, o arquivo é enviado à OpenAI somente depois do consentimento do usuário e apenas para produzir a explicação solicitada. A PalSys não grava o documento nem o resultado no histórico. Para limitar abusos, guardamos somente dados técnicos mínimos da tentativa, como data, tamanho do arquivo, tipo identificado, resultado da operação e um código irreversível derivado do endereço de rede — nunca o endereço original.",
+  },
+  {
     titulo: "Processamento local sempre que aplicável",
     texto:
       "As soluções da PalSys são desenvolvidas para operar, sempre que aplicável, no ambiente local do cliente, escritório ou empresa contratante. Isso significa que os arquivos utilizados no processamento permanecem no computador, servidor ou pasta configurada pelo próprio usuário.",
@@ -15,12 +20,17 @@ const itensPrivacidade = [
   {
     titulo: "Leitura temporária para execução da rotina",
     texto:
-      "Quando um sistema precisa identificar informações em arquivos, como CPF, CNPJ, nome, competência, códigos ou outros dados operacionais, essa leitura acontece de forma temporária e local, apenas no momento do processamento necessário para a execução da automação.",
+      "Quando um sistema precisa identificar informações em arquivos, como CPF, CNPJ, nome, competência, códigos ou outros dados operacionais, essa leitura acontece apenas durante o processamento necessário. Nas automações locais, ocorre no ambiente do cliente; no explicador público de recibos, ocorre por meio da integração com a OpenAI descrita nesta página.",
   },
   {
     titulo: "Envios externos usam serviços definidos pelo usuário",
     texto:
       "Quando houver envio por e-mail, WhatsApp, APIs oficiais, plataformas de terceiros ou qualquer outro serviço externo, a transmissão ocorrerá exclusivamente pelos serviços configurados, contratados ou autorizados pelo próprio usuário.",
+  },
+  {
+    titulo: "Proteção contra uso automatizado",
+    texto:
+      "O explicador público utiliza o Cloudflare Turnstile para reduzir robôs e uso abusivo. Essa verificação pode processar dados técnicos do navegador e da conexão de acordo com as regras de privacidade da Cloudflare.",
   },
   {
     titulo: "Históricos e registros operacionais",

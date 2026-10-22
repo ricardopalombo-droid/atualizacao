@@ -60,6 +60,15 @@ create table if not exists public.event_requests (
   constraint event_requests_user_export_unique unique (user_id, export_hash)
 );
 
+create table if not exists public.receipt_analysis_requests (
+  id uuid primary key default gen_random_uuid(),
+  ip_hash text not null,
+  status text not null check (status in ('processing', 'completed', 'failed')),
+  document_type text check (document_type in ('holerite', 'ferias', 'rescisao', 'desconhecido')),
+  file_size integer not null check (file_size > 0),
+  created_at timestamptz not null default now()
+);
+
 create table if not exists public.employees (
   id uuid primary key default gen_random_uuid(),
   subscriber_id uuid references public.subscribers(id) on delete set null,
@@ -155,6 +164,10 @@ create index if not exists app_users_subscriber_id_idx on public.app_users(subsc
 create index if not exists app_users_client_id_idx on public.app_users(client_id);
 create index if not exists app_users_role_idx on public.app_users(role);
 create index if not exists event_requests_user_created_idx on public.event_requests(user_id, created_at desc);
+create index if not exists receipt_analysis_requests_ip_created_idx
+on public.receipt_analysis_requests(ip_hash, created_at desc);
+create index if not exists receipt_analysis_requests_created_idx
+on public.receipt_analysis_requests(created_at desc);
 create index if not exists employees_client_id_idx on public.employees(client_id);
 create index if not exists employees_subscriber_id_idx on public.employees(subscriber_id);
 create index if not exists employees_workflow_status_idx on public.employees(workflow_status);
@@ -169,6 +182,7 @@ alter table public.employees enable row level security;
 alter table public.dependents enable row level security;
 alter table public.reference_catalog_items enable row level security;
 alter table public.event_requests enable row level security;
+alter table public.receipt_analysis_requests enable row level security;
 
 revoke all privileges on table
   public.subscribers,
@@ -177,7 +191,8 @@ revoke all privileges on table
   public.employees,
   public.dependents,
   public.reference_catalog_items,
-  public.event_requests
+  public.event_requests,
+  public.receipt_analysis_requests
 from anon, authenticated;
 
 grant select, insert, update, delete on table
@@ -187,7 +202,8 @@ grant select, insert, update, delete on table
   public.employees,
   public.dependents,
   public.reference_catalog_items,
-  public.event_requests
+  public.event_requests,
+  public.receipt_analysis_requests
 to service_role;
 
 create policy "service role full subscribers"
@@ -234,6 +250,13 @@ with check (true);
 
 create policy "service role full event_requests"
 on public.event_requests
+for all
+to service_role
+using (true)
+with check (true);
+
+create policy "service role full receipt analysis requests"
+on public.receipt_analysis_requests
 for all
 to service_role
 using (true)
