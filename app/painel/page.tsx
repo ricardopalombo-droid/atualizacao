@@ -201,6 +201,7 @@ export default async function PainelPage() {
                     <tr className="text-left text-sm font-semibold text-slate-700">
                       <th className="px-4 py-3">Nome</th>
                       <th className="px-4 py-3">E-mail</th>
+                      <th className="px-4 py-3 text-center">Confirmação</th>
                       <th className="px-4 py-3">Telefone</th>
                       <th className="px-4 py-3 text-center">Eventos criados</th>
                     </tr>
@@ -210,6 +211,17 @@ export default async function PainelPage() {
                       <tr key={user.id} className="text-sm text-slate-700">
                         <td className="whitespace-nowrap px-4 py-3 font-semibold text-slate-900">{user.name}</td>
                         <td className="whitespace-nowrap px-4 py-3">{user.email}</td>
+                        <td className="whitespace-nowrap px-4 py-3 text-center">
+                          <span
+                            className={`inline-flex rounded-full px-3 py-1 text-xs font-bold ${
+                              user.emailVerified
+                                ? "bg-emerald-100 text-emerald-800"
+                                : "bg-amber-100 text-amber-800"
+                            }`}
+                          >
+                            {user.emailVerified ? "Confirmado" : "Pendente"}
+                          </span>
+                        </td>
                         <td className="whitespace-nowrap px-4 py-3">{user.phone || "Não informado"}</td>
                         <td className="px-4 py-3 text-center">
                           <span className="inline-flex min-w-9 justify-center rounded-full bg-yellow-100 px-3 py-1 font-bold text-yellow-800">
