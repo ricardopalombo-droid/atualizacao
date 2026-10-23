@@ -176,14 +176,18 @@ export default async function PainelPage() {
                 <Users size={24} />
               </div>
               <div>
-                <h2 className="text-2xl font-bold text-slate-900">Usuários do criador de eventos</h2>
+                <h2 className="text-2xl font-bold text-slate-900">Uso do Criador de eventos</h2>
                 <p className="mt-2 text-slate-600">
-                  Pessoas cadastradas e quantidade de arquivos de eventos concluídos por cada conta.
+                  Acessos dos últimos 30 dias e resultados acumulados das contas cadastradas.
                 </p>
               </div>
             </div>
 
             <div className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+              <AdminMetric label="Acessos hoje" value={eventUserSummary.accessesToday} />
+              <AdminMetric label="Acessos em 7 dias" value={eventUserSummary.accesses7Days} />
+              <AdminMetric label="Acessos em 30 dias" value={eventUserSummary.accesses30Days} />
+              <AdminMetric label="Visitantes únicos" value={eventUserSummary.uniqueVisitors30Days} />
               <AdminMetric label="Pessoas cadastradas" value={eventUserSummary.totalUsers} />
               <AdminMetric label="E-mails confirmados" value={eventUserSummary.verifiedUsers} />
               <AdminMetric label="Pessoas que criaram eventos" value={eventUserSummary.usersWithEvents} />

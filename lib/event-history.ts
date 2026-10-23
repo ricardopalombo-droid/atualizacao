@@ -23,6 +23,13 @@ export type EventUserAdminItem = {
   createdAt: string
 }
 
+type EventAccessRow = {
+  pathname: string
+  visitor_id: string | null
+  session_role: string | null
+  created_at: string
+}
+
 export async function listEventHistory(userId: string) {
   const { data, error } = await getSupabaseServerClient()
     .from("event_requests")
@@ -65,14 +72,30 @@ export async function saveEventHistory(input: {
 }
 
 export async function getEventUserAdminSummary() {
-  const { data, error } = await getSupabaseServerClient()
-    .from("app_users")
-    .select("id, full_name, email, phone, email_verified_at, created_at, event_requests(count)")
-    .eq("role", "event_user")
+  const supabase = getSupabaseServerClient()
+  const now = new Date()
+  const from30Days = new Date(now)
+  from30Days.setDate(now.getDate() - 30)
+  const from7Days = new Date(now)
+  from7Days.setDate(now.getDate() - 7)
+  const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate())
 
-  if (error) throw error
+  const [usersResult, accessesResult] = await Promise.all([
+    supabase
+      .from("app_users")
+      .select("id, full_name, email, phone, email_verified_at, created_at, event_requests(count)")
+      .eq("role", "event_user"),
+    supabase
+      .from("site_access_events")
+      .select("pathname, visitor_id, session_role, created_at")
+      .in("pathname", ["/eventos/cadastro", "/painel/eventos"])
+      .gte("created_at", from30Days.toISOString()),
+  ])
 
-  const users: EventUserAdminItem[] = (data ?? []).map((user) => ({
+  if (usersResult.error) throw usersResult.error
+  if (accessesResult.error) throw accessesResult.error
+
+  const users: EventUserAdminItem[] = (usersResult.data ?? []).map((user) => ({
     id: String(user.id),
     name: String(user.full_name ?? ""),
     email: String(user.email ?? ""),
@@ -84,7 +107,16 @@ export async function getEventUserAdminSummary() {
 
   users.sort((left, right) => right.eventCount - left.eventCount || left.name.localeCompare(right.name, "pt-BR"))
 
+  const accesses = ((accessesResult.data ?? []) as EventAccessRow[]).filter(
+    (access) => access.pathname === "/eventos/cadastro" || access.session_role === "event_user",
+  )
+  const isSince = (value: string, date: Date) => new Date(value) >= date
+
   return {
+    accessesToday: accesses.filter((access) => isSince(access.created_at, startOfToday)).length,
+    accesses7Days: accesses.filter((access) => isSince(access.created_at, from7Days)).length,
+    accesses30Days: accesses.length,
+    uniqueVisitors30Days: new Set(accesses.map((access) => access.visitor_id).filter(Boolean)).size,
     users,
     totalUsers: users.length,
     verifiedUsers: users.filter((user) => user.emailVerified).length,

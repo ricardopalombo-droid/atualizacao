@@ -4,7 +4,12 @@ import { useEffect } from "react"
 import { usePathname } from "next/navigation"
 
 const VISITOR_STORAGE_KEY = "palsys_visitor_id"
-const BLOCKED_PREFIXES = ["/painel", "/api", "/cadastro/funcionario"]
+const BLOCKED_PREFIXES = ["/api", "/cadastro/funcionario"]
+
+function shouldSkipTracking(pathname: string) {
+  if (BLOCKED_PREFIXES.some((prefix) => pathname.startsWith(prefix))) return true
+  return pathname.startsWith("/painel") && pathname !== "/painel/eventos"
+}
 
 function getVisitorId() {
   if (typeof window === "undefined") {
@@ -37,7 +42,7 @@ export function SiteVisitTracker() {
       return
     }
 
-    if (BLOCKED_PREFIXES.some((prefix) => pathname.startsWith(prefix))) {
+    if (shouldSkipTracking(pathname)) {
       return
     }
 
