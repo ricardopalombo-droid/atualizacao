@@ -445,9 +445,20 @@ export function ContmaticEventCreator() {
         ) : null}
       </section>
 
-      <p className="px-1 text-sm leading-6 text-slate-500">
-        No Phoenix: Arquivos → Eventos → Eventos Usuário → Importar evento. Use um arquivo JSON por vez e valide primeiro em ambiente de teste.
-      </p>
+      <aside className="flex items-start gap-4 rounded-2xl border border-yellow-300 bg-yellow-50 p-5 shadow-sm">
+        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-yellow-200 text-yellow-800">
+          <FileJson size={23} />
+        </div>
+        <div>
+          <h2 className="font-bold text-slate-950">Como importar o evento no Phoenix</h2>
+          <p className="mt-1 leading-7 text-slate-700">
+            Acesse <strong>Arquivos → Eventos → Eventos Usuário → Importar evento</strong>.
+          </p>
+          <p className="mt-2 text-sm font-semibold leading-6 text-yellow-900">
+            Importe um arquivo JSON por vez e valide primeiro em ambiente de teste antes de utilizar o evento na folha.
+          </p>
+        </div>
+      </aside>
     </div>
   )
 }
