@@ -31,8 +31,8 @@ export default function PalSysAssinaturaPage() {
     if (ref === "dctfweb-integra-001") return "IkpKPZHazCk"
     if (ref === "funcionarios-001") return "LW7mJt-iEFk"
     if (ref === "pdf-monitor-001") return "PwCItzETcg4"
-    if (ref === "consolida-impostos-001") return "tAHFeYmP6BY"
-    if (ref === "consolidador-folhas-001") return "3bs2H7Mewo4"
+    if (ref === "consolida-impostos-001") return "fyY15r9nod0"
+    if (ref === "consolidador-folhas-001") return "y0h8iqL7kFo"
     return null
   }
 
