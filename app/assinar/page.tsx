@@ -115,7 +115,7 @@ export default function PalSysAssinaturaPage() {
               Início
             </Link>
             <Link href="/assinar" className="hover:text-yellow-600 transition">
-              Assinar
+              Assinar / Créditos
             </Link>
             <a
               href="mailto:ricardopalombo@bol.com.br"
@@ -147,6 +147,18 @@ export default function PalSysAssinaturaPage() {
             Preencha seus dados abaixo e escolha o produto que deseja assinar.
           </p>
         </div>
+
+        <Link
+          href="/creditos-auditor"
+          className="mb-10 flex flex-col gap-4 rounded-3xl border-2 border-yellow-300 bg-gradient-to-r from-yellow-50 to-blue-50 p-6 shadow-lg shadow-yellow-100 transition hover:-translate-y-0.5 hover:shadow-xl sm:flex-row sm:items-center sm:justify-between"
+        >
+          <div>
+            <span className="inline-flex rounded-full bg-yellow-400 px-3 py-1 text-xs font-black uppercase tracking-wider text-slate-950">Novo</span>
+            <h2 className="mt-3 text-2xl font-black text-slate-950">PalSys Auditor Integrado por créditos</h2>
+            <p className="mt-2 leading-7 text-slate-600">R$ 5 por empresa/competência. Reprocessamentos já liberados não consomem novamente.</p>
+          </div>
+          <span className="shrink-0 rounded-xl bg-blue-700 px-6 py-3 text-center font-black text-white">Comprar créditos →</span>
+        </Link>
 
         <div className="mb-10 rounded-2xl border border-slate-200 bg-slate-50 p-6 shadow-sm">
           <h2 className="text-xl font-bold text-slate-900">Seus dados</h2>

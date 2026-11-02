@@ -10,14 +10,49 @@ export default function CreditosAuditorPage() {
   const [name, setName] = useState("")
   const [email, setEmail] = useState("")
   const [licenseKey, setLicenseKey] = useState("")
+  const [accessToken, setAccessToken] = useState("")
+  const [licenseHint, setLicenseHint] = useState("")
+  const [creditBalance, setCreditBalance] = useState<number | null>(null)
+  const [identifying, setIdentifying] = useState(false)
+  const [identificationError, setIdentificationError] = useState("")
   const [quantity, setQuantity] = useState(5)
   const [unitPriceCents, setUnitPriceCents] = useState(500)
   const [loading, setLoading] = useState(false)
   const total = useMemo(() => quantity * unitPriceCents / 100, [quantity, unitPriceCents])
 
   useEffect(() => {
+    const token = new URLSearchParams(window.location.search).get("access") || ""
+    if (!token) return
+    setAccessToken(token)
+    setIdentifying(true)
+    fetch("/api/credits-customer-context", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ accessToken: token }),
+      cache: "no-store",
+    })
+      .then(async (response) => ({ response, data: await response.json().catch(() => ({})) }))
+      .then(({ response, data }) => {
+        if (!response.ok) throw new Error(data.error || "Acesso inválido ou expirado.")
+        setName(data.name || "")
+        setEmail(data.email || "")
+        setLicenseHint(data.licenseHint || "")
+        setCreditBalance(Number(data.creditBalance || 0))
+        if (Number.isInteger(data.unitPriceCents)) setUnitPriceCents(data.unitPriceCents)
+      })
+      .catch((error) => {
+        setAccessToken("")
+        setIdentificationError(error instanceof Error ? error.message : "Acesso inválido ou expirado.")
+      })
+      .finally(() => setIdentifying(false))
+  }, [])
+
+  useEffect(() => {
     const timer = window.setTimeout(async () => {
-      const query = licenseKey.trim() ? `?licenseKey=${encodeURIComponent(licenseKey.trim())}` : ""
+      const params = new URLSearchParams()
+      if (accessToken) params.set("accessToken", accessToken)
+      else if (licenseKey.trim()) params.set("licenseKey", licenseKey.trim())
+      const query = params.size ? `?${params.toString()}` : ""
       const response = await fetch(`/api/credits-price${query}`, { cache: "no-store" })
       const data = await response.json().catch(() => ({}))
       if (response.ok && Number.isInteger(data.unitPriceCents)) {
@@ -25,7 +60,7 @@ export default function CreditosAuditorPage() {
       }
     }, 350)
     return () => window.clearTimeout(timer)
-  }, [licenseKey])
+  }, [licenseKey, accessToken])
 
   async function submit(event: FormEvent) {
     event.preventDefault()
@@ -34,7 +69,7 @@ export default function CreditosAuditorPage() {
       const response = await fetch("/api/mercadopago/create-credit-preference", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, email, licenseKey, quantity }),
+        body: JSON.stringify({ name, email, licenseKey, accessToken, quantity }),
       })
       const data = await response.json()
       if (!response.ok || !data.initPoint) {
@@ -66,7 +101,22 @@ export default function CreditosAuditorPage() {
           </div>
 
           <form onSubmit={submit} className="space-y-7 p-7 sm:p-10">
-            <div className="grid gap-5 sm:grid-cols-2">
+            {identifying ? (
+              <div className="rounded-2xl border border-blue-200 bg-blue-50 p-5 font-semibold text-blue-900">Identificando sua licença com segurança...</div>
+            ) : accessToken && licenseHint ? (
+              <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-5 text-emerald-950">
+                <p className="font-black">Compra vinculada automaticamente</p>
+                <p className="mt-2 text-sm">{name} · {email}</p>
+                <div className="mt-4 flex flex-wrap gap-3 text-sm font-bold">
+                  <span className="rounded-full bg-white px-3 py-2">Licença {licenseHint}</span>
+                  <span className="rounded-full bg-white px-3 py-2">Saldo atual: {creditBalance ?? 0} crédito(s)</span>
+                </div>
+                <p className="mt-4 text-sm text-emerald-800">Você só precisa escolher a quantidade. Não é necessário digitar sua chave.</p>
+              </div>
+            ) : (
+              <>
+                {identificationError ? <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm font-semibold text-amber-900">{identificationError} Preencha os dados abaixo para continuar.</div> : null}
+                <div className="grid gap-5 sm:grid-cols-2">
               <label className="grid gap-2 text-sm font-bold">
                 Nome
                 <input required value={name} onChange={(e) => setName(e.target.value)} className="rounded-xl border border-slate-300 px-4 py-3 font-normal outline-none focus:border-blue-500" />
@@ -75,13 +125,15 @@ export default function CreditosAuditorPage() {
                 E-mail
                 <input required type="email" value={email} onChange={(e) => setEmail(e.target.value)} className="rounded-xl border border-slate-300 px-4 py-3 font-normal outline-none focus:border-blue-500" />
               </label>
-            </div>
+                </div>
 
-            <label className="grid gap-2 text-sm font-bold">
-              Chave da licença, se já possuir
-              <input value={licenseKey} onChange={(e) => setLicenseKey(e.target.value.toUpperCase())} placeholder="Deixe em branco na primeira compra" className="rounded-xl border border-slate-300 px-4 py-3 font-mono font-normal uppercase outline-none focus:border-blue-500" />
-              <span className="font-normal text-slate-500">Na primeira compra, uma licença do Auditor Integrado será criada para o e-mail informado.</span>
-            </label>
+                <label className="grid gap-2 text-sm font-bold">
+                  Chave da licença, se já possuir
+                  <input value={licenseKey} onChange={(e) => setLicenseKey(e.target.value.toUpperCase())} placeholder="Deixe em branco na primeira compra" className="rounded-xl border border-slate-300 px-4 py-3 font-mono font-normal uppercase outline-none focus:border-blue-500" />
+                  <span className="font-normal text-slate-500">Na primeira compra, uma licença do Auditor Integrado será criada para o e-mail informado. Clientes ativos podem abrir esta página pelo botão Comprar créditos dentro do aplicativo, sem preencher a chave.</span>
+                </label>
+              </>
+            )}
 
             <div>
               <p className="text-sm font-bold">Quantidade de créditos</p>

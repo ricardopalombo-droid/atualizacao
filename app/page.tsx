@@ -4,6 +4,7 @@ import {
   ArrowRight,
   CheckCircle2,
   ClipboardList,
+  Coins,
   Cog,
   FileSearch,
   ShieldCheck,
@@ -49,6 +50,7 @@ const beneficios = [
 // }
 
 function getVideoUrl(ref: string) {
+  if (ref === "auditor-integrado-credits") return "https://www.youtube.com/watch?v=5-bbDEbe1JQ"
   if (ref === "whats-001") return "https://www.youtube.com/watch?v=lFXViQerYxQ"
   if (ref === "email-001") return "https://www.youtube.com/watch?v=xAvIlFxByP8"
   if (ref === "central-documentos-001") return "https://www.youtube.com/watch?v=McAZDftTzmM"
@@ -72,6 +74,11 @@ function getVideoEmbedUrl(ref: string) {
 }
 
 const productHighlights: Record<string, string[]> = {
+  "auditor-integrado-credits": [
+    "Cruza Folha, Fiscal, impostos e Contabilidade na mesma auditoria.",
+    "Consome um crédito somente na primeira análise de cada empresa e competência.",
+    "Permite reprocessar competências já liberadas sem novo consumo.",
+  ],
   "fgts-001": [
     "Agiliza a preparação das guias para importação no FGTS Digital.",
     "Reduz etapas manuais em rotinas realizadas para várias empresas.",
@@ -182,9 +189,9 @@ export default function HomePage() {
             </Link>
             <Link
               href="/assinar"
-              className="rounded-xl bg-yellow-400 px-4 py-2 font-bold hover:brightness-95"
+              className="whitespace-nowrap rounded-xl bg-yellow-400 px-3 py-2 font-bold hover:brightness-95"
             >
-              Assinar
+              Planos e créditos
             </Link>
           </nav>
         </div>
@@ -203,6 +210,13 @@ export default function HomePage() {
             <ClipboardList size={17} />
             Criar eventos
           </Link>
+          <Link
+            href="/creditos-auditor"
+            className="col-span-2 inline-flex items-center justify-center gap-2 rounded-xl bg-slate-900 px-3 py-3 text-center text-sm font-bold text-white shadow-sm"
+          >
+            <Coins size={17} />
+            Comprar créditos do Auditor
+          </Link>
         </nav>
       </header>
 
@@ -210,9 +224,9 @@ export default function HomePage() {
         <div className="mx-auto max-w-6xl px-6 py-16 lg:py-20">
           <div className="grid items-center gap-10 pb-16 lg:grid-cols-[1.05fr_0.95fr]">
             <div className="max-w-3xl">
-              <span className="inline-flex rounded-full bg-yellow-100 px-4 py-1 text-sm font-semibold text-yellow-800">
-                Soluções para escritórios contábeis
-              </span>
+              <Link href="/creditos-auditor" className="inline-flex items-center gap-2 rounded-full bg-yellow-100 px-4 py-2 text-sm font-bold text-yellow-900 ring-1 ring-yellow-300 transition hover:bg-yellow-200">
+                <Coins size={17} /> Novo: Auditor Integrado por créditos — R$ 5 por empresa/competência
+              </Link>
 
               <h1 className="mt-6 text-4xl font-bold leading-tight text-slate-900 md:text-5xl">
                 Automatize processos e ganhe mais tempo na rotina do seu escritório
@@ -230,6 +244,14 @@ export default function HomePage() {
                   className="inline-flex items-center justify-center rounded-xl bg-yellow-400 px-6 py-3 font-bold text-slate-900 hover:brightness-95"
                 >
                   Ver produtos
+                </Link>
+
+                <Link
+                  href="/creditos-auditor"
+                  className="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-700 px-6 py-3 font-bold text-white shadow-lg shadow-blue-200 hover:bg-blue-800"
+                >
+                  <Coins size={18} />
+                  Comprar créditos
                 </Link>
 
                 <Link
@@ -570,6 +592,13 @@ export default function HomePage() {
           </div>
 
           <div className="mt-10 flex flex-wrap gap-4">
+            <Link
+              href="/creditos-auditor"
+              className="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-700 px-6 py-3 font-bold text-white hover:bg-blue-800"
+            >
+              <Coins size={18} />
+              Créditos do Auditor
+            </Link>
             <Link
               href="/assinar"
               className="inline-flex items-center justify-center rounded-xl bg-yellow-400 px-6 py-3 font-bold text-slate-900 hover:brightness-95"

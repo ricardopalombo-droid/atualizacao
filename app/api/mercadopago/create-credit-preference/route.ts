@@ -13,11 +13,12 @@ export async function POST(request: Request) {
     const name = String(body.name || "").trim()
     const email = String(body.email || "").trim().toLowerCase()
     const licenseKey = String(body.licenseKey || "").trim().toUpperCase()
+    const accessToken = String(body.accessToken || "").trim()
     const quantity = Number.parseInt(String(body.quantity || "0"), 10)
     const mercadoPagoToken = String(process.env.MERCADOPAGO_ACCESS_TOKEN || "").trim()
     const licenseApiToken = String(process.env.LICENSE_API_TOKEN || "").trim()
 
-    if (!name || !email || !Number.isInteger(quantity) || quantity < 1 || quantity > 10000) {
+    if ((!accessToken && (!name || !email)) || !Number.isInteger(quantity) || quantity < 1 || quantity > 10000) {
       return NextResponse.json({ error: "Dados da compra inválidos." }, { status: 400 })
     }
     if (!mercadoPagoToken || !licenseApiToken) {
@@ -34,6 +35,7 @@ export async function POST(request: Request) {
         name,
         email,
         license_key: licenseKey || null,
+        access_token: accessToken || null,
         product_code: "22",
         quantity,
       }),
@@ -61,7 +63,7 @@ export async function POST(request: Request) {
           currency_id: "BRL",
           unit_price: Number(preview.amount_cents) / 100,
         }],
-        payer: { name, email },
+        payer: { name: preview.customer_name || name, email: preview.customer_email || email },
         external_reference: `credits:${preview.order_id}`,
         metadata: { credit_order_id: preview.order_id, credit_quantity: preview.quantity },
         notification_url: `${baseUrl}/api/mercadopago/webhook`,
