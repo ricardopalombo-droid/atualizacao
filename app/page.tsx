@@ -122,6 +122,11 @@ const productHighlights: Record<string, string[]> = {
     "Soma eventos e encargos para facilitar a conferência.",
     "Gera resultados organizados em PDF e Excel.",
   ],
+  "auditor-integrado-credits": [
+    "Cruza Folha, Fiscal, impostos e Contabilidade na mesma auditoria.",
+    "Consome um crédito somente na primeira análise de cada empresa e competência.",
+    "Permite reprocessar competências já liberadas sem novo consumo.",
+  ],
 }
 
 export default function HomePage() {
@@ -519,10 +524,10 @@ export default function HomePage() {
 
                     <div className="mt-6 flex flex-wrap gap-3">
                       <Link
-                        href="/assinar"
+                        href={produto.ref === "auditor-integrado-credits" ? "/creditos-auditor" : "/assinar"}
                         className="inline-flex items-center justify-center gap-2 rounded-xl bg-yellow-400 px-5 py-3 font-bold text-slate-900 hover:brightness-95"
                       >
-                        Conhecer planos
+                        {produto.ref === "auditor-integrado-credits" ? "Comprar créditos" : "Conhecer planos"}
                         <ArrowRight size={17} />
                       </Link>
                       <a

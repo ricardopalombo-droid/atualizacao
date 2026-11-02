@@ -37,7 +37,7 @@ export default function PalSysAssinaturaPage() {
   }
 
   const produtosAssinatura = PRODUTOS.filter(
-    (produto) => !["dre-001", "extratos-001"].includes(produto.ref),
+    (produto) => !["dre-001", "extratos-001", "auditor-integrado-credits"].includes(produto.ref),
   )
   // Para voltar a mostrar esses produtos em assinar, remova os refs acima:
   // "dre-001", "extratos-001"

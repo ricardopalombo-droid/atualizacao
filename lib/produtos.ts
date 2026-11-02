@@ -24,6 +24,15 @@ export type ProdutoSite = {
 
 export const PRODUTOS: ProdutoSite[] = [
   {
+    nome: "PalSys Auditor Integrado",
+    preco: 5,
+    ref: "auditor-integrado-credits",
+    descricao:
+      "Audita Folha, Fiscal, impostos e Contabilidade por empresa e competência. Cada crédito custa R$ 5,00; competências já liberadas podem ser reprocessadas sem novo consumo.",
+    icone: Calculator,
+    status: "disponivel",
+  },
+  {
     nome: "Automação DRE + Geração R-4000",
     preco: 89.9,
     ref: "dre-001",

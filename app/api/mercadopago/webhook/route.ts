@@ -32,6 +32,35 @@ const LICENSE_API_TOKEN = process.env.LICENSE_API_TOKEN || ""
 const HORAS_VALIDADE_DOWNLOAD = 6
 const PRODUTO_CADASTRO_FUNCIONARIOS = "funcionarios-001"
 
+async function confirmarCompraCreditos(params: {
+  orderId: string
+  paymentId: string
+  status: string
+  amountCents: number
+}) {
+  const response = await fetch(
+    "https://license-server-production-ee3a.up.railway.app/webhook/credits/confirm",
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${LICENSE_API_TOKEN}`,
+      },
+      body: JSON.stringify({
+        order_id: params.orderId,
+        payment_id: params.paymentId,
+        status: params.status,
+        amount_cents: params.amountCents,
+      }),
+    },
+  )
+  const text = await response.text()
+  if (!response.ok) {
+    throw new Error(`Servidor de créditos respondeu com erro ${response.status}: ${text}`)
+  }
+  return text
+}
+
 async function buscarComRetry(subscriptionId: string, tentativas = 5) {
   for (let i = 0; i < tentativas; i++) {
     const cadastro = await buscarAssinaturaPorSubscriptionId(subscriptionId)
@@ -257,6 +286,22 @@ export async function POST(req: Request) {
       const statusPagamento = String(payment?.status || "")
       const emailPagamento = String(payment?.payer?.email || "").trim().toLowerCase()
       const produtoRef = String(payment?.external_reference || "").trim()
+
+      if (produtoRef.startsWith("credits:")) {
+        const orderId = String(payment?.metadata?.credit_order_id || produtoRef.slice(8)).trim()
+        if (statusPagamento === "approved") {
+          await confirmarCompraCreditos({
+            orderId,
+            paymentId: pagamentoId,
+            status: statusPagamento,
+            amountCents: Math.round(Number(payment?.transaction_amount || 0) * 100),
+          })
+          console.log("CRÉDITOS ADICIONADOS AO AUDITOR INTEGRADO")
+        } else {
+          console.log("Pagamento de créditos ainda sem liberação:", statusPagamento)
+        }
+        return Response.json({ ok: true })
+      }
 
       let assinaturaId =
         payment?.metadata?.preapproval_id ||
