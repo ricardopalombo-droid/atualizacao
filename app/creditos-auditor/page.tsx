@@ -3,6 +3,7 @@
 import Image from "next/image"
 import Link from "next/link"
 import { FormEvent, useEffect, useMemo, useState } from "react"
+import { Download } from "lucide-react"
 
 const OPTIONS = [5, 20, 50, 100]
 
@@ -98,6 +99,13 @@ export default function CreditosAuditorPage() {
             <p className="mt-4 max-w-2xl leading-7 text-slate-300">
               Cada crédito libera uma empresa em uma competência. Uma vez liberada, essa mesma empresa e competência pode ser reprocessada sem consumir outro crédito.
             </p>
+            <a
+              href="/api/download/auditor-integrado"
+              className="mt-6 inline-flex items-center gap-2 rounded-xl border border-blue-300 bg-blue-600 px-5 py-3 font-black text-white transition hover:bg-blue-500"
+            >
+              <Download size={19} />
+              Baixar o PalSys Auditor Integrado
+            </a>
           </div>
 
           <form onSubmit={submit} className="space-y-7 p-7 sm:p-10">

@@ -5,6 +5,7 @@ import {
   CheckCircle2,
   ClipboardList,
   Coins,
+  Download,
   Cog,
   FileSearch,
   ShieldCheck,
@@ -552,6 +553,15 @@ export default function HomePage() {
                         {produto.ref === "auditor-integrado-credits" ? "Comprar créditos" : "Conhecer planos"}
                         <ArrowRight size={17} />
                       </Link>
+                      {produto.ref === "auditor-integrado-credits" ? (
+                        <a
+                          href="/api/download/auditor-integrado"
+                          className="inline-flex items-center justify-center gap-2 rounded-xl border border-blue-300 bg-blue-50 px-5 py-3 font-bold text-blue-800 hover:bg-blue-100"
+                        >
+                          <Download size={17} />
+                          Baixar sistema
+                        </a>
+                      ) : null}
                       <a
                         href="#contato"
                         className="inline-flex items-center justify-center rounded-xl border border-slate-300 px-5 py-3 font-semibold text-slate-700 hover:bg-slate-50"

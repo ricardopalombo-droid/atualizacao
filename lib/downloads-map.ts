@@ -1,4 +1,5 @@
 export const DOWNLOADS_MAP: Record<string, string> = {
+  "auditor-integrado-credits": "Instalador_PalSys_Auditor_Integrado.exe",
   "ecac-001": "Instalador_ECAC.exe",
   "fgts-001": "Instalador_FGTS.exe",
   "whats-001": "Instalador_EnvioWhatsApp.exe",
