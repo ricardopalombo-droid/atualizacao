@@ -18,7 +18,7 @@ const updateClientPayloadSchema = z.object({
   cnpj: z.string().trim().optional().or(z.literal("")),
   contmaticNickname: z.string().trim().optional().or(z.literal("")),
   maxEmployees: z.coerce.number().int().positive().max(100000).optional(),
-  contactName: z.string().trim().min(2, "Informe o nome do responsavel."),
+  contactName: z.string().trim().min(2, "Informe o nome do responsável."),
   accessEmail: z.string().trim().email("Informe um e-mail de acesso valido."),
   temporaryPassword: z.string().optional().or(z.literal("")),
   employeeDefaults: z.record(z.string(), z.union([z.string(), z.boolean(), z.number(), z.null()])).default({}),
@@ -38,7 +38,7 @@ export async function GET(request: Request) {
     const session = await getCurrentSession()
 
     if (!session) {
-      return Response.json({ ok: false, error: "Nao autenticado." }, { status: 401 })
+      return Response.json({ ok: false, error: "Não autenticado." }, { status: 401 })
     }
 
     const url = new URL(request.url)
@@ -47,7 +47,7 @@ export async function GET(request: Request) {
 
     if (currentClientDefaults) {
       if (session.role !== "client_user" || !session.clientId) {
-        return Response.json({ ok: false, error: "Somente o cliente pode consultar os proprios padroes." }, { status: 403 })
+        return Response.json({ ok: false, error: "Somente o cliente pode consultar os próprios padrões." }, { status: 403 })
       }
 
       const record = await getClientDefaultsForClientUser(session.clientId, session.subscriberId)
@@ -103,7 +103,7 @@ export async function POST(request: Request) {
     const session = await getCurrentSession()
 
     if (!session) {
-      return Response.json({ ok: false, error: "Nao autenticado." }, { status: 401 })
+      return Response.json({ ok: false, error: "Não autenticado." }, { status: 401 })
     }
 
     if (session.role !== "subscriber_admin") {
@@ -141,7 +141,7 @@ export async function PUT(request: Request) {
     const session = await getCurrentSession()
 
     if (!session) {
-      return Response.json({ ok: false, error: "Nao autenticado." }, { status: 401 })
+      return Response.json({ ok: false, error: "Não autenticado." }, { status: 401 })
     }
 
     if (session.role !== "subscriber_admin") {
@@ -178,11 +178,11 @@ export async function PATCH(request: Request) {
     const session = await getCurrentSession()
 
     if (!session) {
-      return Response.json({ ok: false, error: "Nao autenticado." }, { status: 401 })
+      return Response.json({ ok: false, error: "Não autenticado." }, { status: 401 })
     }
 
     if (session.role !== "subscriber_admin" || !session.subscriberId) {
-      return Response.json({ ok: false, error: "Somente o assinante pode alterar os padroes do cliente." }, { status: 403 })
+      return Response.json({ ok: false, error: "Somente o assinante pode alterar os padrões do cliente." }, { status: 403 })
     }
 
     const payload = updateDefaultsPayloadSchema.parse(await request.json())
@@ -198,7 +198,7 @@ export async function PATCH(request: Request) {
     return Response.json(
       {
         ok: false,
-        error: error instanceof Error ? error.message : "Erro ao salvar padroes do cliente",
+        error: error instanceof Error ? error.message : "Erro ao salvar padrões do cliente",
       },
       { status: 500 }
     )
@@ -210,7 +210,7 @@ export async function DELETE(request: Request) {
     const session = await getCurrentSession()
 
     if (!session) {
-      return Response.json({ ok: false, error: "Nao autenticado." }, { status: 401 })
+      return Response.json({ ok: false, error: "Não autenticado." }, { status: 401 })
     }
 
     if (session.role !== "subscriber_admin") {

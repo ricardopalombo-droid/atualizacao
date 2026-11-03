@@ -92,12 +92,12 @@ function extractOutputText(data: Record<string, unknown>) {
     for (const part of content) {
       if (!part || typeof part !== "object") continue
       const typed = part as { type?: string; text?: string }
-      if (typed.type === "refusal") throw new Error("O documento nao pode ser analisado.")
+      if (typed.type === "refusal") throw new Error("O documento não pode ser analisado.")
       if (typed.type === "output_text" && typeof typed.text === "string") texts.push(typed.text)
     }
   }
 
-  if (!texts.length) throw new Error("A leitura nao retornou dados.")
+  if (!texts.length) throw new Error("A leitura não retornou dados.")
   return texts.join("")
 }
 
@@ -142,7 +142,7 @@ export async function analyzeEmployeeDocument(args: {
   ).trim()
 
   if (!apiKey || !model) {
-    throw new Error("A leitura automatica ainda nao foi configurada no servidor.")
+    throw new Error("A leitura automática ainda não foi configurada no servidor.")
   }
 
   const fileData = `data:${args.mimeType};base64,${args.bytes.toString("base64")}`
@@ -190,7 +190,7 @@ export async function analyzeEmployeeDocument(args: {
   }
 
   if (!response.ok) {
-    throw new Error(`A leitura nao pode ser concluida (HTTP ${response.status}).`)
+    throw new Error(`A leitura não pode ser concluída (HTTP ${response.status}).`)
   }
 
   const data = (await response.json()) as Record<string, unknown>

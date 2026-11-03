@@ -25,7 +25,7 @@ export default async function CadastroFuncionarioPage({
           <EmployeeOnboardingForm variant="employee" publicToken={token} />
         ) : (
           <div className="rounded-3xl border border-red-200 bg-white p-8 text-red-700 shadow-sm">
-            Link invalido ou incompleto. Solicite um novo convite a empresa responsavel pelo cadastro.
+            Link inválido ou incompleto. Solicite um novo convite à empresa responsável pelo cadastro.
           </div>
         )}
       </div>

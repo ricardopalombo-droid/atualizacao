@@ -530,7 +530,7 @@ export async function parseReferencePdf(buffer: Buffer, referenceType: Reference
   await document.destroy()
 
   if (!text.trim()) {
-    throw new Error("Nao foi possivel extrair texto do PDF informado.")
+    throw new Error("Não foi possível extrair texto do PDF informado.")
   }
 
   switch (referenceType) {

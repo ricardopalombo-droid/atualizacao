@@ -124,7 +124,7 @@ export async function createEmployeeDocument(args: {
 
     if (updateError) throw updateError
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Nao foi possivel ler o documento."
+    const message = error instanceof Error ? error.message : "Não foi possível ler o documento."
     const { error: updateError } = await supabase
       .from("employee_documents")
       .update({
@@ -137,14 +137,14 @@ export async function createEmployeeDocument(args: {
   }
 
   const saved = await getEmployeeDocument(data.id, args.employeeId)
-  if (!saved) throw new Error("Documento salvo, mas nao encontrado para retorno.")
+  if (!saved) throw new Error("Documento salvo, mas não encontrado para retorno.")
   return mapRecord(saved as Record<string, unknown>)
 }
 
 export async function createEmployeeDocumentSignedUrl(documentId: string, employeeId: string) {
   const supabase = getSupabaseServerClient()
   const document = await getEmployeeDocument(documentId, employeeId)
-  if (!document) throw new Error("Documento nao encontrado.")
+  if (!document) throw new Error("Documento não encontrado.")
 
   const { data, error } = await supabase.storage
     .from(BUCKET)
@@ -157,7 +157,7 @@ export async function createEmployeeDocumentSignedUrl(documentId: string, employ
 export async function deleteEmployeeDocument(documentId: string, employeeId: string) {
   const supabase = getSupabaseServerClient()
   const document = await getEmployeeDocument(documentId, employeeId)
-  if (!document) throw new Error("Documento nao encontrado.")
+  if (!document) throw new Error("Documento não encontrado.")
 
   const { error: storageError } = await supabase.storage.from(BUCKET).remove([String(document.storage_path)])
   if (storageError) throw storageError

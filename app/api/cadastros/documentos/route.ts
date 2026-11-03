@@ -30,7 +30,7 @@ async function resolveAccess(request: Request, employeeId: string, token?: strin
 
   const session = await getCurrentSession()
   if (!session || !["subscriber_admin", "client_user"].includes(session.role)) {
-    throw new Error("Acesso nao autorizado.")
+    throw new Error("Acesso não autorizado.")
   }
 
   const record = await getEmployeeRecordById(employeeId, {
@@ -38,7 +38,7 @@ async function resolveAccess(request: Request, employeeId: string, token?: strin
     clientId: session.role === "client_user" ? session.clientId : null,
   })
 
-  if (!record) throw new Error("Cadastro nao encontrado neste escopo.")
+  if (!record) throw new Error("Cadastro não encontrado neste escopo.")
   return { record, actor: "dp" as const, canManage: session.role === "subscriber_admin" }
 }
 
@@ -80,9 +80,9 @@ export async function POST(request: Request) {
     const access = await resolveAccess(request, employeeId, token)
 
     if (!access.canManage) {
-      throw new Error("Este cadastro nao aceita mais anexos ou o usuario possui somente visualizacao.")
+      throw new Error("Este cadastro não aceita mais anexos ou o usuário possui somente visualização.")
     }
-    if (!consent) throw new Error("Confirme a autorizacao para armazenar e ler o documento.")
+    if (!consent) throw new Error("Confirme a autorização para armazenar e ler o documento.")
 
     if (!(file instanceof File) || !file.size) throw new Error("Selecione um documento.")
     if (!ALLOWED_MIME_TYPES.has(file.type)) throw new Error("Envie PDF, JPG ou PNG.")
@@ -106,7 +106,7 @@ export async function DELETE(request: Request) {
   try {
     const payload = deleteSchema.parse(await request.json())
     const access = await resolveAccess(request, payload.employeeId, payload.token)
-    if (!access.canManage) throw new Error("Este documento nao pode mais ser excluido.")
+    if (!access.canManage) throw new Error("Este documento não pode mais ser excluído.")
 
     await deleteEmployeeDocument(payload.documentId, payload.employeeId)
     return Response.json({ ok: true })

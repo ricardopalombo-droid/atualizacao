@@ -23,7 +23,7 @@ type ReferenceSummary = Record<ReferenceType, ReferenceRecord[]>
 
 const referenceLabels: Record<ReferenceType, string> = {
   cargo: "Cargos",
-  horario: "Horarios",
+  horario: "Horários",
   sindicato: "Sindicatos",
   local: "Locais",
   departamento: "Departamentos",
@@ -33,7 +33,7 @@ const referenceLabels: Record<ReferenceType, string> = {
 
 const helpByType: Record<ReferenceType, string> = {
   cargo: "Importe o PDF de cargos para alimentar o campo Cargo e reaproveitar o CBO do cadastro de origem.",
-  horario: "Importe o PDF de horarios para transformar o campo Horario em lista selecionavel.",
+  horario: "Importe o PDF de horários para transformar o campo Horário em lista selecionável.",
   sindicato: "Importe o PDF de sindicatos para oferecer uma lista padronizada no cadastro contratual.",
   local: "Importe o PDF de locais para oferecer uma lista padronizada por empresa.",
   departamento: "Importe o PDF de departamentos para oferecer uma lista padronizada por empresa.",
@@ -42,12 +42,12 @@ const helpByType: Record<ReferenceType, string> = {
 }
 
 const replaceWarningByType: Record<ReferenceType, string> = {
-  cargo: "Esta importacao vai substituir toda a base atual de cargos desta empresa pelo conteudo do novo PDF.",
-  horario: "Esta importacao vai substituir toda a base atual de horarios desta empresa pelo conteudo do novo PDF.",
-  sindicato: "Esta importacao vai substituir toda a base atual de sindicatos desta empresa pelo conteudo do novo PDF.",
-  local: "Esta importacao vai substituir toda a base atual de locais desta empresa pelo conteudo do novo PDF.",
-  departamento: "Esta importacao vai substituir toda a base atual de departamentos desta empresa pelo conteudo do novo PDF.",
-  setor: "Esta importacao vai substituir toda a base atual de setores desta empresa pelo conteudo do novo PDF.",
+  cargo: "Esta importação vai substituir toda a base atual de cargos desta empresa pelo conteúdo do novo PDF.",
+  horario: "Esta importação vai substituir toda a base atual de horários desta empresa pelo conteúdo do novo PDF.",
+  sindicato: "Esta importação vai substituir toda a base atual de sindicatos desta empresa pelo conteúdo do novo PDF.",
+  local: "Esta importação vai substituir toda a base atual de locais desta empresa pelo conteúdo do novo PDF.",
+  departamento: "Esta importação vai substituir toda a base atual de departamentos desta empresa pelo conteúdo do novo PDF.",
+  setor: "Esta importação vai substituir toda a base atual de setores desta empresa pelo conteúdo do novo PDF.",
   secao: "Esta importação vai substituir toda a base atual de seções desta empresa pelo conteúdo do novo PDF.",
 }
 
@@ -88,7 +88,7 @@ export function ReferenceCatalogManagement() {
     try {
       return JSON.parse(raw) as T
     } catch {
-      throw new Error(raw.startsWith("<!DOCTYPE") ? "A funcao retornou uma pagina de erro do servidor." : raw || "Resposta invalida da API.")
+      throw new Error(raw.startsWith("<!DOCTYPE") ? "A função retornou uma página de erro do servidor." : raw || "Resposta inválida da API.")
     }
   }
 
@@ -107,14 +107,14 @@ export function ReferenceCatalogManagement() {
       }>(response)
 
       if (!response.ok || !result.ok || !result.summary) {
-        setStatusMessage(result.error ?? "Nao foi possivel carregar as bases da empresa.")
+        setStatusMessage(result.error ?? "Não foi possível carregar as bases da empresa.")
         return
       }
 
       setSummary(result.summary)
       setStatusMessage("Bases carregadas com sucesso.")
     } catch (error) {
-      setStatusMessage(error instanceof Error ? error.message : "Erro ao carregar referencias.")
+      setStatusMessage(error instanceof Error ? error.message : "Erro ao carregar referências.")
     } finally {
       setIsLoading(false)
     }
@@ -134,7 +134,7 @@ export function ReferenceCatalogManagement() {
     )
 
     if (!confirmed) {
-      setStatusMessage(`Importacao de ${referenceLabels[referenceType]} cancelada.`)
+      setStatusMessage(`Importação de ${referenceLabels[referenceType]} cancelada.`)
       return
     }
 
@@ -153,7 +153,7 @@ export function ReferenceCatalogManagement() {
       const result = await parseApiResponse<{ ok: boolean; importedCount?: number; error?: string }>(response)
 
       if (!response.ok || !result.ok) {
-        setStatusMessage(result.error ?? "Nao foi possivel importar o PDF.")
+        setStatusMessage(result.error ?? "Não foi possível importar o PDF.")
         return
       }
 
@@ -224,7 +224,7 @@ export function ReferenceCatalogManagement() {
           <div>
             <h2 className="text-2xl font-bold text-slate-900">Resumo das bases importadas</h2>
             <p className="mt-2 text-slate-600">
-              Esta conferencia pertence a empresa e ajuda a validar se os PDFs da propria base foram lidos corretamente.
+              Esta conferência pertence à empresa e ajuda a validar se os PDFs da própria base foram lidos corretamente.
             </p>
           </div>
           <div className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-4 py-2 text-sm font-semibold text-slate-700">
@@ -253,8 +253,8 @@ export function ReferenceCatalogManagement() {
                     <table className="min-w-full divide-y divide-slate-200">
                       <thead className="bg-slate-50">
                         <tr className="text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
-                          <th className="px-4 py-3">Codigo</th>
-                          <th className="px-4 py-3">Descricao</th>
+                          <th className="px-4 py-3">Código</th>
+                          <th className="px-4 py-3">Descrição</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-slate-200 bg-white">

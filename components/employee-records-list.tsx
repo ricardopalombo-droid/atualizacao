@@ -28,7 +28,7 @@ const statusLabels: Record<string, string> = {
 const phoenixStatusLabels: Record<string, string> = {
   pronto_para_phoenix: "Pronto para Phoenix",
   enviado_ao_phoenix: "Enviado ao Phoenix",
-  concluido_no_phoenix: "Concluido no Phoenix",
+  concluido_no_phoenix: "Concluído no Phoenix",
   falha_no_phoenix: "Falha no Phoenix",
 }
 
@@ -117,7 +117,7 @@ export function EmployeeRecordsList({ clientId, canManage }: { clientId: string;
       }
 
       if (!response.ok || !result.ok) {
-        setStatusMessage(result.error ?? "Nao foi possivel atualizar o status do Phoenix.")
+        setStatusMessage(result.error ?? "Não foi possível atualizar o status do Phoenix.")
         return
       }
 
@@ -139,7 +139,7 @@ export function EmployeeRecordsList({ clientId, canManage }: { clientId: string;
         action === "start"
           ? "Cadastro marcado como enviado ao Phoenix."
           : action === "complete"
-            ? "Cadastro marcado como concluido no Phoenix."
+            ? "Cadastro marcado como concluído no Phoenix."
             : action === "fail"
               ? "Cadastro marcado com falha no Phoenix."
               : "Cadastro voltou para pronto para Phoenix."
@@ -251,7 +251,7 @@ export function EmployeeRecordsList({ clientId, canManage }: { clientId: string;
                         ) : null}
                       </div>
                     ) : (
-                      <span className="text-slate-400">Aguardando finalizacao</span>
+                      <span className="text-slate-400">Aguardando finalização</span>
                     )}
                   </td>
                   <td className="px-4 py-3">{formatDateTime(record.updated_at)}</td>
@@ -285,7 +285,7 @@ export function EmployeeRecordsList({ clientId, canManage }: { clientId: string;
                                 disabled={isUpdatingPhoenixId === record.id}
                                 className="inline-flex items-center justify-center rounded-lg border border-emerald-200 px-4 py-2 font-semibold text-emerald-700 hover:bg-emerald-50 disabled:opacity-60"
                               >
-                                {isUpdatingPhoenixId === record.id ? "Atualizando..." : "Marcar concluido"}
+                                {isUpdatingPhoenixId === record.id ? "Atualizando..." : "Marcar concluído"}
                               </button>
                               <button
                                 type="button"

@@ -35,11 +35,11 @@ export default async function ClientePadroesPage({
         <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
           <div>
             <span className="inline-flex rounded-full bg-yellow-100 px-4 py-1 text-sm font-bold text-yellow-800">
-              Operacao do assinante
+              Operação do assinante
             </span>
-            <h1 className="mt-4 text-4xl font-bold text-slate-900">Padroes contabeis de {client.name}</h1>
+            <h1 className="mt-4 text-4xl font-bold text-slate-900">Padrões contábeis de {client.name}</h1>
             <p className="mt-3 max-w-3xl text-slate-600">
-              Configure aqui os valores internos que normalmente se repetem nesta empresa. Esses padroes vao acelerar a revisao do cadastro pela empresa cliente.
+              Configure aqui os valores internos que normalmente se repetem nesta empresa. Esses padrões vão acelerar a revisão do cadastro pela empresa cliente.
             </p>
           </div>
 

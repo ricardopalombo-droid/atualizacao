@@ -145,7 +145,7 @@ const nacionalidadeOptions = [
   { label: "27 - Colombiano", value: "27 - Colombiano" },
   { label: "28 - Peruano", value: "28 - Peruano" },
   { label: "29 - Equatoriano", value: "29 - Equatoriano" },
-  { label: "30 - Alemao", value: "30 - Alemao" },
+  { label: "30 - Alemão", value: "30 - Alemao" },
   { label: "31 - Belga", value: "31 - Belga" },
   { label: "32 - Britanica", value: "32 - Britanica" },
   { label: "34 - Canadense", value: "34 - Canadense" },
@@ -177,15 +177,15 @@ const orgaoEmissorRgOptions = [
   { label: "1 - Ministerio da Aeronautica", value: "1 - Ministerio da Aeronautica" },
   { label: "2 - Ministerio do Exercito", value: "2 - Ministerio do Exercito" },
   { label: "3 - Ministerio da Marinha", value: "3 - Ministerio da Marinha" },
-  { label: "4 - Secretaria de Seguranca Publica", value: "4 - Secretaria de Seguranca Publica" },
+  { label: "4 - Secretaria de Segurança Pública", value: "4 - Secretaria de Seguranca Publica" },
   { label: "5 - Carteira Modelo 19 (Estrangeira)", value: "5 - Carteira Modelo 19 (Estrangeira)" },
   { label: "6 - Outros Emissores", value: "6 - Outros Emissores" },
 ]
 
 const orgaoEmissorCnhOptions = [
   { label: "Selecione", value: "" },
-  { label: "1 - DETRAN (Departamento Estadual de Transito do Estado de Sao Paulo)", value: "1 - DETRAN (Departamento Estadual de Transito do Estado de Sao Paulo)" },
-  { label: "2 - CIRETRAN (Circunscricao Regional de Transito)", value: "2 - CIRETRAN (Circunscricao Regional de Transito)" },
+  { label: "1 - DETRAN (Departamento Estadual de Trânsito do Estado de São Paulo)", value: "1 - DETRAN (Departamento Estadual de Transito do Estado de Sao Paulo)" },
+  { label: "2 - CIRETRAN (Circunscrição Regional de Trânsito)", value: "2 - CIRETRAN (Circunscricao Regional de Transito)" },
 ]
 
 const racaCorOptions = [
@@ -211,13 +211,13 @@ const grauInstrucaoOptions = [
   { label: "1 - Analfabeto", value: "1" },
   { label: "2 - Ate o 5o ano incompleto do ensino fundamental", value: "2" },
   { label: "3 - 5o ano completo do ensino fundamental", value: "3" },
-  { label: "4 - 6o ao 9o ano incompleto do ensino fundamental", value: "4" },
+  { label: "4 - 6º ao 9º ano incompleto do ensino fundamental", value: "4" },
   { label: "5 - Ensino fundamental completo", value: "5" },
   { label: "6 - Ensino medio incompleto", value: "6" },
   { label: "7 - Ensino medio completo", value: "7" },
-  { label: "8 - Educacao superior incompleta", value: "8" },
-  { label: "9 - Educacao superior completa", value: "9" },
-  { label: "10 - Pos-graduacao completa", value: "10" },
+  { label: "8 - Educação superior incompleta", value: "8" },
+  { label: "9 - Educação superior completa", value: "9" },
+  { label: "10 - Pós-graduação completa", value: "10" },
   { label: "11 - Mestrado completo", value: "11" },
   { label: "12 - Doutorado completo", value: "12" },
 ]
@@ -242,8 +242,8 @@ const formaPagamentoOptions = [
 const tipoPagamentoOptions = [
   { label: "Selecione", value: "" },
   { label: "1 - Fixo", value: "1 - Fixo" },
-  { label: "2 - Variavel", value: "2 - Variavel" },
-  { label: "3 - Fixo + variavel", value: "3 - Fixo + variavel" },
+  { label: "2 - Variável", value: "2 - Variavel" },
+  { label: "3 - Fixo + variável", value: "3 - Fixo + variavel" },
 ]
 
 const tipoContratoOptions = [
@@ -251,11 +251,11 @@ const tipoContratoOptions = [
   { label: "1 - CLT Indeterminado", value: "1 - CLT Indeterminado" },
   { label: "2 - Lei 9601/98", value: "2 - Lei 9601/98" },
   { label: "3 - Temporario", value: "3 - Temporario" },
-  { label: "4 - Prazo determinado sem clausula assecuratoria", value: "4 - Prazo determinado sem clausula assecuratoria" },
+  { label: "4 - Prazo determinado sem cláusula assecuratória", value: "4 - Prazo determinado sem clausula assecuratoria" },
   { label: "5 - Avulso", value: "5 - Avulso" },
   { label: "6 - Estagiario", value: "6 - Estagiario" },
   { label: "7 - Contrato parcial", value: "7 - Contrato parcial" },
-  { label: "8 - Prazo determinado com clausula assecuratoria", value: "8 - Prazo determinado com clausula assecuratoria" },
+  { label: "8 - Prazo determinado com cláusula assecuratória", value: "8 - Prazo determinado com clausula assecuratoria" },
   { label: "9 - Intermitente", value: "9 - Intermitente" },
   { label: "10 - Teletrabalho", value: "10 - Teletrabalho" },
   { label: "11 - Verde e Amarelo", value: "11 - Verde e Amarelo" },
@@ -263,24 +263,24 @@ const tipoContratoOptions = [
 
 const cagedOptions = [
   { label: "Selecione", value: "" },
-  { label: "10 - Admissao de empregado no 1o emprego", value: "10 - Admissao de empregado no 1o emprego" },
-  { label: "25 - Admissao de empregado com emprego anterior", value: "25 - Admissao de empregado com emprego anterior" },
-  { label: "35 - Reintegracao", value: "35 - Reintegracao" },
-  { label: "70 - Transferencia de entrada", value: "70 - Transferencia de entrada" },
+  { label: "10 - Admissão de empregado no 1º emprego", value: "10 - Admissao de empregado no 1o emprego" },
+  { label: "25 - Admissão de empregado com emprego anterior", value: "25 - Admissao de empregado com emprego anterior" },
+  { label: "35 - Reintegração", value: "35 - Reintegracao" },
+  { label: "70 - Transferência de entrada", value: "70 - Transferencia de entrada" },
 ]
 
 const grauRiscoOptions = [
   { label: "Selecione", value: "" },
-  { label: "1 - Nao exposicao a agente nocivo", value: "1 - Nao exposicao a agente nocivo" },
-  { label: "2 - Exposicao a agente nocivo (Aposent. Exp. 15 anos)", value: "2 - Exposicao a agente nocivo (Aposent. Exp. 15 anos)" },
-  { label: "3 - Exposicao a agente nocivo (Aposent. Exp. 20 anos)", value: "3 - Exposicao a agente nocivo (Aposent. Exp. 20 anos)" },
-  { label: "4 - Exposicao a agente nocivo (Aposent. Exp. 25 anos)", value: "4 - Exposicao a agente nocivo (Aposent. Exp. 25 anos)" },
-  { label: "5 - Nao exposicao a agente nocivo (Mais de um vinculo)", value: "5 - Nao exposicao a agente nocivo (Mais de um vinculo)" },
-  { label: "6 - Exposicao a agente nocivo (Aposent. Exp. 15 anos) (Mais de um vinculo)", value: "6 - Exposicao a agente nocivo (Aposent. Exp. 15 anos) (Mais de um vinculo)" },
-  { label: "7 - Exposicao a agente nocivo (Aposent. Exp. 20 anos) (Mais de um vinculo)", value: "7 - Exposicao a agente nocivo (Aposent. Exp. 20 anos) (Mais de um vinculo)" },
-  { label: "8 - Exposicao a agente nocivo (Aposent. Exp. 25 anos) (Mais de um vinculo)", value: "8 - Exposicao a agente nocivo (Aposent. Exp. 25 anos) (Mais de um vinculo)" },
+  { label: "1 - Não exposição a agente nocivo", value: "1 - Nao exposicao a agente nocivo" },
+  { label: "2 - Exposição a agente nocivo (aposent. esp. 15 anos)", value: "2 - Exposicao a agente nocivo (Aposent. Exp. 15 anos)" },
+  { label: "3 - Exposição a agente nocivo (aposent. esp. 20 anos)", value: "3 - Exposicao a agente nocivo (Aposent. Exp. 20 anos)" },
+  { label: "4 - Exposição a agente nocivo (aposent. esp. 25 anos)", value: "4 - Exposicao a agente nocivo (Aposent. Exp. 25 anos)" },
+  { label: "5 - Não exposição a agente nocivo (mais de um vínculo)", value: "5 - Nao exposicao a agente nocivo (Mais de um vinculo)" },
+  { label: "6 - Exposição a agente nocivo (aposent. esp. 15 anos, mais de um vínculo)", value: "6 - Exposicao a agente nocivo (Aposent. Exp. 15 anos) (Mais de um vinculo)" },
+  { label: "7 - Exposição a agente nocivo (aposent. esp. 20 anos, mais de um vínculo)", value: "7 - Exposicao a agente nocivo (Aposent. Exp. 20 anos) (Mais de um vinculo)" },
+  { label: "8 - Exposição a agente nocivo (aposent. esp. 25 anos, mais de um vínculo)", value: "8 - Exposicao a agente nocivo (Aposent. Exp. 25 anos) (Mais de um vinculo)" },
   {
-    label: "9 - Empregadores cuja atividade nao exponha seus trabalhadores a agentes nocivos",
+    label: "9 - Empregadores cuja atividade não exponha seus trabalhadores a agentes nocivos",
     value: "9 - Empregadores cuja atividade nao exponha seus trabalhadores a agentes nocivos",
   },
 ]
@@ -288,13 +288,13 @@ const grauRiscoOptions = [
 const indicativoAdmissaoOptions = [
   { label: "Selecione", value: "" },
   { label: "1 - Normal", value: "1 - Normal" },
-  { label: "2 - Decorrente de acao fiscal", value: "2 - Decorrente de acao fiscal" },
-  { label: "3 - Decorrente de decisao judicial", value: "3 - Decorrente de decisao judicial" },
+  { label: "2 - Decorrente de ação fiscal", value: "2 - Decorrente de acao fiscal" },
+  { label: "3 - Decorrente de decisão judicial", value: "3 - Decorrente de decisao judicial" },
 ]
 
 const codigoAdmissaoOptions = [
   { label: "Selecione", value: "" },
-  { label: "1 - Diretor Nao Empregado", value: "1 - Diretor Nao Empregado" },
+  { label: "1 - Diretor não empregado", value: "1 - Diretor Nao Empregado" },
   { label: "2 - Trabalhador Rural", value: "2 - Trabalhador Rural" },
   { label: "3 - Jovem Aprendiz", value: "3 - Jovem Aprendiz" },
   { label: "9 - Outros", value: "9 - Outros" },
@@ -304,16 +304,16 @@ const codigoAdmissaoOptions = [
 const tipoTributacaoSindicalOptions = [
   { label: "Selecione", value: "" },
   { label: "1 - Ja contribui este ano", value: "1 - Ja contribui este ano" },
-  { label: "2 - Desconta sindical mes admissao", value: "2 - Desconta sindical mes admissao" },
-  { label: "3 - Desconta sindical mes subsequente a admissao", value: "3 - Desconta sindical mes subsequente a admissao" },
-  { label: "4 - Nao desconta sindical (contador)", value: "4 - Nao desconta sindical (contador)" },
+  { label: "2 - Desconta sindical no mês da admissão", value: "2 - Desconta sindical mes admissao" },
+  { label: "3 - Desconta sindical no mês subsequente à admissão", value: "3 - Desconta sindical mes subsequente a admissao" },
+  { label: "4 - Não desconta sindical (contador)", value: "4 - Nao desconta sindical (contador)" },
 ]
 
 const regimeJornadaOptions = [
   { label: "Selecione", value: "" },
   { label: "1 - Submetidos a horario de trabalho (Cap. II da CLT)", value: "1 - Submetidos a horario de trabalho (Cap. II da CLT)" },
   { label: "2 - Atividade externa especificada no inciso I do Art. 62 da CLT", value: "2 - Atividade externa especificada no inciso I do Art. 62 da CLT" },
-  { label: "3 - Funcoes especificadas no inciso II do Art. 62 da CLT", value: "3 - Funcoes especificadas no inciso II do Art. 62 da CLT" },
+  { label: "3 - Funções especificadas no inciso II do Art. 62 da CLT", value: "3 - Funcoes especificadas no inciso II do Art. 62 da CLT" },
   { label: "4 - Teletrabalho, previsto no Inciso III do Art. 62 da CLT", value: "4 - Teletrabalho, previsto no Inciso III do Art. 62 da CLT" },
 ]
 
@@ -323,8 +323,8 @@ const vinculoEmpregaticioOptions = [
   { label: "15 - Trab. urbano vinc. empregador pessoa fisica por contr. de trab. regido pela CLT, por prazo indeter.", value: "15 - Trab. urbano vinc. empregador pessoa fisica por contr. de trab. regido pela CLT, por prazo indeter." },
   { label: "20 - Trab. rural vinc. empregador pessoa juridica por contr. de trab. regido pela CLT, por prazo indeter.", value: "20 - Trab. rural vinc. empregador pessoa juridica por contr. de trab. regido pela CLT, por prazo indeter." },
   { label: "25 - Trab. rural vinc. empregador pessoa fisica por contr. de trab. regido pela CLT, por prazo indeter.", value: "25 - Trab. rural vinc. empregador pessoa fisica por contr. de trab. regido pela CLT, por prazo indeter." },
-  { label: "30 - Servidor regido pelo Regime Juridico Unico (Federal, estadual e municipal) e militar", value: "30 - Servidor regido pelo Regime Juridico Unico (Federal, estadual e municipal) e militar" },
-  { label: "35 - Serv. publico nao-efetivo vinculado por contrato de trabalho (servidor regido pela CLT)", value: "35 - Serv. publico nao-efetivo vinculado por contrato de trabalho (servidor regido pela CLT)" },
+  { label: "30 - Servidor regido pelo Regime Jurídico Único (federal, estadual e municipal) e militar", value: "30 - Servidor regido pelo Regime Juridico Unico (Federal, estadual e municipal) e militar" },
+  { label: "35 - Serv. público não efetivo vinculado por contrato de trabalho (servidor regido pela CLT)", value: "35 - Serv. publico nao-efetivo vinculado por contrato de trabalho (servidor regido pela CLT)" },
   { label: "40 - Trab. avulso (Trab. Adm. pelo sind. da categ.) p / o qual dev. depos. de fgts, lei n. 5480 10.08.68", value: "40 - Trab. avulso (Trab. Adm. pelo sind. da categ.) p / o qual dev. depos. de fgts, lei n. 5480 10.08.68" },
   { label: "50 - Trabalhador temporario, regido pela lei 6.019, de 03.01.74", value: "50 - Trabalhador temporario, regido pela lei 6.019, de 03.01.74" },
   { label: "55 - Jovem Aprendiz", value: "55 - Jovem Aprendiz" },
@@ -332,7 +332,7 @@ const vinculoEmpregaticioOptions = [
   { label: "65 - Trab. urbano vinc. a empreg pessoa fisica por contr. de trab. regido pela CLT, por tempo deter. ou obra", value: "65 - Trab. urbano vinc. a empreg pessoa fisica por contr. de trab. regido pela CLT, por tempo deter. ou obra" },
   { label: "70 - Trab. rural vinc. a empreg. pessoa juridica por contr. de trab. regido pela CLT, por tempo deter. ou obra", value: "70 - Trab. rural vinc. a empreg. pessoa juridica por contr. de trab. regido pela CLT, por tempo deter. ou obra" },
   { label: "75 - Trab. rural vinc. a empreg. pessoa fisica por contr. de trab. regido pela CLT, por tempo deter. ou obra", value: "75 - Trab. rural vinc. a empreg. pessoa fisica por contr. de trab. regido pela CLT, por tempo deter. ou obra" },
-  { label: "80 - Diretor sem vinculo empreg. para o qual a empresa/entidade nao optado por recolhimento do FGTS", value: "80 - Diretor sem vinculo empreg. para o qual a empresa/entidade nao optado por recolhimento do FGTS" },
+  { label: "80 - Diretor sem vínculo empregatício para o qual a empresa/entidade não optou pelo recolhimento do FGTS", value: "80 - Diretor sem vinculo empreg. para o qual a empresa/entidade nao optado por recolhimento do FGTS" },
   { label: "90 - Contrato de trabalho por prazo determinado, regido pela lei 9601/98 de 21.01.98", value: "90 - Contrato de trabalho por prazo determinado, regido pela lei 9601/98 de 21.01.98" },
 ]
 
@@ -453,7 +453,7 @@ export const formSections: FormSection[] = [
       { key: "imovel_fgts", label: "Imóvel adquirido com recursos do FGTS", type: "checkbox", audience: "employee" },
       { key: "cnpj_vinculo_anterior", label: "CNPJ vinculo anterior", type: "text", audience: "employee" },
       { key: "matricula_anterior", label: "Matricula vinculo anterior", type: "text", audience: "employee" },
-      { key: "data_inicio_vinculo_anterior", label: "Data inicio vinculo anterior", type: "date", audience: "employee" },
+      { key: "data_inicio_vinculo_anterior", label: "Data de início do vínculo anterior", type: "date", audience: "employee" },
       { key: "data_fim_vinculo_anterior", label: "Data fim vinculo anterior", type: "date", audience: "employee" },
       { key: "inicio_aposentadoria", label: "Início da aposentadoria", type: "date", audience: "employee" },
       { key: "motivo_aposentadoria", label: "Motivo aposentadoria", type: "text", audience: "employee" },
@@ -473,8 +473,8 @@ export const formSections: FormSection[] = [
       { key: "tipo_tributacao_sindical", label: "Tipo de tributação sindical", type: "select", audience: "client", options: tipoTributacaoSindicalOptions, requiredForExport: true },
       { key: "categoria_normativa", label: "Categoria normativa vinculada", type: "text", audience: "client" },
       { key: "tipo_contrato", label: "Tipo de contrato", type: "select", audience: "client", options: tipoContratoOptions, requiredForExport: true },
-      { key: "caged", label: "Situacao Caged entrada", type: "select", audience: "client", options: cagedOptions, requiredForExport: true },
-      { key: "percepcao_seguro_desemprego", label: "Percepcao seguro desemprego / requerimento em tramitacao", type: "checkbox", audience: "client" },
+      { key: "caged", label: "Situação CAGED na entrada", type: "select", audience: "client", options: cagedOptions, requiredForExport: true },
+      { key: "percepcao_seguro_desemprego", label: "Percepção de seguro-desemprego / requerimento em tramitação", type: "checkbox", audience: "client" },
       { key: "forma_pagamento", label: "Forma de pagamento", type: "select", audience: "client", options: formaPagamentoOptions },
       { key: "tipo_pagamento", label: "Tipo de pagamento", type: "select", audience: "client", options: tipoPagamentoOptions },
       { key: "salario", label: "Salário", type: "number", audience: "client", requiredForExport: true },
@@ -484,10 +484,10 @@ export const formSections: FormSection[] = [
       { key: "codigo_admissao", label: "Código de admissão", type: "select", audience: "client", options: codigoAdmissaoOptions, requiredForExport: true },
       { key: "horas_semanais", label: "Horas semanais", type: "text", audience: "client", placeholder: "44.00" },
       { key: "horas_mensais", label: "Horas mensais", type: "text", audience: "client", placeholder: "220.00" },
-      { key: "experiencia_qtde_dias", label: "Qtde. dias experiencia", type: "number", audience: "client" },
-      { key: "experiencia_termino", label: "Termino experiencia", type: "date", audience: "client" },
-      { key: "experiencia_qtde_dias_prorrogacao", label: "Qtde. dias prorrogacao", type: "number", audience: "client" },
-      { key: "experiencia_termino_prorrogacao", label: "Termino prorrogacao", type: "date", audience: "client" },
+      { key: "experiencia_qtde_dias", label: "Qtde. de dias de experiência", type: "number", audience: "client" },
+      { key: "experiencia_termino", label: "Término da experiência", type: "date", audience: "client" },
+      { key: "experiencia_qtde_dias_prorrogacao", label: "Qtde. de dias de prorrogação", type: "number", audience: "client" },
+      { key: "experiencia_termino_prorrogacao", label: "Término da prorrogação", type: "date", audience: "client" },
       { key: "horario", label: "Horário", type: "select", audience: "client" },
       { key: "vinculo_empregaticio", label: "Vínculo empregatício", type: "select", audience: "client", options: vinculoEmpregaticioOptions, requiredForExport: true },
     ],
@@ -503,7 +503,7 @@ export const formSections: FormSection[] = [
       { key: "setor", label: "Setor", type: "select", audience: "client" },
   { key: "secao", label: "Seção", type: "select", audience: "client" },
       { key: "data_exame_medico", label: "Data do exame médico", type: "date", audience: "client" },
-      { key: "validade_exame_medico", label: "Validade exame medico (meses)", type: "number", audience: "client" },
+      { key: "validade_exame_medico", label: "Validade do exame médico (meses)", type: "number", audience: "client" },
       { key: "data_saida", label: "Data de saida", type: "date", audience: "client" },
       { key: "registro_funcionario", label: "Registro do funcionário", type: "text", audience: "client" },
       { key: "folha_ficha", label: "Folha/Ficha", type: "text", audience: "client" },
@@ -520,7 +520,7 @@ export const formSections: FormSection[] = [
       { key: "agencia", label: "Agência", type: "text", audience: "client" },
       { key: "tipo_conta", label: "Tipo da conta", type: "select", audience: "client", options: tipoContaOptions },
       { key: "numero_conta", label: "Numero da conta", type: "text", audience: "client" },
-      { key: "antecipar_indenizacao_fgts", label: "Antecipar indenizacao do FGTS", type: "checkbox", audience: "client" },
+      { key: "antecipar_indenizacao_fgts", label: "Antecipar indenização do FGTS", type: "checkbox", audience: "client" },
     ],
   },
 ]

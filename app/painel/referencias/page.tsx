@@ -24,8 +24,8 @@ export default async function ReferenciasPage() {
             </span>
             <h1 className="mt-4 text-4xl font-bold text-slate-900">Bases importadas do cliente</h1>
             <p className="mt-3 max-w-3xl text-slate-600">
-              Importe os PDFs de cargos, horarios e sindicatos da sua empresa para alimentar as
-              listas usadas no cadastro de funcionarios.
+              Importe os PDFs de cargos, horários e sindicatos da sua empresa para alimentar as
+              listas usadas no cadastro de funcionários.
             </p>
           </div>
 

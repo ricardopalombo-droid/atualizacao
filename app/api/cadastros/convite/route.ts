@@ -18,7 +18,7 @@ export async function POST(request: Request) {
 
     if (session.role !== "subscriber_admin" || !session.subscriberId) {
       return Response.json(
-        { ok: false, error: "Somente o escritorio/DP pode disparar convites." },
+        { ok: false, error: "Somente o escritório/DP pode disparar convites." },
         { status: 403 }
       )
     }

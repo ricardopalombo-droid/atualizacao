@@ -31,7 +31,7 @@ export async function GET(request: Request) {
     const session = await getCurrentSession()
 
     if (!session?.clientId) {
-      return Response.json({ ok: false, error: "Cliente nao identificado." }, { status: 401 })
+      return Response.json({ ok: false, error: "Cliente não identificado." }, { status: 401 })
     }
 
     if (session.role !== "client_user") {
@@ -60,7 +60,7 @@ export async function GET(request: Request) {
     return Response.json(
       {
         ok: false,
-        error: getErrorMessage(error) ?? "Erro ao carregar referencias",
+        error: getErrorMessage(error) ?? "Erro ao carregar referências",
       },
       { status: 500 }
     )
@@ -72,12 +72,12 @@ export async function POST(request: Request) {
     const session = await getCurrentSession()
 
     if (!session?.clientId) {
-      return Response.json({ ok: false, error: "Cliente nao identificado." }, { status: 401 })
+      return Response.json({ ok: false, error: "Cliente não identificado." }, { status: 401 })
     }
 
     if (session.role !== "client_user") {
       return Response.json(
-        { ok: false, error: "Somente o cliente pode importar as bases de referencias da empresa." },
+        { ok: false, error: "Somente o cliente pode importar as bases de referências da empresa." },
         { status: 403 }
       )
     }
@@ -105,7 +105,7 @@ export async function POST(request: Request) {
     return Response.json(
       {
         ok: false,
-        error: getErrorMessage(error) ?? "Erro ao importar PDF de referencias",
+        error: getErrorMessage(error) ?? "Erro ao importar PDF de referências",
       },
       { status: 500 }
     )

@@ -45,7 +45,7 @@ export function ClientManagement() {
   const [form, setForm] = useState<FormState>(initialForm)
   const [clients, setClients] = useState<ClientRecord[]>([])
   const [editingDefaults, setEditingDefaults] = useState<Record<string, string | boolean | number | null>>({})
-  const [statusMessage, setStatusMessage] = useState("Cadastre os clientes e depois configure os padroes contabeis de cada empresa em uma tela separada.")
+  const [statusMessage, setStatusMessage] = useState("Cadastre os clientes e depois configure os padrões contábeis de cada empresa em uma tela separada.")
   const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
   const [isDeletingId, setIsDeletingId] = useState<string | null>(null)
@@ -69,7 +69,7 @@ export function ClientManagement() {
       }
 
       if (!response.ok || !result.ok) {
-        setStatusMessage(result.error ?? "Nao foi possivel carregar os clientes.")
+        setStatusMessage(result.error ?? "Não foi possível carregar os clientes.")
         return
       }
 
@@ -108,12 +108,12 @@ export function ClientManagement() {
   function cancelEditing() {
     setForm(initialForm)
     setEditingDefaults({})
-    setStatusMessage("Edicao cancelada.")
+    setStatusMessage("Edição cancelada.")
   }
 
   async function handleDelete(client: ClientRecord) {
     const confirmed = window.confirm(
-      `Excluir o cliente ${client.name}? Isso tambem remove o login e os funcionarios vinculados.`
+      `Excluir o cliente ${client.name}? Isso também remove o login e os funcionários vinculados.`
     )
 
     if (!confirmed) {
@@ -136,7 +136,7 @@ export function ClientManagement() {
       const result = (await response.json()) as { ok: boolean; error?: string }
 
       if (!response.ok || !result.ok) {
-        setStatusMessage(result.error ?? "Nao foi possivel excluir o cliente.")
+        setStatusMessage(result.error ?? "Não foi possível excluir o cliente.")
         return
       }
 
@@ -186,7 +186,7 @@ export function ClientManagement() {
       }
 
       if (!response.ok || !result.ok || !result.record) {
-        setStatusMessage(result.error ?? "Nao foi possivel salvar o cliente.")
+        setStatusMessage(result.error ?? "Não foi possível salvar o cliente.")
         return
       }
 
@@ -219,21 +219,21 @@ export function ClientManagement() {
             <div>
               <h2 className="text-2xl font-bold text-slate-900">Cadastro de clientes</h2>
               <p className="mt-2 leading-7 text-slate-600">
-                Cadastre a empresa, o acesso do cliente e o apelido usado no escritorio. Os padroes contabeis ficam em uma tela separada, depois do cadastro basico.
+                Cadastre a empresa, o acesso do cliente e o apelido usado no escritório. Os padrões contábeis ficam em uma tela separada, depois do cadastro básico.
               </p>
             </div>
           </div>
 
           <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
             <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-              <Field label="Nome do cliente" value={form.name} onChange={(value) => updateField("name", value)} placeholder="Ex.: Clinica Exemplo Ltda" />
+              <Field label="Nome do cliente" value={form.name} onChange={(value) => updateField("name", value)} placeholder="Ex.: Clínica Exemplo Ltda" />
               <Field label="E-mail principal" type="email" value={form.email} onChange={(value) => updateField("email", value)} placeholder="contato@cliente.com.br" />
               <Field label="CNPJ" value={form.cnpj} onChange={(value) => updateField("cnpj", value)} placeholder="00.000.000/0001-00" />
               <Field label="Apelido Contmatic" value={form.contmaticNickname} onChange={(value) => updateField("contmaticNickname", value)} placeholder="Ex.: SOFTMATIC" />
-              <Field label="Responsavel pelo cliente" value={form.contactName} onChange={(value) => updateField("contactName", value)} placeholder="Ex.: Maria Oliveira" />
+              <Field label="Responsável pelo cliente" value={form.contactName} onChange={(value) => updateField("contactName", value)} placeholder="Ex.: Maria Oliveira" />
               <Field label="E-mail de acesso do cliente" type="email" value={form.accessEmail} onChange={(value) => updateField("accessEmail", value)} placeholder="login@cliente.com.br" />
-              <Field label={form.id ? "Nova senha do cliente (opcional)" : "Senha provisoria"} type="password" value={form.temporaryPassword} onChange={(value) => updateField("temporaryPassword", value)} placeholder={form.id ? "Preencha apenas se quiser trocar" : "Defina uma senha inicial"} />
-              <Field label="Limite de funcionarios" type="number" value={form.maxEmployees} onChange={(value) => updateField("maxEmployees", value)} placeholder="200" />
+              <Field label={form.id ? "Nova senha do cliente (opcional)" : "Senha provisória"} type="password" value={form.temporaryPassword} onChange={(value) => updateField("temporaryPassword", value)} placeholder={form.id ? "Preencha apenas se quiser trocar" : "Defina uma senha inicial"} />
+              <Field label="Limite de funcionários" type="number" value={form.maxEmployees} onChange={(value) => updateField("maxEmployees", value)} placeholder="200" />
             </div>
 
             <div className="flex flex-wrap items-center gap-3 pt-2">
@@ -243,7 +243,7 @@ export function ClientManagement() {
                 className="inline-flex items-center gap-2 rounded-xl bg-slate-900 px-5 py-3 font-semibold text-white hover:bg-slate-800"
               >
                 <Plus size={18} />
-                {isSaving ? "Salvando..." : form.id ? "Salvar alteracoes" : "Cadastrar cliente"}
+                {isSaving ? "Salvando..." : form.id ? "Salvar alterações" : "Cadastrar cliente"}
               </button>
               {form.id ? (
                 <button
@@ -264,7 +264,7 @@ export function ClientManagement() {
             <div>
               <h2 className="text-2xl font-bold text-slate-900">Clientes cadastrados</h2>
               <p className="mt-2 text-slate-600">
-                Depois do cadastro basico, abra a configuracao de padroes contabeis para deixar a empresa com os campos internos pre-preenchidos.
+                Depois do cadastro básico, abra a configuração de padrões contábeis para deixar a empresa com os campos internos pré-preenchidos.
               </p>
             </div>
             <div className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-4 py-2 text-sm font-semibold text-slate-700">
@@ -279,7 +279,7 @@ export function ClientManagement() {
             </div>
           ) : clients.length === 0 ? (
             <div className="mt-6 rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-6 text-slate-600">
-              Ainda nao ha clientes cadastrados para este assinante.
+              Ainda não há clientes cadastrados para este assinante.
             </div>
           ) : (
             <div className="mt-6 overflow-hidden rounded-2xl border border-slate-200">
@@ -292,7 +292,7 @@ export function ClientManagement() {
                     <th className="px-4 py-3">Login do cliente</th>
                     <th className="px-4 py-3">CNPJ</th>
                     <th className="px-4 py-3">Limite</th>
-                    <th className="px-4 py-3">Padroes</th>
+                    <th className="px-4 py-3">Padrões</th>
                     <th className="px-4 py-3">Atualizado</th>
                     <th className="px-4 py-3">Acao</th>
                   </tr>
@@ -302,12 +302,12 @@ export function ClientManagement() {
                     <tr key={client.id} className="text-sm text-slate-700">
                       <td className="px-4 py-3 font-medium text-slate-900">
                         <div>{client.name}</div>
-                        <div className="text-xs text-slate-500">{client.contact_name || "Sem responsavel"}</div>
+                        <div className="text-xs text-slate-500">{client.contact_name || "Sem responsável"}</div>
                       </td>
                       <td className="px-4 py-3">{client.contmatic_nickname || "Sem apelido"}</td>
                       <td className="px-4 py-3">{client.access_email || client.email || "Sem e-mail"}</td>
                       <td className="px-4 py-3">{client.cnpj || "Sem CNPJ"}</td>
-                      <td className="px-4 py-3">{client.max_employees ?? "Nao definido"}</td>
+                      <td className="px-4 py-3">{client.max_employees ?? "Não definido"}</td>
                       <td className="px-4 py-3">{countFilledDefaults(client.employee_defaults)} campo(s)</td>
                       <td className="px-4 py-3">{formatDateTime(client.updated_at)}</td>
                       <td className="px-4 py-3">
@@ -317,7 +317,7 @@ export function ClientManagement() {
                             className="inline-flex items-center gap-2 rounded-lg border border-slate-300 px-4 py-2 font-semibold text-slate-700 hover:bg-slate-100"
                           >
                             <Settings2 size={16} />
-                            Padroes contabeis
+                            Padrões contábeis
                           </Link>
                           <button
                             type="button"

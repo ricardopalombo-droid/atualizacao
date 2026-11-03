@@ -37,11 +37,11 @@ type PresetFieldMeta = {
 }
 
 const presetGroups = [
-  { title: "Admissao e vinculo", keys: ["indicativo_admissao", "tipo_contrato", "vinculo_empregaticio", "codigo_admissao", "caged", "percepcao_seguro_desemprego"] },
+  { title: "Admissão e vínculo", keys: ["indicativo_admissao", "tipo_contrato", "vinculo_empregaticio", "codigo_admissao", "caged", "percepcao_seguro_desemprego"] },
   { title: "Jornada e cargo", keys: ["cargo", "horario", "regime_jornada", "horas_semanais", "horas_mensais"] },
-  { title: "Sindicato e tributacao", keys: ["sindicato", "tipo_tributacao_sindical", "categoria_normativa", "grau_risco"] },
+  { title: "Sindicato e tributação", keys: ["sindicato", "tipo_tributacao_sindical", "categoria_normativa", "grau_risco"] },
   { title: "Pagamento", keys: ["forma_pagamento", "tipo_pagamento"] },
-  { title: "Lotacao interna", keys: ["local", "departamento", "setor", "secao", "registro_funcionario", "folha_ficha", "chapa"] },
+  { title: "Lotação interna", keys: ["local", "departamento", "setor", "secao", "registro_funcionario", "folha_ficha", "chapa"] },
   { title: "Banco e FGTS", keys: ["banco", "agencia", "tipo_conta", "numero_conta", "antecipar_indenizacao_fgts"] },
 ] as const
 
@@ -52,7 +52,7 @@ const presetFieldMeta = formSections
     key: field.key,
     label:
       dynamicReferenceFieldKeys.includes(field.key as (typeof dynamicReferenceFieldKeys)[number])
-        ? `${field.label} padrao (codigo)`
+        ? `${field.label} padrão (código)`
         : field.label,
     type:
       field.type === "checkbox"
@@ -65,10 +65,10 @@ const presetFieldMeta = formSections
     options: field.options,
     placeholder:
       dynamicReferenceFieldKeys.includes(field.key as (typeof dynamicReferenceFieldKeys)[number])
-        ? `Informe o codigo padrao de ${field.label.toLowerCase()}`
+        ? `Informe o código padrão de ${field.label.toLowerCase()}`
         : field.placeholder,
     group:
-      presetGroups.find((group) => group.keys.includes(field.key as never))?.title ?? "Outros padroes",
+      presetGroups.find((group) => group.keys.includes(field.key as never))?.title ?? "Outros padrões",
   })) as PresetFieldMeta[]
 
 const initialValues = presetFieldMeta.reduce<Record<string, string | boolean>>((accumulator, field) => {
@@ -82,7 +82,7 @@ export function ClientDefaultsForm({ client, lookupCatalog = {} }: ClientDefault
     ...client.employee_defaults,
   })
   const [statusMessage, setStatusMessage] = useState(
-    "Defina os padroes internos que costumam se repetir nesta empresa."
+    "Defina os padrões internos que costumam se repetir nesta empresa."
   )
   const [isSaving, setIsSaving] = useState(false)
 
@@ -139,13 +139,13 @@ export function ClientDefaultsForm({ client, lookupCatalog = {} }: ClientDefault
       const result = (await response.json()) as { ok: boolean; error?: string }
 
       if (!response.ok || !result.ok) {
-        setStatusMessage(result.error ?? "Nao foi possivel salvar os padroes contabeis.")
+        setStatusMessage(result.error ?? "Não foi possível salvar os padrões contábeis.")
         return
       }
 
-      setStatusMessage("Padroes contabeis salvos com sucesso.")
+      setStatusMessage("Padrões contábeis salvos com sucesso.")
     } catch (error) {
-      setStatusMessage(error instanceof Error ? error.message : "Erro ao salvar os padroes contabeis.")
+      setStatusMessage(error instanceof Error ? error.message : "Erro ao salvar os padrões contábeis.")
     } finally {
       setIsSaving(false)
     }
@@ -159,9 +159,9 @@ export function ClientDefaultsForm({ client, lookupCatalog = {} }: ClientDefault
             <Settings2 size={22} />
           </div>
           <div>
-            <h2 className="text-2xl font-bold text-slate-900">Padroes contabeis da empresa</h2>
+            <h2 className="text-2xl font-bold text-slate-900">Padrões contábeis da empresa</h2>
             <p className="mt-2 leading-7 text-slate-600">
-              Esses valores entram automaticamente nos campos internos de novos funcionarios desta empresa. O cliente ainda pode revisar e alterar antes de finalizar o cadastro.
+              Esses valores entram automaticamente nos campos internos de novos funcionários desta empresa. O cliente ainda pode revisar e alterar antes de finalizar o cadastro.
             </p>
           </div>
         </div>
@@ -213,7 +213,7 @@ export function ClientDefaultsForm({ client, lookupCatalog = {} }: ClientDefault
           className="inline-flex items-center gap-2 rounded-xl bg-slate-900 px-5 py-3 font-semibold text-white hover:bg-slate-800"
         >
           <Save size={18} />
-          {isSaving ? "Salvando..." : "Salvar padroes contabeis"}
+          {isSaving ? "Salvando..." : "Salvar padrões contábeis"}
         </button>
         <p className="text-sm text-slate-600">{statusMessage}</p>
       </section>

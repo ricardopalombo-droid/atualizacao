@@ -41,7 +41,7 @@ export default async function PainelPage() {
       ? [
           {
             titulo: "Assinantes da plataforma",
-            descricao: "Administre a base de escritorios e empresas assinantes da PalSys.",
+            descricao: "Administre a base de escritórios e empresas assinantes da PalSys.",
             href: "/painel/assinantes",
             icone: Shield,
             acao: "Gerenciar assinantes",
@@ -58,7 +58,7 @@ export default async function PainelPage() {
         ? [
             {
               titulo: "Carteira de clientes",
-              descricao: "Cadastre e mantenha as empresas atendidas por este escritorio.",
+              descricao: "Cadastre e mantenha as empresas atendidas por este escritório.",
               href: "/painel/clientes",
               icone: Building2,
               acao: "Gerenciar clientes",
@@ -74,14 +74,14 @@ export default async function PainelPage() {
         : [
             {
               titulo: "Consulta de funcionários",
-              descricao: "Consulte cadastros e documentos encaminhados ao escritorio.",
+              descricao: "Consulte cadastros e documentos encaminhados ao escritório.",
               href: "/painel/cadastros",
               icone: ClipboardList,
               acao: "Consultar",
             },
             {
               titulo: "Bases importadas",
-              descricao: "Mantenha cargos, horarios e sindicatos da empresa alinhados ao cadastro.",
+              descricao: "Mantenha cargos, horários e sindicatos da empresa alinhados ao cadastro.",
               href: "/painel/referencias",
               icone: Database,
               acao: "Gerenciar bases",
@@ -106,7 +106,7 @@ export default async function PainelPage() {
     session.role === "palsys_admin"
       ? "Este acesso administra a plataforma, os assinantes e os limites contratados."
       : session.role === "subscriber_admin"
-        ? "Este acesso administra clientes, acompanha a fila do Phoenix e opera a carteira do escritorio."
+        ? "Este acesso administra clientes, acompanha a fila do Phoenix e opera a carteira do escritório."
         : "Este acesso consulta os funcionários e os documentos enviados ao escritório."
 
   return (
@@ -243,8 +243,8 @@ export default async function PainelPage() {
                 </h2>
                 <p className="mt-2 text-slate-600">
                   {session.role === "subscriber_admin"
-                    ? "Visao resumida dos registros vinculados aos clientes do assinante."
-                    : "Visao resumida dos registros vinculados a empresa logada."}
+                    ? "Visão resumida dos registros vinculados aos clientes do assinante."
+                    : "Visão resumida dos registros vinculados à empresa conectada."}
                 </p>
               </div>
               {session.role === "client_user" ? (
@@ -259,14 +259,14 @@ export default async function PainelPage() {
 
             {records.length === 0 ? (
               <div className="mt-6 rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-6 text-slate-600">
-                Ainda nao ha cadastros salvos neste escopo.
+                Ainda não há cadastros salvos neste escopo.
               </div>
             ) : (
               <div className="mt-6 overflow-hidden rounded-2xl border border-slate-200">
                 <table className="min-w-full divide-y divide-slate-200">
                   <thead className="bg-slate-50">
                     <tr className="text-left text-sm font-semibold text-slate-700">
-                      <th className="px-4 py-3">Funcionario</th>
+                      <th className="px-4 py-3">Funcionário</th>
                       <th className="px-4 py-3">E-mail</th>
                       <th className="px-4 py-3">Status</th>
                       <th className="px-4 py-3">Atualizado</th>

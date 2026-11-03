@@ -13,9 +13,9 @@ export const clientPayloadSchema = z.object({
   cnpj: z.string().trim().optional().or(z.literal("")),
   contmaticNickname: z.string().trim().optional().or(z.literal("")),
   maxEmployees: z.coerce.number().int().positive().max(100000).optional(),
-  contactName: z.string().trim().min(2, "Informe o nome do responsavel."),
+  contactName: z.string().trim().min(2, "Informe o nome do responsável."),
   accessEmail: z.string().trim().email("Informe um e-mail de acesso valido."),
-  temporaryPassword: z.string().min(6, "A senha provisoria deve ter pelo menos 6 caracteres."),
+  temporaryPassword: z.string().min(6, "A senha provisória deve ter pelo menos 6 caracteres."),
   employeeDefaults: clientEmployeeDefaultsSchema,
 })
 
@@ -77,7 +77,7 @@ async function getSubscriberOrThrow(subscriberId: string) {
   }
 
   if (!data) {
-    throw new Error("Assinante nao encontrado.")
+    throw new Error("Assinante não encontrado.")
   }
 
   return data
@@ -111,7 +111,7 @@ export async function createClientRecord(subscriberId: string, payload: ClientPa
   }
 
   if (existingUser) {
-    throw new Error("Ja existe um usuario com esse e-mail de acesso.")
+    throw new Error("Já existe um usuário com esse e-mail de acesso.")
   }
 
   const { data, error } = await supabase
@@ -178,7 +178,7 @@ export async function updateClientRecord(
   }
 
   if (!client) {
-    throw new Error("Cliente nao encontrado.")
+    throw new Error("Cliente não encontrado.")
   }
 
   const { error: updateClientError } = await supabase
@@ -209,7 +209,7 @@ export async function updateClientRecord(
   }
 
   if (!appUser) {
-    throw new Error("Usuario do cliente nao encontrado.")
+    throw new Error("Usuário do cliente não encontrado.")
   }
 
   if (payload.accessEmail && payload.accessEmail !== appUser.email) {
@@ -225,7 +225,7 @@ export async function updateClientRecord(
     }
 
     if (existingUser) {
-      throw new Error("Ja existe outro usuario com esse e-mail de acesso.")
+      throw new Error("Já existe outro usuário com esse e-mail de acesso.")
     }
   }
 
@@ -415,7 +415,7 @@ export async function updateClientEmployeeDefaults(
   }
 
   if (!data) {
-    throw new Error("Cliente nao encontrado.")
+    throw new Error("Cliente não encontrado.")
   }
 
   return {
@@ -442,7 +442,7 @@ export async function deleteClientRecord(subscriberId: string, id: string) {
   }
 
   if (!client) {
-    throw new Error("Cliente nao encontrado.")
+    throw new Error("Cliente não encontrado.")
   }
 
   const { error: deleteEmployeesError } = await supabase.from("employees").delete().eq("client_id", id)

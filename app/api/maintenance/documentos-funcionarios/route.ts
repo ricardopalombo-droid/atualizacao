@@ -8,7 +8,7 @@ export async function GET(request: Request) {
   const authorization = request.headers.get("authorization") ?? ""
 
   if (!secret || authorization !== `Bearer ${secret}`) {
-    return Response.json({ ok: false, error: "Nao autorizado." }, { status: 401 })
+    return Response.json({ ok: false, error: "Não autorizado." }, { status: 401 })
   }
 
   try {

@@ -38,7 +38,7 @@ export function LoginForm({ initialMessage = "", initialError = "" }: { initialM
 
       if (!response.ok) {
         const data = (await response.json()) as { error?: string }
-        setErrorMessage(data.error ?? "Nao foi possivel entrar.")
+        setErrorMessage(data.error ?? "Não foi possível entrar.")
         return
       }
 

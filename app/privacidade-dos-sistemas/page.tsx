@@ -5,12 +5,12 @@ const itensPrivacidade = [
   {
     titulo: "Documentos do cadastro admissional",
     texto:
-      "No cadastro de funcionarios, documentos pessoais podem ser armazenados em area privada depois da confirmacao de autorizacao do titular. Eles sao usados para sugerir o preenchimento dos dados pessoais e ficam acessiveis somente ao escritorio/DP e a empresa vinculada ao cadastro. Os arquivos possuem exclusao programada em ate 60 dias depois do encerramento do processo.",
+      "No cadastro de funcionários, documentos pessoais podem ser armazenados em área privada depois da confirmação de autorização do titular. Eles são usados para sugerir o preenchimento dos dados pessoais e ficam acessíveis somente ao escritório/DP e à empresa vinculada ao cadastro. Os arquivos possuem exclusão programada em até 60 dias depois do encerramento do processo.",
   },
   {
     titulo: "Leitura assistida dos documentos admissionais",
     texto:
-      "Os documentos admissionais podem ser enviados a OpenAI exclusivamente para identificar os campos necessarios ao cadastro. A leitura produz sugestoes, nao toma decisoes trabalhistas e nao substitui a conferencia do DP. A solicitacao e feita sem habilitar armazenamento do resultado para treinamento ou historico da API.",
+      "Os documentos admissionais podem ser enviados à OpenAI exclusivamente para identificar os campos necessários ao cadastro. A leitura produz sugestões, não toma decisões trabalhistas e não substitui a conferência do DP. A solicitação é feita sem habilitar armazenamento do resultado para treinamento ou histórico da API.",
   },
   {
     titulo: "Explicador de holerites, férias e rescisões",
@@ -25,7 +25,7 @@ const itensPrivacidade = [
   {
     titulo: "Armazenamento somente quando a funcionalidade exige",
     texto:
-      "As automacoes locais nao enviam nem armazenam documentos em servidores da PalSys. Excecoes, como o cadastro admissional, sao identificadas na propria funcionalidade, exigem autorizacao e utilizam armazenamento privado com prazo de exclusao.",
+      "As automações locais não enviam nem armazenam documentos em servidores da PalSys. Exceções, como o cadastro admissional, são identificadas na própria funcionalidade, exigem autorização e utilizam armazenamento privado com prazo de exclusão.",
   },
   {
     titulo: "Leitura temporária para execução da rotina",
@@ -116,10 +116,10 @@ export default function PrivacidadeDosSistemasPage() {
             <div className="rounded-2xl border border-blue-100 bg-blue-50 p-6">
               <h2 className="text-2xl font-bold text-slate-900">Resumo objetivo</h2>
               <p className="mt-4 leading-8 text-slate-700">
-                As automacoes locais mantem os arquivos no ambiente definido pelo cliente.
+                As automações locais mantêm os arquivos no ambiente definido pelo cliente.
                 Quando uma funcionalidade em nuvem precisa armazenar documentos, como o
-                cadastro admissional, isso e informado ao usuario, exige autorizacao,
-                possui acesso restrito e prazo de exclusao.
+                cadastro admissional, isso é informado ao usuário, exige autorização,
+                possui acesso restrito e prazo de exclusão.
               </p>
             </div>
 

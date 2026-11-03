@@ -17,10 +17,10 @@ export default async function AcessoPage({
             Area de acesso
           </span>
           <h1 className="mt-6 text-4xl font-bold leading-tight">
-            Entre na sua area de trabalho
+            Entre na sua área de trabalho
           </h1>
           <p className="mt-4 max-w-xl text-lg leading-8 text-slate-300">
-            Este acesso e usado pela equipe PalSys, pelos assinantes e pelas empresas clientes. Entre com seu login para continuar na area correspondente ao seu perfil.
+            Este acesso é usado pela equipe PalSys, pelos assinantes e pelas empresas clientes. Entre com seu login para continuar na área correspondente ao seu perfil.
           </p>
           <div className="mt-8">
             <Link

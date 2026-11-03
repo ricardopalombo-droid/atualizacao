@@ -201,6 +201,36 @@ function calculateMonthlyHours(weeklyHours: string) {
   return (parsed * 5).toFixed(2)
 }
 
+function normalizeCurrencyDraft(rawValue: string) {
+  const cleaned = rawValue.replace(/[^0-9,.]/g, "")
+  const lastComma = cleaned.lastIndexOf(",")
+  const lastDot = cleaned.lastIndexOf(".")
+  const separatorIndex = Math.max(lastComma, lastDot)
+
+  if (separatorIndex < 0) {
+    return cleaned.replace(/\D/g, "")
+  }
+
+  const integerPart = cleaned.slice(0, separatorIndex).replace(/\D/g, "")
+  const decimalPart = cleaned.slice(separatorIndex + 1).replace(/\D/g, "").slice(0, 2)
+  return `${integerPart},${decimalPart}`
+}
+
+function currencyDraftToStoredValue(draft: string) {
+  const normalized = normalizeCurrencyDraft(draft)
+  if (!normalized) return ""
+  return normalized.replace(",", ".")
+}
+
+function formatCurrencyDisplay(value: string) {
+  const parsed = Number.parseFloat(value.replace(",", "."))
+  if (!Number.isFinite(parsed)) return ""
+  return new Intl.NumberFormat("pt-BR", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(parsed)
+}
+
 function parsePositiveInteger(value: string) {
   const digits = value.replace(/\D/g, "")
 
@@ -434,9 +464,9 @@ export function EmployeeOnboardingForm({
         }
 
         setFormData((previous) => ({ ...previous, ...normalizedDefaults }))
-        setStatusMessage("Os padroes contabeis da empresa ja foram aplicados neste novo cadastro.")
+        setStatusMessage("Os padrões contábeis da empresa já foram aplicados neste novo cadastro.")
       } catch {
-        // Mantem o fluxo atual se a leitura dos padroes falhar.
+        // Mantém o fluxo atual se a leitura dos padrões falhar.
       }
     }
 
@@ -1355,15 +1385,10 @@ function WorkflowOverview({
             />
           </InviteField>
           <InviteField label="Salário *">
-            <input
-              type="number"
-              min="0"
-              step="0.01"
+            <CurrencyInput
               value={String(formData.salario ?? "")}
-              disabled={inviteReadOnly}
-              onChange={(event) => onFieldChange("salario", event.target.value)}
-              placeholder="0,00"
-              className="w-full rounded-xl border border-slate-300 bg-white px-3 py-3 text-slate-900 outline-none transition focus:border-yellow-400 focus:ring-2 focus:ring-yellow-200 disabled:bg-slate-100 disabled:text-slate-500"
+              readOnly={inviteReadOnly}
+              onChange={(value) => onFieldChange("salario", value)}
             />
           </InviteField>
         </div>
@@ -1432,6 +1457,58 @@ function InviteField({
       <span className="mb-2 block">{label}</span>
       {children}
     </label>
+  )
+}
+
+function CurrencyInput({
+  id,
+  value,
+  readOnly = false,
+  onChange,
+}: {
+  id?: string
+  value: string
+  readOnly?: boolean
+  onChange: (value: string) => void
+}) {
+  const [isFocused, setIsFocused] = useState(false)
+  const [draft, setDraft] = useState(() => formatCurrencyDisplay(value))
+
+  useEffect(() => {
+    if (!isFocused) setDraft(formatCurrencyDisplay(value))
+  }, [isFocused, value])
+
+  return (
+    <input
+      id={id}
+      type="text"
+      inputMode="decimal"
+      value={draft}
+      readOnly={readOnly}
+      placeholder="0,00"
+      onFocus={() => {
+        setIsFocused(true)
+        setDraft(value ? value.replace(".", ",") : "")
+      }}
+      onChange={(event) => {
+        const nextDraft = normalizeCurrencyDraft(event.target.value)
+        setDraft(nextDraft)
+        onChange(currencyDraftToStoredValue(nextDraft))
+      }}
+      onBlur={() => {
+        const storedValue = currencyDraftToStoredValue(draft)
+        const parsed = Number.parseFloat(storedValue)
+        const normalizedValue = Number.isFinite(parsed) ? parsed.toFixed(2) : ""
+        onChange(normalizedValue)
+        setDraft(formatCurrencyDisplay(normalizedValue))
+        setIsFocused(false)
+      }}
+      className={`w-full rounded-xl border px-3 py-3 outline-none transition ${
+        readOnly
+          ? "border-slate-200 bg-slate-100 text-slate-500"
+          : "border-slate-300 bg-white text-slate-900 focus:border-yellow-400 focus:ring-2 focus:ring-yellow-200"
+      }`}
+    />
   )
 }
 
@@ -2103,6 +2180,23 @@ function FieldRenderer({
             </option>
           ))}
         </select>
+      </div>
+    )
+  }
+
+  if (field.key === "salario") {
+    return (
+      <div>
+        <label htmlFor={field.key} className="mb-2 block text-sm font-semibold text-slate-700">
+          {field.label}
+          {field.requiredForExport ? " *" : ""}
+        </label>
+        <CurrencyInput
+          id={field.key}
+          value={String(value ?? "")}
+          readOnly={readOnly}
+          onChange={(nextValue) => onChange(nextValue)}
+        />
       </div>
     )
   }

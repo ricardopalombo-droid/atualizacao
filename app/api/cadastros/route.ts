@@ -22,7 +22,7 @@ export async function GET(request: Request) {
     }
 
     if (!["subscriber_admin", "client_user"].includes(session.role)) {
-      return Response.json({ ok: false, error: "Acesso nao autorizado." }, { status: 403 })
+      return Response.json({ ok: false, error: "Acesso não autorizado." }, { status: 403 })
     }
 
     const url = new URL(request.url)
@@ -35,7 +35,7 @@ export async function GET(request: Request) {
         return Response.json({ ok: false, error: "Selecione a empresa do cadastro." }, { status: 400 })
       }
       const client = await getClientRecordById(session.subscriberId, requestedClientId)
-      if (!client) return Response.json({ ok: false, error: "Empresa nao encontrada." }, { status: 404 })
+      if (!client) return Response.json({ ok: false, error: "Empresa não encontrada." }, { status: 404 })
       scopedClientId = client.id
     }
 
@@ -83,7 +83,7 @@ export async function POST(request: Request) {
 
     if (session.role !== "subscriber_admin" || !session.subscriberId) {
       return Response.json(
-        { ok: false, error: "Somente o escritorio/DP pode cadastrar funcionarios." },
+        { ok: false, error: "Somente o escritório/DP pode cadastrar funcionários." },
         { status: 403 }
       )
     }
@@ -91,7 +91,7 @@ export async function POST(request: Request) {
     const body = await request.json()
     const clientId = z.string().uuid().parse(body.clientId)
     const client = await getClientRecordById(session.subscriberId, clientId)
-    if (!client) return Response.json({ ok: false, error: "Empresa nao encontrada." }, { status: 404 })
+    if (!client) return Response.json({ ok: false, error: "Empresa não encontrada." }, { status: 404 })
     const payload = cadastroPayloadSchema.parse({
       ...body,
       clientId,
@@ -127,14 +127,14 @@ export async function DELETE(request: Request) {
 
     if (session.role !== "subscriber_admin" || !session.subscriberId) {
       return Response.json(
-        { ok: false, error: "Somente o escritorio/DP pode excluir funcionarios." },
+        { ok: false, error: "Somente o escritório/DP pode excluir funcionários." },
         { status: 403 }
       )
     }
 
     const payload = deleteEmployeePayloadSchema.parse(await request.json())
     const record = await getEmployeeRecordById(payload.id, { subscriberId: session.subscriberId })
-    if (!record) return Response.json({ ok: false, error: "Cadastro nao encontrado." }, { status: 404 })
+    if (!record) return Response.json({ ok: false, error: "Cadastro não encontrado." }, { status: 404 })
     await deleteEmployeeRecord(payload.id, {
       subscriberId: session.subscriberId,
       clientId: record.client_id,
