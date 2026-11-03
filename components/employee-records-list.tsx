@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { useEffect, useState } from "react"
-import { Trash2 } from "lucide-react"
+import { FileArchive, Trash2 } from "lucide-react"
 
 type EmployeeRecord = {
   id: string
@@ -27,8 +27,8 @@ const statusLabels: Record<string, string> = {
 
 const phoenixStatusLabels: Record<string, string> = {
   pronto_para_phoenix: "Pronto para Phoenix",
-  enviado_ao_phoenix: "Enviado ao Phoenix",
-  concluido_no_phoenix: "Concluído no Phoenix",
+  enviado_ao_phoenix: "Pacote gerado",
+  concluido_no_phoenix: "Importado no Phoenix",
   falha_no_phoenix: "Falha no Phoenix",
 }
 
@@ -84,6 +84,15 @@ export function EmployeeRecordsList({ clientId, canManage }: { clientId: string;
   }
 
   async function handlePhoenixAction(record: EmployeeRecord, action: "start" | "complete" | "fail" | "reset") {
+    if (
+      action === "start" &&
+      !window.confirm(
+        "Antes de importar, confirme que não existe uma empresa com o apelido ZZLIMPA no Contmatic. O pacote será baixado agora e a ZZLIMPA deverá ser excluída manualmente depois da importação. Deseja gerar o pacote?"
+      )
+    ) {
+      return
+    }
+
     const note =
       action === "fail"
         ? window.prompt("Informe o motivo da falha no Phoenix:", record.phoenix_status_note ?? "") ?? null
@@ -96,6 +105,33 @@ export function EmployeeRecordsList({ clientId, canManage }: { clientId: string;
     setIsUpdatingPhoenixId(record.id)
 
     try {
+      if (action === "start") {
+        const packageResponse = await fetch(
+          `/api/cadastros/phoenix?id=${encodeURIComponent(record.id)}&download=package`,
+          { method: "GET", cache: "no-store" }
+        )
+
+        if (!packageResponse.ok) {
+          const packageError = (await packageResponse.json().catch(() => null)) as
+            | { error?: string }
+            | null
+          setStatusMessage(packageError?.error ?? "Não foi possível gerar o pacote Contmatic.")
+          return
+        }
+
+        const disposition = packageResponse.headers.get("Content-Disposition") ?? ""
+        const filename = disposition.match(/filename="([^"]+)"/)?.[1] ?? "Script_Contmatic.zip"
+        const packageBlob = await packageResponse.blob()
+        const packageUrl = URL.createObjectURL(packageBlob)
+        const downloadLink = document.createElement("a")
+        downloadLink.href = packageUrl
+        downloadLink.download = filename
+        document.body.appendChild(downloadLink)
+        downloadLink.click()
+        downloadLink.remove()
+        URL.revokeObjectURL(packageUrl)
+      }
+
       const response = await fetch("/api/cadastros/phoenix", {
         method: "POST",
         headers: {
@@ -104,7 +140,10 @@ export function EmployeeRecordsList({ clientId, canManage }: { clientId: string;
         body: JSON.stringify({
           id: record.id,
           action,
-          note: note ?? undefined,
+          note:
+            action === "start"
+              ? "Pacote Contmatic gerado para importação manual."
+              : note ?? undefined,
         }),
       })
 
@@ -137,9 +176,9 @@ export function EmployeeRecordsList({ clientId, canManage }: { clientId: string;
 
       const actionMessage =
         action === "start"
-          ? "Cadastro marcado como enviado ao Phoenix."
+          ? "Pacote Contmatic gerado. Antes de importar, confirme que a ZZLIMPA não existe; depois da importação, exclua-a manualmente."
           : action === "complete"
-            ? "Cadastro marcado como concluído no Phoenix."
+            ? "Cadastro marcado como importado no Phoenix."
             : action === "fail"
               ? "Cadastro marcado com falha no Phoenix."
               : "Cadastro voltou para pronto para Phoenix."
@@ -271,9 +310,10 @@ export function EmployeeRecordsList({ clientId, canManage }: { clientId: string;
                               type="button"
                               onClick={() => void handlePhoenixAction(record, "start")}
                               disabled={isUpdatingPhoenixId === record.id}
-                              className="inline-flex items-center justify-center rounded-lg border border-sky-200 px-4 py-2 font-semibold text-sky-700 hover:bg-sky-50 disabled:opacity-60"
+                              className="inline-flex items-center justify-center gap-2 rounded-lg border border-sky-200 px-4 py-2 font-semibold text-sky-700 hover:bg-sky-50 disabled:opacity-60"
                             >
-                              {isUpdatingPhoenixId === record.id ? "Atualizando..." : "Enviar para Phoenix"}
+                              <FileArchive size={16} />
+                              {isUpdatingPhoenixId === record.id ? "Gerando..." : "Gerar pacote Phoenix"}
                             </button>
                           )}
 
@@ -281,11 +321,20 @@ export function EmployeeRecordsList({ clientId, canManage }: { clientId: string;
                             <>
                               <button
                                 type="button"
+                                onClick={() => void handlePhoenixAction(record, "start")}
+                                disabled={isUpdatingPhoenixId === record.id}
+                                className="inline-flex items-center gap-2 rounded-lg border border-sky-200 px-4 py-2 font-semibold text-sky-700 hover:bg-sky-50 disabled:opacity-60"
+                              >
+                                <FileArchive size={16} />
+                                {isUpdatingPhoenixId === record.id ? "Gerando..." : "Baixar novamente"}
+                              </button>
+                              <button
+                                type="button"
                                 onClick={() => void handlePhoenixAction(record, "complete")}
                                 disabled={isUpdatingPhoenixId === record.id}
                                 className="inline-flex items-center justify-center rounded-lg border border-emerald-200 px-4 py-2 font-semibold text-emerald-700 hover:bg-emerald-50 disabled:opacity-60"
                               >
-                                {isUpdatingPhoenixId === record.id ? "Atualizando..." : "Marcar concluído"}
+                                {isUpdatingPhoenixId === record.id ? "Atualizando..." : "Marcar como importado"}
                               </button>
                               <button
                                 type="button"

@@ -505,7 +505,7 @@ export const formSections: FormSection[] = [
       { key: "data_exame_medico", label: "Data do exame médico", type: "date", audience: "client" },
       { key: "validade_exame_medico", label: "Validade do exame médico (meses)", type: "number", audience: "client" },
       { key: "data_saida", label: "Data de saida", type: "date", audience: "client" },
-      { key: "registro_funcionario", label: "Registro do funcionário", type: "text", audience: "client" },
+      { key: "registro_funcionario", label: "Registro do funcionário", type: "text", audience: "client", requiredForExport: true },
       { key: "folha_ficha", label: "Folha/Ficha", type: "text", audience: "client" },
       { key: "chapa", label: "Chapa", type: "text", audience: "client" },
     ],

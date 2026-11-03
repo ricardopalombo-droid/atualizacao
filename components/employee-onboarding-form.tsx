@@ -989,7 +989,13 @@ export function EmployeeOnboardingForm({
   }
 
   async function saveDraft() {
-    await persist("rascunho_interno", "Rascunho salvo. O DP ainda pode revisar tudo antes do envio.")
+    const keepFinalStatus = status === "finalizado" || status === "exportado"
+    await persist(
+      keepFinalStatus ? status : "rascunho_interno",
+      keepFinalStatus
+        ? "Correções salvas. O cadastro continua finalizado."
+        : "Rascunho salvo. O DP ainda pode revisar tudo antes do envio."
+    )
   }
 
   async function sendInvite() {
@@ -2137,6 +2143,17 @@ function ActionPanel({
               >
                 <Save size={18} />
                 {isSaving ? "Salvando..." : "Salvar rascunho"}
+              </button>
+            ) : null}
+            {status === "finalizado" || status === "exportado" ? (
+              <button
+                type="button"
+                onClick={onSaveDraft}
+                disabled={isSaving || missingRequiredFieldCount > 0}
+                className="inline-flex items-center gap-2 rounded-xl border border-slate-300 px-4 py-3 font-semibold text-slate-700 hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                <Save size={18} />
+                {isSaving ? "Salvando..." : "Salvar correções"}
               </button>
             ) : null}
             {status === "convite_enviado" ? (

@@ -1,8 +1,10 @@
 ﻿import { buildPhoenixStructuredPayload } from "@/lib/phoenix-payload"
 import { getCurrentSession } from "@/lib/auth-session"
+import { buildContmaticImportPackage } from "@/lib/contmatic-import-package"
 import { getEmployeeRecordById, listEmployeeRecords, updateEmployeePhoenixStatus } from "@/lib/cadastro-repository"
 import { getSupabaseServerClient } from "@/lib/supabase-server"
 import { z } from "zod"
+import JSZip from "jszip"
 
 const phoenixStatusPayloadSchema = z.object({
   id: z.string().uuid(),
@@ -267,6 +269,35 @@ export async function GET(request: Request) {
     }
 
     const clientInfo = await getClientInfoById(record.client_id)
+
+    if (url.searchParams.get("download") === "package") {
+      if (session.role !== "subscriber_admin") {
+        return Response.json(
+          { ok: false, error: "Somente o escritório/DP pode gerar o pacote Contmatic." },
+          { status: 403 }
+        )
+      }
+
+      const importPackage = buildContmaticImportPackage(record, clientInfo.contmaticNickname)
+      const zip = new JSZip()
+      zip.file(importPackage.employeeFileName, importPackage.employeeSql)
+      zip.file(importPackage.generalFileName, importPackage.generalSql)
+      const zipBuffer = await zip.generateAsync({
+        type: "uint8array",
+        compression: "DEFLATE",
+        compressionOptions: { level: 9 },
+      })
+
+      return new Response(zipBuffer, {
+        status: 200,
+        headers: {
+          "Content-Type": "application/zip",
+          "Content-Disposition": `attachment; filename="${importPackage.zipFileName}"`,
+          "Cache-Control": "no-store",
+          "X-PalSys-Employee-Code": importPackage.employeeCode,
+        },
+      })
+    }
 
     return Response.json({
       ok: true,
