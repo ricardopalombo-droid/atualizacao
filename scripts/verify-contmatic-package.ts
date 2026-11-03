@@ -14,6 +14,9 @@ async function main() {
   uf: "SP",
   naturalidade: "São Paulo - SP",
   cpf: "12345678901",
+  ctps_digital: true,
+  ctps_uf: "SP",
+  matricula_esocial: "21633",
   pis: "12345678901",
   horas_semanais: "44.00",
   // A tela pode não persistir o valor calculado; o pacote deve derivar 44 × 5.
@@ -46,6 +49,7 @@ async function main() {
   qtdedepirrf: "'0'",
   codhorario: "'1'",
   cpf: "'123.456.789-01'",
+  ctpsserieuf: "'1234567'",
   }
 
   const funcaux2Line = result.employeeSql
@@ -54,6 +58,17 @@ async function main() {
   if (!funcaux2Line) throw new Error("A linha FUNCAUX2 não foi gerada.")
   if (!funcaux2Line.includes("'3549904'") || !funcaux2Line.includes("'3550308'")) {
     throw new Error("Os códigos IBGE esperados não foram gerados.")
+  }
+
+  const funcaux1Line = result.employeeSql
+    .split(/\r?\n/)
+    .find((line) => line.startsWith("INSERT INTO public.funcaux1 ("))
+  if (!funcaux1Line?.includes("'8901', 'SP'")) {
+    throw new Error("A série ou a UF da CTPS digital não foi gerada corretamente.")
+  }
+
+  if (!result.employeeSql.includes("INSERT INTO public.histsind ")) {
+    throw new Error("O histórico sindical não foi gerado.")
   }
 
   for (const [column, expectedValue] of Object.entries(expected)) {

@@ -467,7 +467,7 @@ export const formSections: FormSection[] = [
     description: "Campos preenchidos pelo DP após o retorno do funcionário.",
     audience: "client",
     fields: [
-      { key: "matricula_esocial", label: "Matrícula eSocial", type: "text", audience: "client" },
+      { key: "matricula_esocial", label: "Matrícula eSocial", type: "text", audience: "client", requiredForExport: true },
       { key: "data_admissao", label: "Data de admissão", type: "date", audience: "client", requiredForExport: true },
       { key: "indicativo_admissao", label: "Indicativo de admissão", type: "select", audience: "client", options: indicativoAdmissaoOptions, requiredForExport: true },
       { key: "sindicato", label: "Sindicato representante", type: "select", audience: "client", requiredForExport: true },
