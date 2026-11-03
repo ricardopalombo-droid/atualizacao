@@ -1144,24 +1144,6 @@ export function EmployeeOnboardingForm({
           onApplyFields={applyDocumentFields}
         />
 
-        {variant === "client" ? (
-          <RequiredFieldsNotice
-            missingRequiredFields={missingRequiredFields}
-            onSelectField={(field) => {
-              if (field.audience) setViewer(field.audience)
-              setActiveSection(field.sectionId ?? "")
-            }}
-          />
-        ) : null}
-
-        {variant === "employee" && !employeeReadOnly ? (
-          <RequiredFieldsNotice
-            missingRequiredFields={missingEmployeeRequiredFields}
-            employeeMode
-            onSelectField={(field) => setActiveSection(field.sectionId ?? "")}
-          />
-        ) : null}
-
         {canSwitchViewer ? (
           <div className="mt-6 flex flex-wrap gap-3">
             <button
@@ -1220,6 +1202,24 @@ export function EmployeeOnboardingForm({
             </button>
           ) : null}
         </div>
+
+        {variant === "client" ? (
+          <RequiredFieldsNotice
+            missingRequiredFields={missingRequiredFields}
+            onSelectField={(field) => {
+              if (field.audience) setViewer(field.audience)
+              setActiveSection(field.sectionId ?? "")
+            }}
+          />
+        ) : null}
+
+        {variant === "employee" && !employeeReadOnly ? (
+          <RequiredFieldsNotice
+            missingRequiredFields={missingEmployeeRequiredFields}
+            employeeMode
+            onSelectField={(field) => setActiveSection(field.sectionId ?? "")}
+          />
+        ) : null}
 
         {activeSection !== "__dependentes__" && currentSection ? (
           <section className="mt-6 rounded-3xl border border-slate-200 bg-slate-50 p-6">
