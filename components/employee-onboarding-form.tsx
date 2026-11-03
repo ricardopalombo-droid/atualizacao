@@ -1054,7 +1054,10 @@ export function EmployeeOnboardingForm({
         <WorkflowOverview
           formData={formData}
           status={status}
+          canManage={canManage}
+          isSaving={isSaving}
           onInviteEmailChange={(value) => updateField("convite_email", value)}
+          onSendInvite={sendInvite}
         />
       ) : null}
 
@@ -1235,7 +1238,6 @@ export function EmployeeOnboardingForm({
             variant === "employee" ? missingEmployeeRequiredFields.length : missingRequiredFields.length
           }
           onSaveDraft={saveDraft}
-          onSendInvite={sendInvite}
           onSubmitEmployeeData={submitEmployeeData}
           onMoveToClientReview={moveToClientReview}
           onFinalizeRecord={finalizeRecord}
@@ -1252,11 +1254,17 @@ export function EmployeeOnboardingForm({
 function WorkflowOverview({
   formData,
   status,
+  canManage,
+  isSaving,
   onInviteEmailChange,
+  onSendInvite,
 }: {
   formData: FormState
   status: WorkflowStatus
+  canManage: boolean
+  isSaving: boolean
   onInviteEmailChange: (value: string) => void
+  onSendInvite: () => Promise<void>
 }) {
   return (
     <section className="grid gap-4 lg:grid-cols-[1.6fr_1fr]">
@@ -1302,10 +1310,22 @@ function WorkflowOverview({
           id="convite_email"
           type="email"
           value={String(formData.convite_email ?? "")}
+          disabled={!canManage || isSaving}
           onChange={(event) => onInviteEmailChange(event.target.value)}
           placeholder="funcionario@empresa.com"
-          className="mt-2 w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-slate-900 outline-none transition focus:border-yellow-400 focus:ring-2 focus:ring-yellow-200"
+          className="mt-2 w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-slate-900 outline-none transition focus:border-yellow-400 focus:ring-2 focus:ring-yellow-200 disabled:bg-slate-100 disabled:text-slate-500"
         />
+        {canManage ? (
+          <button
+            type="button"
+            onClick={() => void onSendInvite()}
+            disabled={isSaving}
+            className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-slate-900 px-4 py-3 font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            <Mail size={18} />
+            {isSaving ? "Processando..." : "Disparar link"}
+          </button>
+        ) : null}
         <div className="mt-6 rounded-2xl bg-slate-50 p-4 text-sm text-slate-600">
           Link da área do funcionário: <strong>/cadastro/funcionario</strong>
         </div>
@@ -1810,7 +1830,6 @@ function ActionPanel({
   currentStatusIndex,
   missingRequiredFieldCount,
   onSaveDraft,
-  onSendInvite,
   onSubmitEmployeeData,
   onMoveToClientReview,
   onFinalizeRecord,
@@ -1823,7 +1842,6 @@ function ActionPanel({
   currentStatusIndex: number
   missingRequiredFieldCount: number
   onSaveDraft: () => Promise<void>
-  onSendInvite: () => Promise<void>
   onSubmitEmployeeData: () => Promise<void>
   onMoveToClientReview: () => Promise<void>
   onFinalizeRecord: () => Promise<void>
@@ -1850,15 +1868,6 @@ function ActionPanel({
             >
               <Save size={18} />
               {isSaving ? "Salvando..." : "Salvar rascunho"}
-            </button>
-            <button
-              type="button"
-              onClick={onSendInvite}
-              disabled={isSaving}
-              className="inline-flex items-center gap-2 rounded-xl bg-slate-900 px-4 py-3 font-semibold text-white hover:bg-slate-800"
-            >
-              <Mail size={18} />
-              {isSaving ? "Processando..." : "Disparar link"}
             </button>
             {status === "preenchido_funcionario" || status === "convite_enviado" ? (
               <button
