@@ -32,6 +32,14 @@ function formatDate(value: string) {
   return new Intl.DateTimeFormat("pt-BR", { dateStyle: "short" }).format(new Date(value))
 }
 
+function normalizeComparableValue(value: string | boolean) {
+  return String(value)
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toUpperCase()
+    .replace(/[^A-Z0-9]/g, "")
+}
+
 export function EmployeeDocuments({
   employeeId,
   publicToken,
@@ -77,7 +85,11 @@ export function EmployeeDocuments({
   }, [employeeId, tokenQuery])
 
   const availableFields = useMemo(
-    () => records.flatMap((record) => record.extracted_fields.map((field) => ({ ...field, documentId: record.id }))),
+    () => records.flatMap((record) => record.extracted_fields.map((field) => ({
+      ...field,
+      documentId: record.id,
+      documentName: record.original_name,
+    }))),
     [records]
   )
 
@@ -90,10 +102,19 @@ export function EmployeeDocuments({
   )
 
   const conflictingSuggestions = useMemo(
-    () => availableFields.filter((field) => {
-      const current = currentValues[field.key]
-      return current !== undefined && current !== false && String(current).trim() !== "" && String(current) !== field.value
-    }),
+    () => {
+      const seen = new Set<string>()
+      return availableFields.filter((field) => {
+        const current = currentValues[field.key]
+        if (current === undefined || current === false || String(current).trim() === "") return false
+        if (normalizeComparableValue(current) === normalizeComparableValue(field.value)) return false
+
+        const signature = `${field.key}:${normalizeComparableValue(field.value)}`
+        if (seen.has(signature)) return false
+        seen.add(signature)
+        return true
+      })
+    },
     [availableFields, currentValues]
   )
 
@@ -160,7 +181,7 @@ export function EmployeeDocuments({
       const result = await response.json() as { ok: boolean; error?: string }
       if (!response.ok || !result.ok) throw new Error(result.error ?? "Não foi possível excluir o documento.")
       setRecords((previous) => previous.filter((item) => item.id !== record.id))
-      setMessage("Documento excluido.")
+      setMessage("Documento excluído.")
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Erro ao excluir documento.")
     } finally {
@@ -295,6 +316,34 @@ export function EmployeeDocuments({
               </button>
             ) : null}
           </div>
+          {conflictingSuggestions.length > 0 ? (
+            <div className="mt-4 rounded-2xl border border-amber-200 bg-amber-50 p-4">
+              <h5 className="font-bold text-amber-900">Divergências para conferir</h5>
+              <p className="mt-1 text-xs leading-5 text-amber-800">
+                O sistema não altera esses campos automaticamente. Compare os valores e mantenha a informação correta.
+              </p>
+              <div className="mt-3 grid gap-3 lg:grid-cols-2">
+                {conflictingSuggestions.map((field, index) => (
+                  <div
+                    key={`conflict-${field.documentId}-${field.key}-${index}`}
+                    className="rounded-xl border border-amber-200 bg-white p-3 text-sm"
+                  >
+                    <div className="font-bold text-slate-900">
+                      Campo: {fieldLabels[field.key] ?? field.key}
+                    </div>
+                    <div className="mt-2 text-slate-700">
+                      <span className="font-semibold">Cadastro atual:</span>{" "}
+                      {String(currentValues[field.key] ?? "")}
+                    </div>
+                    <div className="mt-1 text-slate-700">
+                      <span className="font-semibold">Documento:</span> {field.value}
+                    </div>
+                    <div className="mt-2 text-xs text-slate-500">Origem: {field.documentName}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : null}
           <div className="mt-3 grid gap-2 md:grid-cols-2">
             {availableFields.map((field, index) => (
               <div key={`${field.documentId}-${field.key}-${index}`} className="rounded-xl bg-slate-50 px-3 py-2 text-sm">

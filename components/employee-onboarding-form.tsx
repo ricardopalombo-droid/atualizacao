@@ -1058,7 +1058,13 @@ export function EmployeeOnboardingForm({
       setStatusMessage(`Preencha os campos obrigatórios antes de finalizar: ${preview}${suffix}`)
       return
     }
-    await persist("finalizado", "Cadastro finalizado e pronto para a próxima etapa.")
+    const savedId = await persist("finalizado", "Cadastro finalizado e pronto para a próxima etapa.")
+    if (savedId) {
+      const listUrl = clientId
+        ? `/painel/cadastros?clientId=${encodeURIComponent(clientId)}`
+        : "/painel/cadastros"
+      window.location.assign(listUrl)
+    }
   }
 
   const currentStatusIndex = workflowStatusOrder.indexOf(status)
@@ -1129,8 +1135,23 @@ export function EmployeeOnboardingForm({
           </div>
         </div>
 
+        <EmployeeDocuments
+          employeeId={recordId}
+          publicToken={publicToken}
+          canUpload={!employeeReadOnly && !dpWaitingForEmployee && (variant === "employee" || canManage)}
+          canApply={!employeeReadOnly && !dpWaitingForEmployee && (variant === "employee" || canManage)}
+          currentValues={formData}
+          onApplyFields={applyDocumentFields}
+        />
+
         {variant === "client" ? (
-          <RequiredFieldsNotice missingRequiredFields={missingRequiredFields} />
+          <RequiredFieldsNotice
+            missingRequiredFields={missingRequiredFields}
+            onSelectField={(field) => {
+              if (field.audience) setViewer(field.audience)
+              setActiveSection(field.sectionId ?? "")
+            }}
+          />
         ) : null}
 
         {variant === "employee" && !employeeReadOnly ? (
@@ -1140,15 +1161,6 @@ export function EmployeeOnboardingForm({
             onSelectField={(field) => setActiveSection(field.sectionId ?? "")}
           />
         ) : null}
-
-        <EmployeeDocuments
-          employeeId={recordId}
-          publicToken={publicToken}
-          canUpload={!employeeReadOnly && !dpWaitingForEmployee && (variant === "employee" || canManage)}
-          canApply={!employeeReadOnly && !dpWaitingForEmployee && (variant === "employee" || canManage)}
-          currentValues={formData}
-          onApplyFields={applyDocumentFields}
-        />
 
         {canSwitchViewer ? (
           <div className="mt-6 flex flex-wrap gap-3">
@@ -1538,11 +1550,11 @@ function RequiredFieldsNotice({
   employeeMode = false,
   onSelectField,
 }: {
-  missingRequiredFields: Array<{ key: string; label: string; sectionId?: string }>
+  missingRequiredFields: Array<{ key: string; label: string; sectionId?: string; audience?: FieldAudience }>
   employeeMode?: boolean
-  onSelectField?: (field: { key: string; label: string; sectionId?: string }) => void
+  onSelectField?: (field: { key: string; label: string; sectionId?: string; audience?: FieldAudience }) => void
 }) {
-  function focusRequiredField(field: { key: string; label: string; sectionId?: string }) {
+  function focusRequiredField(field: { key: string; label: string; sectionId?: string; audience?: FieldAudience }) {
     onSelectField?.(field)
     setTimeout(() => {
       const target = document.getElementById(field.key)

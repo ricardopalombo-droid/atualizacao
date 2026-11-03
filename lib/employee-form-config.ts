@@ -38,11 +38,11 @@ export type FormSection = {
 export type RequiredExportField = {
   key: string
   label: string
+  sectionId: string
+  audience: FieldAudience
 }
 
-export type RequiredEmployeeField = RequiredExportField & {
-  sectionId: string
-}
+export type RequiredEmployeeField = RequiredExportField
 
 export const dynamicReferenceFieldKeys = [
   "cargo",
@@ -550,6 +550,8 @@ export const requiredExportFields: RequiredExportField[] = formSections.flatMap(
     .map((field) => ({
       key: field.key,
       label: field.label,
+      sectionId: section.id,
+      audience: section.audience,
     }))
 )
 
@@ -562,5 +564,6 @@ export const requiredEmployeeFields: RequiredEmployeeField[] = formSections
         key: field.key,
         label: field.label,
         sectionId: section.id,
+        audience: section.audience,
       }))
   )
