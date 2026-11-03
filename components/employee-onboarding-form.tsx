@@ -14,6 +14,7 @@ import {
   UsersRound,
 } from "lucide-react"
 import {
+  clientPresetFieldKeys,
   defaultFormValues,
   dynamicReferenceFieldKeys,
   getSectionsForAudience,
@@ -571,11 +572,71 @@ export function EmployeeOnboardingForm({
         const cleanPayload = Object.fromEntries(
           Object.entries(result.record.full_payload).filter(([key]) => key !== "dependentes")
         ) as FormState
-        setFormData({
+        const loadedFormData: FormState = {
           ...defaultFormValues,
           ...cleanPayload,
           convite_email: result.record.invite_email ?? String(result.record.full_payload.convite_email ?? ""),
-        })
+        }
+        let appliedClientDefaults = 0
+
+        if (
+          variant === "client" &&
+          clientId &&
+          !["finalizado", "exportado"].includes(result.record.workflow_status)
+        ) {
+          try {
+            const defaultsResponse = await fetch(`/api/clientes?id=${encodeURIComponent(clientId)}`, {
+              method: "GET",
+              cache: "no-store",
+            })
+            const defaultsResult = (await defaultsResponse.json()) as {
+              ok: boolean
+              record?: {
+                employee_defaults?: Record<string, string | boolean | number | null>
+              } | null
+            }
+
+            if (defaultsResponse.ok && defaultsResult.ok && defaultsResult.record?.employee_defaults) {
+              const normalizedDefaults = Object.fromEntries(
+                Object.entries(defaultsResult.record.employee_defaults).map(([key, value]) => [
+                  key,
+                  typeof value === "boolean" ? value : value == null ? "" : String(value),
+                ])
+              ) as FormState
+
+              for (const key of dynamicReferenceFieldKeys) {
+                const code = String(normalizedDefaults[key] ?? "")
+                const selectedRecord = (lookupCatalog[key] ?? []).find((record) => record.code === code)
+
+                if (selectedRecord) {
+                  normalizedDefaults[`${key}_descricao`] = selectedRecord.label
+                  if (key === "cargo") {
+                    normalizedDefaults.cargo_cbo = String(selectedRecord.metadata?.cbo_esocial ?? "")
+                  }
+                }
+              }
+
+              for (const key of clientPresetFieldKeys) {
+                if (!hasFilledValue(loadedFormData[key]) && hasFilledValue(normalizedDefaults[key])) {
+                  loadedFormData[key] = normalizedDefaults[key]
+                  appliedClientDefaults += 1
+
+                  if (dynamicReferenceFieldKeys.includes(key as (typeof dynamicReferenceFieldKeys)[number])) {
+                    const descriptionKey = `${key}_descricao`
+                    loadedFormData[descriptionKey] = normalizedDefaults[descriptionKey] ?? ""
+                    if (key === "cargo") {
+                      loadedFormData.cargo_cbo = normalizedDefaults.cargo_cbo ?? ""
+                    }
+                  }
+                }
+              }
+            }
+          } catch {
+            // O cadastro continua disponível mesmo se os padrões da empresa não puderem ser consultados.
+          }
+        }
+
+        setFormData(loadedFormData)
         setDependents(
           (result.record.dependents ?? []).map((dependent) => ({
             id: dependent.id,
@@ -599,9 +660,13 @@ export function EmployeeOnboardingForm({
           }))
         )
         setStatusMessage(
-          result.record.workflow_status === "convite_enviado"
-            ? "Cadastro carregado para continuar o preenchimento."
-            : "Este cadastro já foi enviado e não pode mais ser alterado pelo funcionário."
+          appliedClientDefaults > 0
+            ? `${appliedClientDefaults} padrão(ões) da empresa preencheram campos internos que estavam vazios.`
+            : result.record.workflow_status === "convite_enviado"
+              ? "Cadastro carregado para continuar o preenchimento."
+              : variant === "employee"
+                ? "Este cadastro já foi enviado e não pode mais ser alterado pelo funcionário."
+                : "Cadastro recebido e carregado para revisão do DP."
         )
       } catch (error) {
         if (isMounted) {
@@ -615,7 +680,7 @@ export function EmployeeOnboardingForm({
     return () => {
       isMounted = false
     }
-  }, [clientId, editRecordId, publicToken, variant])
+  }, [clientId, editRecordId, lookupCatalog, publicToken, variant])
 
   function updateField(key: string, value: string | boolean) {
     if (employeeReadOnly || dpWaitingForEmployee || (variant === "client" && !canManage)) {
