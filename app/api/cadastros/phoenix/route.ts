@@ -278,7 +278,7 @@ export async function GET(request: Request) {
         )
       }
 
-      const importPackage = buildContmaticImportPackage(record, clientInfo.contmaticNickname)
+      const importPackage = await buildContmaticImportPackage(record, clientInfo.contmaticNickname)
       const zip = new JSZip()
       zip.file(importPackage.employeeFileName, importPackage.employeeSql)
       zip.file(importPackage.generalFileName, importPackage.generalSql)

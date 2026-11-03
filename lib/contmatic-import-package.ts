@@ -22,6 +22,12 @@ function onlyDigits(value: unknown) {
   return asText(value).replace(/\D/g, "")
 }
 
+function formatCpf(value: unknown) {
+  const digits = onlyDigits(value)
+  if (digits.length !== 11) return digits
+  return digits.replace(/^(\d{3})(\d{3})(\d{3})(\d{2})$/, "$1.$2.$3-$4")
+}
+
 function leadingCode(value: unknown, fallback = "") {
   const text = asText(value)
   const match = text.match(/^(\d+)/)
@@ -100,6 +106,63 @@ function naturalityParts(value: unknown) {
   }
 }
 
+function normalizeMunicipalityName(value: string) {
+  return value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .trim()
+    .toLocaleLowerCase("pt-BR")
+    .replace(/\s+/g, " ")
+}
+
+type IbgeMunicipality = {
+  id: number
+  nome: string
+}
+
+const ibgeMunicipalitiesByState = new Map<string, Promise<IbgeMunicipality[]>>()
+
+async function resolveIbgeMunicipalityCode(city: string, state: string, label: string) {
+  const normalizedState = state.trim().toUpperCase()
+  const normalizedCity = normalizeMunicipalityName(city)
+
+  if (!normalizedCity || !/^[A-Z]{2}$/.test(normalizedState)) {
+    throw new Error(`Não foi possível identificar o município de ${label}: confira cidade e UF.`)
+  }
+
+  let request = ibgeMunicipalitiesByState.get(normalizedState)
+  if (!request) {
+    request = fetch(
+      `https://servicodados.ibge.gov.br/api/v1/localidades/estados/${encodeURIComponent(normalizedState)}/municipios`,
+      { cache: "force-cache", signal: AbortSignal.timeout(15_000) }
+    ).then(async (response) => {
+      if (!response.ok) {
+        throw new Error(`A consulta de municípios do IBGE falhou (HTTP ${response.status}).`)
+      }
+      return await response.json() as IbgeMunicipality[]
+    })
+    ibgeMunicipalitiesByState.set(normalizedState, request)
+  }
+
+  let municipalities: IbgeMunicipality[]
+  try {
+    municipalities = await request
+  } catch (error) {
+    ibgeMunicipalitiesByState.delete(normalizedState)
+    throw error
+  }
+
+  const municipality = municipalities.find(
+    (item) => normalizeMunicipalityName(item.nome) === normalizedCity
+  )
+
+  if (!municipality) {
+    throw new Error(`Município de ${label} não localizado no IBGE: ${city} - ${normalizedState}.`)
+  }
+
+  return String(municipality.id)
+}
+
 function contmaticRaceCode(value: unknown) {
   const code = leadingCode(value)
   return ({ "2": "1", "4": "2", "8": "3", "6": "4", "0": "5" } as Record<string, string>)[code] ?? code
@@ -155,7 +218,7 @@ function validatePackageData(record: EmployeeRecordDetail, companyAlias: string)
 
 const temporaryCadgwInsert = "INSERT INTO public.cadgw (apelido, razaosocial, endereco, nocasa, complcasa, bairro, distrito, subdistr, cep, cidade, uf, cgc, cpf, inscest, natjurid, codatividade, inicatividade, dataregistroxxxxxxx, nomeresp, qualifresp, cpfresp, foneresp, distrlp, dataisssimples, dataicmssimples, apelidomatriz, fpas, codbfgts, categempreg, codcgc, sat, cei, numcontfgts, codcontfgts, decman1, numproprietfamil, codmunicipio, codsindpat, regimefolha, arredonda, recpis, tipoempresa, vctogrmes, planocontas, regapurac, ccm, periodoicms, qtdetotalizador, metcontab, cae, codbcc, numerocc, porcfpas, porcsat, porcinssemp, desccodativ, feriasdobro, decimoterc1a, decimoterc2a, pgvariaveis, calendario, dpto, setor, secao, plcontascontab, balanco, tipocaixas, datainicbalanco, usaindicecon, n1extra, n2extra, n3extra, n4extra, n5extra, n6extra, n7extra, n8extra, n9extra, n10extra, f1extra, f2extra, f3extra, f4extra, x1extra, x2extra, x3extra, x4extra, x5extra, x6extra, x7extra, ativocentralsimples) VALUES ('ZZLIMPA', 'EMPRESA TEMPORARIA IMPORTACAO PALSYS', 'RUA TESTE', '0', 'TEMPORARIA', 'TESTE', '', '7099', '00000-000', 'SAO PAULO', 'SP', '00000000000000', '', '', '2135', '821999', '03/03/2023', '03/03/2023', 'IMPORTACAO PALSYS', '', '', '', '1', '  /  /    ', '  /  /    ', '', NULL, '0', '0', '0', NULL, '', '  /  /    ', NULL, NULL, '0', NULL, '0', '0', '0', NULL, '6', '2', '2', '1', '446287', '1', '6', '1', 'ADM', '0', NULL, '0', '0', '0', 'Administrativo', NULL, NULL, NULL, NULL, '0', '0', '0', '0', '0', '13', '2', NULL, '0', '0', '0', '1', '33', '1', '2', '0', '0', '1', '0', '2', '0', '0', '0', NULL, '8219999', '32060910', NULL, '12', '  .    .  - ', '', 'false');"
 
-export function buildContmaticImportPackage(
+export async function buildContmaticImportPackage(
   record: EmployeeRecordDetail,
   rawCompanyAlias: string | null | undefined
 ): ContmaticImportPackage {
@@ -166,6 +229,12 @@ export function buildContmaticImportPackage(
   const naturality = naturalityParts(data.naturalidade)
   const addressCountryCode = brazilCountryCode(data.pais) || "01058"
   const birthCountryCode = brazilCountryCode(data.pais_origem) || addressCountryCode
+  const addressMunicipalityCode = addressCountryCode === "01058"
+    ? await resolveIbgeMunicipalityCode(asText(data.cidade), asText(data.uf), "endereço")
+    : "0"
+  const birthMunicipalityCode = birthCountryCode === "01058"
+    ? await resolveIbgeMunicipalityCode(naturality.city, naturality.state, "nascimento")
+    : "0"
   const employeeName = asText(data.nome_completo)
   const employeeRegistration = asText(data.registro_funcionario) || employeeCode
   const employeeSheet = asText(data.folha_ficha) || employeeRegistration
@@ -186,7 +255,7 @@ export function buildContmaticImportPackage(
     insert("func", [
       "apelidopg", "funcid", "numregistro", "numchapa", "nome", "endereco", "numero", "compl", "bairro", "cidade", "uf", "cep", "fone", "datanasc", "nomepai", "nomemae", "estcivil", "sexo", "ctpsserieuf", "pis", "cpf", "rg", "titeleitor", "zona", "secao", "reservista", "carthabilt", "tpsanguinio", "naturalidade", "ufnasc", "nacionalidade", "datachegada", "situacaocaged", "grauinstr", "vinculoempreg", "admrefgts", "tipocontrato", "validadeexmed", "op13ferres", "dataadmissao", "dataopcaofgts", "dataexmedico", "datatransf", "datarescisao", "numcontfgts", "numbanco", "numerocc", "tiposalario", "codsind", "tptributsind", "qtdehsmensal", "qtdehssemana", "tempoexper", "tempoprorrog", "codlocal", "coddepto", "codsetor", "codsecao", "codrisco", "emissorrg", "emissorufrg", "dataexprg", "dataexpctps", "tipovisto", "numrne", "validaderne", "dataexpctpsex", "valctpsex", "numctpsex", "datacadpis", "matriculasind", "nomeconsreg", "numconsreg", "siglaconsreg", "regiaoconsreg", "partcipa", "qtdedepsalfam", "qtdedepirrf", "codhorario", "observacao", "datatransferenciasaida",
     ], [
-      companyAlias, employeeCode, employeeRegistration, employeeBadge, employeeName, asText(data.logradouro), asText(data.numero), asText(data.complemento), asText(data.bairro), asText(data.cidade), asText(data.uf), asText(data.cep), asText(data.telefone || data.celular), asText(data.data_nascimento), asText(data.nome_pai), asText(data.nome_mae), leadingCode(data.estado_civil), leadingCode(data.sexo), [asText(data.ctps_serie), asText(data.ctps_uf)].filter(Boolean).join("/"), onlyDigits(data.pis), onlyDigits(data.cpf), asText(data.rg_numero), asText(data.titulo_eleitor), asText(data.zona_eleitoral), asText(data.secao_eleitoral), "", asText(data.cnh_numero), asText(data.tipo_sanguineo) || null, naturality.city, naturality.state, leadingCode(data.nacionalidade, "10"), null, leadingCode(data.caged, "0"), leadingCode(data.grau_instrucao), leadingCode(data.vinculo_empregaticio), leadingCode(data.codigo_admissao || data.indicativo_admissao, "0"), leadingCode(data.tipo_contrato), asText(data.validade_exame_medico) || "0", "0", admissionDate, admissionDate, asText(data.data_exame_medico) || null, null, asText(data.data_saida) || null, null, asText(data.banco) || null, asText(data.numero_conta), "0", asText(data.sindicato), leadingCode(data.tipo_tributacao_sindical, "0"), monthlyHours, weeklyHours, asText(data.experiencia_qtde_dias) || "0", asText(data.experiencia_qtde_dias_prorrogacao) || "0", asText(data.local) || "0", asText(data.departamento) || "0", asText(data.setor) || "0", asText(data.secao) || "0", leadingCode(data.grau_risco, "1"), leadingCode(data.rg_orgao_emissor), asText(data.uf_rg), asText(data.rg_data_expedicao) || null, asText(data.ctps_data_expedicao) || null, null, "", null, null, null, null, null, null, null, "", null, null, "false", "0", "0", asText(data.horario) || "0", notes, null,
+      companyAlias, employeeCode, employeeRegistration, employeeBadge, employeeName, asText(data.logradouro), asText(data.numero), asText(data.complemento), asText(data.bairro), asText(data.cidade), asText(data.uf), asText(data.cep), asText(data.telefone || data.celular), asText(data.data_nascimento), asText(data.nome_pai), asText(data.nome_mae), leadingCode(data.estado_civil), leadingCode(data.sexo), [asText(data.ctps_serie), asText(data.ctps_uf)].filter(Boolean).join("/"), onlyDigits(data.pis), formatCpf(data.cpf), asText(data.rg_numero), asText(data.titulo_eleitor), asText(data.zona_eleitoral), asText(data.secao_eleitoral), "", asText(data.cnh_numero), asText(data.tipo_sanguineo) || null, naturality.city, naturality.state, leadingCode(data.nacionalidade, "10"), null, leadingCode(data.caged, "0"), leadingCode(data.grau_instrucao), leadingCode(data.vinculo_empregaticio), leadingCode(data.codigo_admissao || data.indicativo_admissao, "0"), leadingCode(data.tipo_contrato), asText(data.validade_exame_medico) || "0", "0", admissionDate, admissionDate, asText(data.data_exame_medico) || null, null, asText(data.data_saida) || null, null, asText(data.banco) || null, asText(data.numero_conta), "0", asText(data.sindicato), leadingCode(data.tipo_tributacao_sindical, "0"), monthlyHours, weeklyHours, asText(data.experiencia_qtde_dias) || "0", asText(data.experiencia_qtde_dias_prorrogacao) || "0", asText(data.local) || "0", asText(data.departamento) || "0", asText(data.setor) || "0", asText(data.secao) || "0", leadingCode(data.grau_risco, "1"), leadingCode(data.rg_orgao_emissor), asText(data.uf_rg), asText(data.rg_data_expedicao) || null, asText(data.ctps_data_expedicao) || null, null, "", null, null, null, null, null, null, null, "", null, null, "false", "0", "0", asText(data.horario) || "0", notes, null,
     ]),
     insert("funcaux", ["apelidopg", "funcid", "racacor", "int1", "int2", "int3", "int4", "float1", "float2", "str1", "str2", "data1", "data2"], [
       companyAlias, employeeCode, contmaticRaceCode(data.raca_cor), "0", "0", "0", "0", "0", "0", null, "", null, null,
@@ -199,7 +268,7 @@ export function buildContmaticImportPackage(
     insert("funcaux2", [
       "apelidopg", "funcid", "tipolog", "codmunicipio", "codpais", "caixapostal", "fonecelular", "codpaisnasc", "codmunnasc", "obsdeffisico", "casadobrasil", "filhosbrasil", "dataexpcnh", "orgaoemissorcnh", "expedicaocr", "orgemissorcr", "vencimentocr", "expedicaorne", "orgemissrne", "numeropass", "orgemispass", "ufpass", "codpaispass", "emissaopass", "validadepass", "numerocnv", "expedicaocnv", "validadecnv", "residprop", "imoveladfgts", "cnpjva", "matriculava", "dtiniciova", "dtfimva", "observacaova", "inicioaposen", "motivoaposen", "instensinoid", "coordenadoid", "agenintgid", "natobrigator", "seguradoraas", "numeroas", "prevtermestg", "areaatuaestg", "inscinssdata", "inscinssnro", "extra_int_1", "extra_int_2", "extra_int_3", "extra_int_4", "extra_int_5", "extra_int_6", "extra_int_7", "extra_int_8", "motivotrabtemp", "tipoinctrabtemp", "extra_chr_1", "numerocompl", "caixapostalcompl", "complementocompl", "bairrocompl", "cidadecompl", "enderecocompl", "emailcompl", "emailalternativo", "orgaoemissorcompl", "numerocnhcompl", "ufcnh", "orgaoemissorric", "nroconselhoreg", "nomesocial", "matriculavacompl", "numprocreintegra", "apelidotransf", "cnpjtransf", "matriculatransf", "extra_chr_11", "extra_log_1", "extra_log_2", "extra_log_3", "extra_log_4", "ctpsdigital", "extra_flo_1", "extra_flo_2", "extra_flo_3", "extra_flo_4", "extra_flo_5", "extra_dat_1", "extra_dat_2", "extra_dat_3", "extra_dat_4", "extra_dat_5", "extra_dat_6",
     ], [
-      companyAlias, employeeCode, "33", "0", addressCountryCode, "", asText(data.celular), birthCountryCode, "0", asText(data.observacao_deficiencia), "false", "false", asText(data.data_expedicao_cnh) || null, leadingCode(data.orgao_emissor_cnh, "0"), null, null, null, null, "", null, "0", null, null, null, null, null, null, null, booleanValue(data.possui_residencia_propria), booleanValue(data.imovel_fgts), asText(data.cnpj_vinculo_anterior) || null, asText(data.matricula_anterior) || null, asText(data.data_inicio_vinculo_anterior) || null, asText(data.data_fim_vinculo_anterior) || null, null, asText(data.inicio_aposentadoria) || null, leadingCode(data.motivo_aposentadoria, "0"), "0", "0", "0", "false", null, null, null, null, null, onlyDigits(data.pis), "0", "0", "0", "0", "0", "-1", "0", "0", "0", "0", null, null, "", "", "", "", "", asText(data.email), "", "", " ", asText(data.uf_cnh || data.uf_rg), "", "", asText(data.nome_social), null, null, null, null, null, null, "false", "false", "false", "false", booleanValue(data.ctps_digital), "0", "0", "0", "0", "0", null, null, null, null, null, null,
+      companyAlias, employeeCode, "33", addressMunicipalityCode, addressCountryCode, "", asText(data.celular), birthCountryCode, birthMunicipalityCode, asText(data.observacao_deficiencia), "false", "false", asText(data.data_expedicao_cnh) || null, leadingCode(data.orgao_emissor_cnh, "0"), null, null, null, null, "", null, "0", null, null, null, null, null, null, null, booleanValue(data.possui_residencia_propria), booleanValue(data.imovel_fgts), asText(data.cnpj_vinculo_anterior) || null, asText(data.matricula_anterior) || null, asText(data.data_inicio_vinculo_anterior) || null, asText(data.data_fim_vinculo_anterior) || null, null, asText(data.inicio_aposentadoria) || null, leadingCode(data.motivo_aposentadoria, "0"), "0", "0", "0", "false", null, null, null, null, null, onlyDigits(data.pis), "0", "0", "0", "0", "0", "-1", "0", "0", "0", "0", null, null, "", "", "", "", "", asText(data.email), "", "", " ", asText(data.uf_cnh || data.uf_rg), "", "", asText(data.nome_social), null, null, null, null, null, null, "false", "false", "false", "false", booleanValue(data.ctps_digital), "0", "0", "0", "0", "0", null, null, null, null, null, null,
     ]),
     insert("funcaux3", [
       "apelidopg", "funcid", "motivo", "tipoinclusao", "extra_chr_1", "matriculaesocial", "apelidosucessora", "extra_chr_2", "extra_chr_3", "extra_chr_4", "extra_chr_5", "extra_int_1", "extra_int_2", "extra_int_3", "extra_int_4", "extra_int_5", "extra_int_6", "extra_int_7", "extra_int_8", "extra_int_9", "extra_int_10", "extra_float_1", "extra_float_2", "extra_float_3", "extra_float_4", "extra_float_5", "extra_float_6", "extra_float_7", "extra_float_8", "extra_float_9", "extra_float_10", "extra_date_1", "extra_date_2", "extra_date_3", "extra_date_4", "extra_date_5", "extra_date_6", "extra_date_7", "extra_date_8", "extra_date_9", "extra_date_10", "extra_logical_1", "extra_logical_2", "extra_logical_3", "extra_logical_4", "extra_logical_5", "extra_logical_6", "extra_logical_7", "extra_logical_8", "extra_logical_9", "extra_logical_10", "justificativa",
