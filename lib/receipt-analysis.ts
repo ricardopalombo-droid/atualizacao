@@ -16,6 +16,16 @@ export const receiptAnalysisSchema = z.object({
     total_descontos: moneySchema,
     valor_liquido: moneySchema,
   }),
+  motivo_desligamento: z.object({
+    aplicavel: z.boolean(),
+    codigo: z.string(),
+    motivo: z.string(),
+    explicacao: z.string(),
+    aviso_previo: z.string(),
+    verbas_normalmente_devidas: z.array(z.string()),
+    verbas_normalmente_nao_devidas: z.array(z.string()),
+    ressalvas: z.array(z.string()),
+  }),
   itens: z.array(
     z.object({
       descricao: z.string(),
@@ -69,6 +79,30 @@ const RESPONSE_SCHEMA = {
         valor_liquido: { type: ["number", "null"] },
       },
       required: ["total_vencimentos", "total_descontos", "valor_liquido"],
+      additionalProperties: false,
+    },
+    motivo_desligamento: {
+      type: "object",
+      properties: {
+        aplicavel: { type: "boolean" },
+        codigo: { type: "string" },
+        motivo: { type: "string" },
+        explicacao: { type: "string" },
+        aviso_previo: { type: "string" },
+        verbas_normalmente_devidas: { type: "array", items: { type: "string" } },
+        verbas_normalmente_nao_devidas: { type: "array", items: { type: "string" } },
+        ressalvas: { type: "array", items: { type: "string" } },
+      },
+      required: [
+        "aplicavel",
+        "codigo",
+        "motivo",
+        "explicacao",
+        "aviso_previo",
+        "verbas_normalmente_devidas",
+        "verbas_normalmente_nao_devidas",
+        "ressalvas",
+      ],
       additionalProperties: false,
     },
     itens: {
@@ -133,6 +167,7 @@ const RESPONSE_SCHEMA = {
     "competencia",
     "titulo",
     "resumo",
+    "motivo_desligamento",
     "itens",
     "calculos",
     "pendencias",
@@ -169,6 +204,28 @@ absoluto entre ambos. Diferença de até R$ 1,00 é tolerância normal de arredo
 use status confere, não mencione a diferença e não crie alerta. Somente quando a diferença for maior
 que R$ 1,00 use status diverge e explique claramente o valor calculado, o valor do documento e a
 diferença. Use status informativo apenas quando não houver dados suficientes para uma comparação.
+
+Quando o documento for uma rescisão, preencha motivo_desligamento e crie uma explicação própria sobre
+o motivo e seus efeitos. Leia a causa e o código impressos no TRCT ou nos anexos; não deduza o motivo
+apenas pelas verbas pagas. Informe o código, o nome do motivo, se o término decorreu de iniciativa do
+empregador, do empregado, de término automático ou de outra causa, e explique em linguagem simples
+quais verbas normalmente são devidas ou não devidas por esse motivo. Explique separadamente o efeito
+sobre o aviso-prévio. Use expressões como “em regra” e registre em ressalvas condições que possam mudar
+o resultado, como convenção coletiva, contrato por prazo determinado, aviso já em curso, estabilidade,
+acidente de trabalho, decisão judicial ou informação ausente. Não confunda falecimento do empregado com
+falecimento do empregador.
+
+Referências de identificação: no TRCT/HomologNet, FT1 significa rescisão por falecimento do empregado;
+na Tabela 19 do eSocial, o motivo 10 possui o mesmo significado. Nessa hipótese o vínculo personalíssimo
+se encerra automaticamente na data do falecimento. Em regra, não surge aviso-prévio indenizado novo,
+pois não houve dispensa sem justa causa nem pedido de demissão. Explique que costumam permanecer saldo
+de salário, 13º proporcional, férias adquiridas ou proporcionais com um terço, além de outras parcelas
+já vencidas; e que aviso-prévio novo, seguro-desemprego e multa de 40% do FGTS normalmente não decorrem
+apenas do falecimento. Se o falecimento ocorreu durante aviso-prévio já iniciado, se houver instrumento
+coletivo ou se o contexto estiver incompleto, não conclua automaticamente: inclua a ressalva ou pergunte.
+Os valores podem ser destinados aos dependentes ou sucessores habilitados, conforme o caso.
+
+Para holerite ou férias, use aplicavel=false e deixe os demais campos de motivo_desligamento vazios.
 
 Considere todos os arquivos enviados em conjunto. Identifique o recibo/termo principal e use
 demonstrativos de médias, faltas ou outras memórias como anexos complementares. Liste, sem dados

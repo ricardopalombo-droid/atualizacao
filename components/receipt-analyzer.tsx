@@ -10,6 +10,7 @@ import {
   FileText,
   LoaderCircle,
   Printer,
+  Scale,
   ShieldCheck,
   Upload,
 } from "lucide-react"
@@ -24,6 +25,16 @@ type Analysis = {
     total_vencimentos: number | null
     total_descontos: number | null
     valor_liquido: number | null
+  }
+  motivo_desligamento: {
+    aplicavel: boolean
+    codigo: string
+    motivo: string
+    explicacao: string
+    aviso_previo: string
+    verbas_normalmente_devidas: string[]
+    verbas_normalmente_nao_devidas: string[]
+    ressalvas: string[]
   }
   itens: Array<{
     descricao: string
@@ -341,6 +352,77 @@ function AnalysisResult({ analysis }: { analysis: Analysis }) {
           </div>
         )}
       </div>
+
+      {analysis.tipo_documento === "rescisao" && analysis.motivo_desligamento.aplicavel && (
+        <article className="rounded-[2rem] border border-violet-200 bg-white p-6 shadow-sm md:p-8">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-violet-100 text-violet-700">
+              <Scale className="h-6 w-6" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <div className="flex flex-wrap items-center gap-3">
+                <h3 className="text-xl font-bold text-slate-950">Motivo do desligamento</h3>
+                {analysis.motivo_desligamento.codigo && (
+                  <span className="rounded-full bg-violet-100 px-3 py-1 text-xs font-bold text-violet-800">
+                    Código {analysis.motivo_desligamento.codigo}
+                  </span>
+                )}
+              </div>
+              <p className="mt-2 text-lg font-semibold text-violet-950">
+                {analysis.motivo_desligamento.motivo}
+              </p>
+              <p className="mt-3 leading-7 text-slate-600">
+                {analysis.motivo_desligamento.explicacao}
+              </p>
+            </div>
+          </div>
+
+          {analysis.motivo_desligamento.aviso_previo && (
+            <div className="mt-6 rounded-2xl border border-blue-100 bg-blue-50 p-5">
+              <h4 className="font-bold text-blue-950">E o aviso-prévio?</h4>
+              <p className="mt-2 leading-7 text-blue-900">{analysis.motivo_desligamento.aviso_previo}</p>
+            </div>
+          )}
+
+          {(analysis.motivo_desligamento.verbas_normalmente_devidas.length > 0 ||
+            analysis.motivo_desligamento.verbas_normalmente_nao_devidas.length > 0) && (
+            <div className="mt-6 grid gap-4 md:grid-cols-2">
+              {analysis.motivo_desligamento.verbas_normalmente_devidas.length > 0 && (
+                <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-5">
+                  <h4 className="font-bold text-emerald-950">Verbas normalmente devidas</h4>
+                  <ul className="mt-3 space-y-2 text-sm leading-6 text-emerald-900">
+                    {analysis.motivo_desligamento.verbas_normalmente_devidas.map((item) => (
+                      <li key={item} className="flex gap-2">
+                        <CheckCircle2 className="mt-1 h-4 w-4 shrink-0" />
+                        <span>{item}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              {analysis.motivo_desligamento.verbas_normalmente_nao_devidas.length > 0 && (
+                <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
+                  <h4 className="font-bold text-slate-950">Verbas normalmente não geradas por esse motivo</h4>
+                  <ul className="mt-3 list-disc space-y-2 pl-5 text-sm leading-6 text-slate-700">
+                    {analysis.motivo_desligamento.verbas_normalmente_nao_devidas.map((item) => (
+                      <li key={item}>{item}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
+          )}
+
+          {analysis.motivo_desligamento.ressalvas.length > 0 && (
+            <div className="mt-5 rounded-2xl border border-amber-200 bg-amber-50 p-5">
+              <h4 className="font-bold text-amber-950">O que ainda pode alterar essa explicação</h4>
+              <ul className="mt-3 list-disc space-y-2 pl-5 text-sm leading-6 text-amber-900">
+                {analysis.motivo_desligamento.ressalvas.map((item) => <li key={item}>{item}</li>)}
+              </ul>
+            </div>
+          )}
+        </article>
+      )}
 
       {analysis.calculos.map((calculation, index) => (
         <article key={`${calculation.titulo}-${index}`} className="rounded-[2rem] border border-slate-200 bg-white p-6 md:p-8">
