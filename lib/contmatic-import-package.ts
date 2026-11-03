@@ -42,12 +42,51 @@ function sqlValue(value: SqlValue) {
   return `'${text.replace(/'/g, "''")}'`
 }
 
+function validateKnownColumnTypes(table: string, columns: string[], values: SqlValue[]) {
+  const fields = new Map(columns.map((column, index) => [column, values[index]]))
+  const assertInteger = (column: string) => {
+    const value = fields.get(column)
+    if (value === null || value === undefined) return
+    if (!/^-?\d+$/.test(String(value))) {
+      throw new Error(`Falha interna ao gerar ${table}.${column}: era esperado um número inteiro.`)
+    }
+  }
+  const assertMaxLength = (column: string, maxLength: number) => {
+    const value = fields.get(column)
+    if (value === null || value === undefined) return
+    if (String(value).length > maxLength) {
+      throw new Error(`Falha interna ao gerar ${table}.${column}: máximo de ${maxLength} caractere(s).`)
+    }
+  }
+
+  if (table === "func") {
+    [
+      "numbanco",
+      "qtdehsmensal",
+      "qtdehssemana",
+      "matriculasind",
+      "regiaoconsreg",
+      "qtdedepsalfam",
+      "qtdedepirrf",
+      "codhorario",
+    ].forEach(assertInteger)
+  }
+
+  if (table === "funcaux2") {
+    assertInteger("motivoaposen")
+    assertMaxLength("numerocnhcompl", 1)
+    assertMaxLength("ufcnh", 2)
+  }
+}
+
 function insert(table: string, columns: string[], values: SqlValue[]) {
   if (columns.length !== values.length) {
     throw new Error(
       `Falha interna ao gerar ${table}: ${columns.length} colunas e ${values.length} valores.`
     )
   }
+
+  validateKnownColumnTypes(table, columns, values)
 
   return `INSERT INTO public.${table} (${columns.join(", ")}) VALUES (${values.map(sqlValue).join(", ")});`
 }
@@ -146,7 +185,7 @@ export function buildContmaticImportPackage(
     insert("func", [
       "apelidopg", "funcid", "numregistro", "numchapa", "nome", "endereco", "numero", "compl", "bairro", "cidade", "uf", "cep", "fone", "datanasc", "nomepai", "nomemae", "estcivil", "sexo", "ctpsserieuf", "pis", "cpf", "rg", "titeleitor", "zona", "secao", "reservista", "carthabilt", "tpsanguinio", "naturalidade", "ufnasc", "nacionalidade", "datachegada", "situacaocaged", "grauinstr", "vinculoempreg", "admrefgts", "tipocontrato", "validadeexmed", "op13ferres", "dataadmissao", "dataopcaofgts", "dataexmedico", "datatransf", "datarescisao", "numcontfgts", "numbanco", "numerocc", "tiposalario", "codsind", "tptributsind", "qtdehsmensal", "qtdehssemana", "tempoexper", "tempoprorrog", "codlocal", "coddepto", "codsetor", "codsecao", "codrisco", "emissorrg", "emissorufrg", "dataexprg", "dataexpctps", "tipovisto", "numrne", "validaderne", "dataexpctpsex", "valctpsex", "numctpsex", "datacadpis", "matriculasind", "nomeconsreg", "numconsreg", "siglaconsreg", "regiaoconsreg", "partcipa", "qtdedepsalfam", "qtdedepirrf", "codhorario", "observacao", "datatransferenciasaida",
     ], [
-      companyAlias, employeeCode, employeeRegistration, employeeBadge, employeeName, asText(data.logradouro), asText(data.numero), asText(data.complemento), asText(data.bairro), asText(data.cidade), asText(data.uf), asText(data.cep), asText(data.telefone || data.celular), asText(data.data_nascimento), asText(data.nome_pai), asText(data.nome_mae), leadingCode(data.estado_civil), leadingCode(data.sexo), [asText(data.ctps_serie), asText(data.ctps_uf)].filter(Boolean).join("/"), onlyDigits(data.pis), onlyDigits(data.cpf), asText(data.rg_numero), asText(data.titulo_eleitor), asText(data.zona_eleitoral), asText(data.secao_eleitoral), "", asText(data.cnh_numero), asText(data.tipo_sanguineo) || null, naturality.city, naturality.state, leadingCode(data.nacionalidade, "10"), null, leadingCode(data.caged, "0"), leadingCode(data.grau_instrucao), leadingCode(data.vinculo_empregaticio), leadingCode(data.codigo_admissao || data.indicativo_admissao, "0"), leadingCode(data.tipo_contrato), asText(data.validade_exame_medico) || "0", "0", admissionDate, admissionDate, asText(data.data_exame_medico) || null, null, asText(data.data_saida) || null, null, asText(data.banco) || null, asText(data.numero_conta), "0", asText(data.sindicato), leadingCode(data.tipo_tributacao_sindical, "0"), monthlyHours, weeklyHours, asText(data.experiencia_qtde_dias) || "0", asText(data.experiencia_qtde_dias_prorrogacao) || "0", asText(data.local) || "0", asText(data.departamento) || "0", asText(data.setor) || "0", asText(data.secao) || "0", leadingCode(data.grau_risco, "1"), leadingCode(data.rg_orgao_emissor), asText(data.uf_rg), asText(data.rg_data_expedicao) || null, asText(data.ctps_data_expedicao) || null, null, "", null, null, null, null, null, null, null, null, null, null, null, null, "false", asText(data.horario) || "0", notes, null,
+      companyAlias, employeeCode, employeeRegistration, employeeBadge, employeeName, asText(data.logradouro), asText(data.numero), asText(data.complemento), asText(data.bairro), asText(data.cidade), asText(data.uf), asText(data.cep), asText(data.telefone || data.celular), asText(data.data_nascimento), asText(data.nome_pai), asText(data.nome_mae), leadingCode(data.estado_civil), leadingCode(data.sexo), [asText(data.ctps_serie), asText(data.ctps_uf)].filter(Boolean).join("/"), onlyDigits(data.pis), onlyDigits(data.cpf), asText(data.rg_numero), asText(data.titulo_eleitor), asText(data.zona_eleitoral), asText(data.secao_eleitoral), "", asText(data.cnh_numero), asText(data.tipo_sanguineo) || null, naturality.city, naturality.state, leadingCode(data.nacionalidade, "10"), null, leadingCode(data.caged, "0"), leadingCode(data.grau_instrucao), leadingCode(data.vinculo_empregaticio), leadingCode(data.codigo_admissao || data.indicativo_admissao, "0"), leadingCode(data.tipo_contrato), asText(data.validade_exame_medico) || "0", "0", admissionDate, admissionDate, asText(data.data_exame_medico) || null, null, asText(data.data_saida) || null, null, asText(data.banco) || null, asText(data.numero_conta), "0", asText(data.sindicato), leadingCode(data.tipo_tributacao_sindical, "0"), monthlyHours, weeklyHours, asText(data.experiencia_qtde_dias) || "0", asText(data.experiencia_qtde_dias_prorrogacao) || "0", asText(data.local) || "0", asText(data.departamento) || "0", asText(data.setor) || "0", asText(data.secao) || "0", leadingCode(data.grau_risco, "1"), leadingCode(data.rg_orgao_emissor), asText(data.uf_rg), asText(data.rg_data_expedicao) || null, asText(data.ctps_data_expedicao) || null, null, "", null, null, null, null, null, null, null, "", null, null, "false", "0", "0", asText(data.horario) || "0", notes, null,
     ]),
     insert("funcaux", ["apelidopg", "funcid", "racacor", "int1", "int2", "int3", "int4", "float1", "float2", "str1", "str2", "data1", "data2"], [
       companyAlias, employeeCode, contmaticRaceCode(data.raca_cor), "0", "0", "0", "0", "0", "0", null, "", null, null,
