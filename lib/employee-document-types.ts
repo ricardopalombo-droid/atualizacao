@@ -37,6 +37,7 @@ export const extractableEmployeeFieldKeys = [
   "naturalidade",
   "sexo",
   "nacionalidade",
+  "estado_civil",
   "cpf",
   "pis",
   "ctps_numero",

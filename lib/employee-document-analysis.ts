@@ -64,8 +64,16 @@ Valores de selecao devem seguir estes formatos quando houver informacao suficien
 - sexo: "1 - Masculino" ou "2 - Feminino";
 - nacionalidade brasileira: "10 - Brasileira";
 - pais brasileiro: "Brasil";
+- estado civil: "1 - Solteiro", "2 - Casado", "3 - Divorciado", "4 - Separado" ou "5 - Viuvo";
 - orgao emissor RG SSP: "4 - Secretaria de Seguranca Publica";
 - orgao emissor CNH DETRAN: "1 - DETRAN (Departamento Estadual de Transito do Estado de Sao Paulo)".
+
+Regras importantes:
+- quando RG/CIN, CNH ou certidao informar nacionalidade brasileira, extraia tambem pais_origem como "Brasil";
+- em certidao de casamento sem averbacao de divorcio, separacao ou obito, o estado civil atual e
+  "2 - Casado", mesmo que o quadro dos conjuges informe "Solteiro" ou "Solteira" no momento da habilitacao;
+- nao trate o estado civil anterior registrado na habilitacao como estado civil atual;
+- havendo averbacao posterior, use o estado civil resultante da averbacao e acrescente um warning para conferencia.
 
 Em evidence, descreva apenas a regiao/rotulo que sustenta o campo, sem repetir o valor
 pessoal completo. Se o documento estiver protegido, ilegivel ou inconsistente, use warnings.
@@ -104,6 +112,16 @@ function dedupeFields(analysis: EmployeeDocumentAnalysis): EmployeeDocumentAnaly
     if (!previous || confidenceRank[field.confidence] > confidenceRank[previous.confidence]) {
       byKey.set(field.key, { ...field, value })
     }
+  }
+
+  const nationality = byKey.get("nacionalidade")
+  if (nationality?.value === "10 - Brasileira" && !byKey.has("pais_origem")) {
+    byKey.set("pais_origem", {
+      key: "pais_origem",
+      value: "Brasil",
+      confidence: nationality.confidence,
+      evidence: "Nacionalidade brasileira identificada no documento.",
+    })
   }
 
   return { ...analysis, fields: Array.from(byKey.values()) }
