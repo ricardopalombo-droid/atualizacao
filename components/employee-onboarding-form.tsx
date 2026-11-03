@@ -329,6 +329,7 @@ export function EmployeeOnboardingForm({
   const [status, setStatus] = useState<WorkflowStatus>("rascunho_interno")
   const [recordId, setRecordId] = useState<string | null>(null)
   const [isSaving, setIsSaving] = useState(false)
+  const [showSubmissionSuccess, setShowSubmissionSuccess] = useState(false)
   const [statusMessage, setStatusMessage] = useState(
     variant === "employee"
       ? "Preencha suas informações pessoais e envie para o DP revisar."
@@ -463,7 +464,7 @@ export function EmployeeOnboardingForm({
         const targetUrl =
           variant === "employee"
             ? `/api/cadastros/funcionario?token=${encodeURIComponent(publicToken ?? "")}`
-            : `/api/cadastros?id=${editRecordId}`
+            : `/api/cadastros?id=${encodeURIComponent(editRecordId ?? "")}&clientId=${encodeURIComponent(clientId ?? "")}`
 
         const response = await fetch(targetUrl, {
           method: "GET",
@@ -545,7 +546,7 @@ export function EmployeeOnboardingForm({
     return () => {
       isMounted = false
     }
-  }, [editRecordId, publicToken, variant])
+  }, [clientId, editRecordId, publicToken, variant])
 
   function updateField(key: string, value: string | boolean) {
     if (employeeReadOnly || (variant === "client" && !canManage)) {
@@ -945,6 +946,7 @@ export function EmployeeOnboardingForm({
           "preenchido_funcionario",
           "Cadastro básico enviado. Agora o DP deve revisar e completar os campos internos."
         )
+        setShowSubmissionSuccess(true)
       } catch (error) {
         setStatusMessage(error instanceof Error ? error.message : "Erro ao enviar cadastro básico.")
       } finally {
@@ -988,6 +990,38 @@ export function EmployeeOnboardingForm({
 
   return (
     <div className="space-y-6">
+      {showSubmissionSuccess ? (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 p-4"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="submission-success-title"
+        >
+          <div className="w-full max-w-lg rounded-3xl bg-white p-7 shadow-2xl">
+            <div className="flex h-14 w-14 items-center justify-center rounded-full bg-green-100 text-green-700">
+              <CheckCircle2 className="h-8 w-8" aria-hidden="true" />
+            </div>
+            <h3 id="submission-success-title" className="mt-5 text-2xl font-bold text-slate-900">
+              Cadastro enviado com sucesso!
+            </h3>
+            <p className="mt-3 leading-7 text-slate-600">
+              Seus dados e documentos foram enviados ao Departamento Pessoal. Você concluiu esta etapa e não
+              precisa fazer mais nada agora.
+            </p>
+            <p className="mt-2 text-sm text-slate-500">
+              Se precisar corrigir alguma informação, entre em contato com o Departamento Pessoal.
+            </p>
+            <button
+              type="button"
+              onClick={() => setShowSubmissionSuccess(false)}
+              className="mt-6 w-full rounded-2xl bg-slate-950 px-5 py-3 font-bold text-white transition hover:bg-slate-800"
+            >
+              Entendi
+            </button>
+          </div>
+        </div>
+      ) : null}
+
       {variant === "client" ? (
         <WorkflowOverview
           formData={formData}
