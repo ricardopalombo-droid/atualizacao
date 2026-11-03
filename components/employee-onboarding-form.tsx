@@ -28,6 +28,7 @@ import {
 } from "@/lib/employee-form-config"
 import { EmployeeDocuments } from "@/components/employee-documents"
 import type { EmployeeDocumentExtractedField } from "@/lib/employee-document-types"
+import { resolveBrazilCityOption } from "@/lib/location-options"
 
 type FormState = Record<string, string | boolean>
 
@@ -512,6 +513,15 @@ export function EmployeeOnboardingForm({
   }, [formData.pais, formData.uf])
 
   useEffect(() => {
+    const currentNaturalidade = String(formData.naturalidade ?? "").trim()
+    const resolvedNaturalidade = resolveBrazilCityOption(currentNaturalidade)
+
+    if (resolvedNaturalidade && resolvedNaturalidade !== currentNaturalidade) {
+      setFormData((previous) => ({ ...previous, naturalidade: resolvedNaturalidade }))
+    }
+  }, [formData.naturalidade])
+
+  useEffect(() => {
     if (!editRecordId && !publicToken) {
       return
     }
@@ -896,7 +906,10 @@ export function EmployeeOnboardingForm({
       for (const field of fields) {
         const current = next[field.key]
         if (current === undefined || current === false || String(current).trim() === "") {
-          next[field.key] = field.value
+          next[field.key] =
+            field.key === "naturalidade"
+              ? resolveBrazilCityOption(field.value) ?? field.value
+              : field.value
         }
       }
       if (next.ctps_digital && fields.some((field) => field.key === "cpf")) {

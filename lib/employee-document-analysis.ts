@@ -58,7 +58,8 @@ visiveis e pertencentes ao titular. Nunca adivinhe caracteres, datas ou numeros.
 
 Datas devem usar AAAA-MM-DD. CPF, PIS, CEP e numeros de documentos devem ser devolvidos
 sem pontuacao, exceto quando a pontuacao fizer parte indispensavel do documento.
-UF deve ter duas letras. Naturalidade deve conter somente a cidade.
+UF deve ter duas letras. Naturalidade deve usar "Cidade - UF" quando a UF estiver visível;
+quando ela não estiver disponível, devolva somente a cidade.
 
 Valores de selecao devem seguir estes formatos quando houver informacao suficiente:
 - sexo: "1 - Masculino" ou "2 - Feminino";

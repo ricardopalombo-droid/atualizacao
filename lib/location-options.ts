@@ -5767,3 +5767,33 @@ export const ibgeCityNames = [
   'Zé Doca - MA',
   'Zortéa - SC',
 ] as const
+
+function normalizeLocationValue(value: string) {
+  return value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, " ")
+}
+
+export function resolveBrazilCityOption(value: string) {
+  const rawValue = value.trim()
+  if (!rawValue) return null
+
+  const exactOption = ibgeCityNames.find(
+    (option) => normalizeLocationValue(option) === normalizeLocationValue(rawValue)
+  )
+  if (exactOption) return exactOption
+
+  const valueWithState = rawValue.match(/^(.*?)\s*(?:-|\/)\s*([a-z]{2})$/i)
+  const requestedCity = normalizeLocationValue(valueWithState?.[1] ?? rawValue)
+  const requestedState = valueWithState?.[2]?.toUpperCase() ?? null
+  const matchingOptions = ibgeCityNames.filter((option) => {
+    const match = option.match(/^(.*?)\s+-\s+([A-Z]{2})$/)
+    if (!match || normalizeLocationValue(match[1]) !== requestedCity) return false
+    return !requestedState || match[2] === requestedState
+  })
+
+  return matchingOptions.length === 1 ? matchingOptions[0] : null
+}
