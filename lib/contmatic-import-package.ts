@@ -1,5 +1,6 @@
 import type { EmployeeRecordDetail } from "@/lib/cadastro-repository"
 import { requiredExportFields } from "@/lib/employee-form-config"
+import ibgeMunicipalities from "@/lib/ibge-municipality-codes.json"
 
 type SqlValue = string | number | boolean | null | undefined
 
@@ -116,13 +117,12 @@ function normalizeMunicipalityName(value: string) {
 }
 
 type IbgeMunicipality = {
-  id: number
-  nome: string
+  id: string
+  name: string
+  state: string
 }
 
-const ibgeMunicipalitiesByState = new Map<string, Promise<IbgeMunicipality[]>>()
-
-async function resolveIbgeMunicipalityCode(city: string, state: string, label: string) {
+function resolveIbgeMunicipalityCode(city: string, state: string, label: string) {
   const normalizedState = state.trim().toUpperCase()
   const normalizedCity = normalizeMunicipalityName(city)
 
@@ -130,37 +130,17 @@ async function resolveIbgeMunicipalityCode(city: string, state: string, label: s
     throw new Error(`Não foi possível identificar o município de ${label}: confira cidade e UF.`)
   }
 
-  let request = ibgeMunicipalitiesByState.get(normalizedState)
-  if (!request) {
-    request = fetch(
-      `https://servicodados.ibge.gov.br/api/v1/localidades/estados/${encodeURIComponent(normalizedState)}/municipios`,
-      { cache: "force-cache", signal: AbortSignal.timeout(15_000) }
-    ).then(async (response) => {
-      if (!response.ok) {
-        throw new Error(`A consulta de municípios do IBGE falhou (HTTP ${response.status}).`)
-      }
-      return await response.json() as IbgeMunicipality[]
-    })
-    ibgeMunicipalitiesByState.set(normalizedState, request)
-  }
-
-  let municipalities: IbgeMunicipality[]
-  try {
-    municipalities = await request
-  } catch (error) {
-    ibgeMunicipalitiesByState.delete(normalizedState)
-    throw error
-  }
-
-  const municipality = municipalities.find(
-    (item) => normalizeMunicipalityName(item.nome) === normalizedCity
+  const municipality = (ibgeMunicipalities as IbgeMunicipality[]).find(
+    (item) =>
+      item.state === normalizedState &&
+      normalizeMunicipalityName(item.name) === normalizedCity
   )
 
   if (!municipality) {
     throw new Error(`Município de ${label} não localizado no IBGE: ${city} - ${normalizedState}.`)
   }
 
-  return String(municipality.id)
+  return municipality.id
 }
 
 function contmaticRaceCode(value: unknown) {
@@ -230,10 +210,10 @@ export async function buildContmaticImportPackage(
   const addressCountryCode = brazilCountryCode(data.pais) || "01058"
   const birthCountryCode = brazilCountryCode(data.pais_origem) || addressCountryCode
   const addressMunicipalityCode = addressCountryCode === "01058"
-    ? await resolveIbgeMunicipalityCode(asText(data.cidade), asText(data.uf), "endereço")
+    ? resolveIbgeMunicipalityCode(asText(data.cidade), asText(data.uf), "endereço")
     : "0"
   const birthMunicipalityCode = birthCountryCode === "01058"
-    ? await resolveIbgeMunicipalityCode(naturality.city, naturality.state, "nascimento")
+    ? resolveIbgeMunicipalityCode(naturality.city, naturality.state, "nascimento")
     : "0"
   const employeeName = asText(data.nome_completo)
   const employeeRegistration = asText(data.registro_funcionario) || employeeCode
