@@ -19,9 +19,14 @@ export async function GET(request: Request) {
       return Response.json({ ok: false, error: "Link inválido ou expirado." }, { status: 404 })
     }
 
+    const { dependentes: _legacyDependents, ...publicPayload } = record.full_payload
+
     return Response.json({
       ok: true,
-      record,
+      record: {
+        ...record,
+        full_payload: publicPayload,
+      },
     })
   } catch (error) {
     console.error(error)
@@ -52,10 +57,16 @@ export async function POST(request: Request) {
   } catch (error) {
     console.error(error)
 
+    const message = error instanceof z.ZodError
+      ? "Há informações antigas incompatíveis neste cadastro. Atualize a página e tente novamente."
+      : error instanceof Error
+        ? error.message
+        : "Erro ao enviar cadastro do funcionário"
+
     return Response.json(
       {
         ok: false,
-        error: error instanceof Error ? error.message : "Erro ao enviar cadastro do funcionário",
+        error: message,
       },
       { status: 500 }
     )

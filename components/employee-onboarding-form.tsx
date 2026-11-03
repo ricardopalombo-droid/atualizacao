@@ -498,9 +498,12 @@ export function EmployeeOnboardingForm({
 
         setRecordId(result.record.id)
         setStatus(result.record.workflow_status)
+        const cleanPayload = Object.fromEntries(
+          Object.entries(result.record.full_payload).filter(([key]) => key !== "dependentes")
+        ) as FormState
         setFormData({
           ...defaultFormValues,
-          ...result.record.full_payload,
+          ...cleanPayload,
           convite_email: result.record.invite_email ?? String(result.record.full_payload.convite_email ?? ""),
         })
         setDependents(
@@ -915,6 +918,9 @@ export function EmployeeOnboardingForm({
       setIsSaving(true)
 
       try {
+        const employeeFormData = Object.fromEntries(
+          Object.entries(formData).filter(([key]) => key !== "dependentes")
+        )
         const response = await fetch("/api/cadastros/funcionario", {
           method: "POST",
           headers: {
@@ -922,7 +928,7 @@ export function EmployeeOnboardingForm({
           },
           body: JSON.stringify({
             token: publicToken,
-            data: formData,
+            data: employeeFormData,
             dependents,
           }),
         })
