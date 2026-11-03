@@ -28,6 +28,14 @@ function leadingCode(value: unknown, fallback = "") {
   return match?.[1] ?? fallback
 }
 
+function integerText(value: unknown, fallback = "0") {
+  const normalized = asText(value).replace(",", ".")
+  if (!normalized) return fallback
+
+  const parsed = Number(normalized)
+  return Number.isFinite(parsed) ? String(Math.trunc(parsed)) : fallback
+}
+
 function sqlValue(value: SqlValue) {
   if (value === null || value === undefined) return "NULL"
   const text = typeof value === "boolean" ? (value ? "true" : "false") : String(value)
@@ -91,6 +99,14 @@ function validatePackageData(record: EmployeeRecordDetail, companyAlias: string)
     throw new Error("O Registro do funcionário precisa conter somente números para gerar o pacote Contmatic.")
   }
 
+  const cnhNumber = onlyDigits(data.cnh_numero)
+  if (cnhNumber && cnhNumber.length < 11) {
+    missing.push("Número da CNH com 11 caracteres")
+  }
+  if (cnhNumber && !asText(data.uf_cnh || data.uf_rg)) {
+    missing.push("UF da CNH")
+  }
+
   if (missing.length > 0) {
     throw new Error(`Preencha antes de gerar o pacote: ${Array.from(new Set(missing)).join(", ")}.`)
   }
@@ -115,8 +131,10 @@ export function buildContmaticImportPackage(
   const employeeRegistration = asText(data.registro_funcionario) || employeeCode
   const employeeSheet = asText(data.folha_ficha) || employeeRegistration
   const employeeBadge = asText(data.chapa) || employeeRegistration
-  const weeklyHours = asText(data.horas_semanais) || "0"
-  const monthlyHours = asText(data.horas_mensais) || "0"
+  // No cadastro FUNC estes campos são inteiros (smallint), embora a tela os
+  // represente com casas decimais, por exemplo 44.00 e 220.00.
+  const weeklyHours = integerText(data.horas_semanais)
+  const monthlyHours = integerText(data.horas_mensais)
   const salary = asText(data.salario).replace(",", ".")
   const notes = "CADASTRO GERADO PELO PALSYS - CONFERIR ANTES DE TRANSMITIR AO ESOCIAL"
 
@@ -141,7 +159,7 @@ export function buildContmaticImportPackage(
     insert("funcaux2", [
       "apelidopg", "funcid", "tipolog", "codmunicipio", "codpais", "caixapostal", "fonecelular", "codpaisnasc", "codmunnasc", "obsdeffisico", "casadobrasil", "filhosbrasil", "dataexpcnh", "orgaoemissorcnh", "expedicaocr", "orgemissorcr", "vencimentocr", "expedicaorne", "orgemissrne", "numeropass", "orgemispass", "ufpass", "codpaispass", "emissaopass", "validadepass", "numerocnv", "expedicaocnv", "validadecnv", "residprop", "imoveladfgts", "cnpjva", "matriculava", "dtiniciova", "dtfimva", "observacaova", "inicioaposen", "motivoaposen", "instensinoid", "coordenadoid", "agenintgid", "natobrigator", "seguradoraas", "numeroas", "prevtermestg", "areaatuaestg", "inscinssdata", "inscinssnro", "extra_int_1", "extra_int_2", "extra_int_3", "extra_int_4", "extra_int_5", "extra_int_6", "extra_int_7", "extra_int_8", "motivotrabtemp", "tipoinctrabtemp", "extra_chr_1", "numerocompl", "caixapostalcompl", "complementocompl", "bairrocompl", "cidadecompl", "enderecocompl", "emailcompl", "emailalternativo", "orgaoemissorcompl", "numerocnhcompl", "ufcnh", "orgaoemissorric", "nroconselhoreg", "nomesocial", "matriculavacompl", "numprocreintegra", "apelidotransf", "cnpjtransf", "matriculatransf", "extra_chr_11", "extra_log_1", "extra_log_2", "extra_log_3", "extra_log_4", "ctpsdigital", "extra_flo_1", "extra_flo_2", "extra_flo_3", "extra_flo_4", "extra_flo_5", "extra_dat_1", "extra_dat_2", "extra_dat_3", "extra_dat_4", "extra_dat_5", "extra_dat_6",
     ], [
-      companyAlias, employeeCode, "33", "0", addressCountryCode, "", asText(data.celular), birthCountryCode, "0", asText(data.observacao_deficiencia), "false", "false", asText(data.data_expedicao_cnh) || null, leadingCode(data.orgao_emissor_cnh, "0"), null, null, null, null, "", null, "0", null, null, null, null, null, null, null, booleanValue(data.possui_residencia_propria), booleanValue(data.imovel_fgts), asText(data.cnpj_vinculo_anterior) || null, asText(data.matricula_anterior) || null, asText(data.data_inicio_vinculo_anterior) || null, asText(data.data_fim_vinculo_anterior) || null, null, asText(data.inicio_aposentadoria) || null, leadingCode(data.motivo_aposentadoria, "0"), "0", "0", "0", "false", null, null, null, null, null, onlyDigits(data.pis), "0", "0", "0", "0", "0", "-1", "0", "0", "0", "0", null, null, "", "", "", "", "", asText(data.email), "", "", asText(data.cnh_numero), asText(data.uf_rg), "", "", asText(data.nome_social), null, null, null, null, null, null, "false", "false", "false", "false", booleanValue(data.ctps_digital), "0", "0", "0", "0", "0", null, null, null, null, null, null,
+      companyAlias, employeeCode, "33", "0", addressCountryCode, "", asText(data.celular), birthCountryCode, "0", asText(data.observacao_deficiencia), "false", "false", asText(data.data_expedicao_cnh) || null, leadingCode(data.orgao_emissor_cnh, "0"), null, null, null, null, "", null, "0", null, null, null, null, null, null, null, booleanValue(data.possui_residencia_propria), booleanValue(data.imovel_fgts), asText(data.cnpj_vinculo_anterior) || null, asText(data.matricula_anterior) || null, asText(data.data_inicio_vinculo_anterior) || null, asText(data.data_fim_vinculo_anterior) || null, null, asText(data.inicio_aposentadoria) || null, leadingCode(data.motivo_aposentadoria, "0"), "0", "0", "0", "false", null, null, null, null, null, onlyDigits(data.pis), "0", "0", "0", "0", "0", "-1", "0", "0", "0", "0", null, null, "", "", "", "", "", asText(data.email), "", "", " ", asText(data.uf_cnh || data.uf_rg), "", "", asText(data.nome_social), null, null, null, null, null, null, "false", "false", "false", "false", booleanValue(data.ctps_digital), "0", "0", "0", "0", "0", null, null, null, null, null, null,
     ]),
     insert("funcaux3", [
       "apelidopg", "funcid", "motivo", "tipoinclusao", "extra_chr_1", "matriculaesocial", "apelidosucessora", "extra_chr_2", "extra_chr_3", "extra_chr_4", "extra_chr_5", "extra_int_1", "extra_int_2", "extra_int_3", "extra_int_4", "extra_int_5", "extra_int_6", "extra_int_7", "extra_int_8", "extra_int_9", "extra_int_10", "extra_float_1", "extra_float_2", "extra_float_3", "extra_float_4", "extra_float_5", "extra_float_6", "extra_float_7", "extra_float_8", "extra_float_9", "extra_float_10", "extra_date_1", "extra_date_2", "extra_date_3", "extra_date_4", "extra_date_5", "extra_date_6", "extra_date_7", "extra_date_8", "extra_date_9", "extra_date_10", "extra_logical_1", "extra_logical_2", "extra_logical_3", "extra_logical_4", "extra_logical_5", "extra_logical_6", "extra_logical_7", "extra_logical_8", "extra_logical_9", "extra_logical_10", "justificativa",

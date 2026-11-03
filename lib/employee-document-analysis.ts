@@ -71,6 +71,7 @@ Valores de selecao devem seguir estes formatos quando houver informacao suficien
 
 Regras importantes:
 - quando RG/CIN, CNH ou certidao informar nacionalidade brasileira, extraia tambem pais_origem como "Brasil";
+- em CNH, extraia a UF de emissão no campo uf_cnh quando estiver visível;
 - em certidao de casamento sem averbacao de divorcio, separacao ou obito, o estado civil atual e
   "2 - Casado", mesmo que o quadro dos conjuges informe "Solteiro" ou "Solteira" no momento da habilitacao;
 - nao trate o estado civil anterior registrado na habilitacao como estado civil atual;

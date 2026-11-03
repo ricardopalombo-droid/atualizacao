@@ -49,6 +49,7 @@ export const extractableEmployeeFieldKeys = [
   "uf_rg",
   "rg_data_expedicao",
   "cnh_numero",
+  "uf_cnh",
   "categoria_cnh",
   "data_expedicao_cnh",
   "orgao_emissor_cnh",

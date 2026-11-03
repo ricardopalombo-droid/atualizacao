@@ -431,6 +431,7 @@ export const formSections: FormSection[] = [
       { key: "uf_rg", label: "UF do RG", type: "select", audience: "employee", options: stateOptions },
       { key: "rg_data_expedicao", label: "Data de expedição do RG", type: "date", audience: "employee" },
       { key: "cnh_numero", label: "Número da CNH", type: "text", audience: "employee" },
+      { key: "uf_cnh", label: "UF da CNH", type: "select", audience: "employee", options: stateOptions },
       {
         key: "categoria_cnh",
         label: "Categoria CNH",
