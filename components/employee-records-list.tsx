@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { useEffect, useState } from "react"
-import { FileArchive, Trash2 } from "lucide-react"
+import { AlertTriangle, FileArchive, Trash2 } from "lucide-react"
 
 type EmployeeRecord = {
   id: string
@@ -38,6 +38,7 @@ export function EmployeeRecordsList({ clientId, canManage }: { clientId: string;
   const [isLoading, setIsLoading] = useState(true)
   const [isDeletingId, setIsDeletingId] = useState<string | null>(null)
   const [isUpdatingPhoenixId, setIsUpdatingPhoenixId] = useState<string | null>(null)
+  const statusNeedsAttention = /preencha|erro|falha|não foi possível|informe|obrigat/i.test(statusMessage)
 
   useEffect(() => {
     void loadRecords()
@@ -246,6 +247,18 @@ export function EmployeeRecordsList({ clientId, canManage }: { clientId: string;
         </Link> : null}
       </div>
 
+      <div
+        role={statusNeedsAttention ? "alert" : "status"}
+        className={`mt-5 flex items-start gap-3 rounded-2xl border px-5 py-4 text-sm font-medium ${
+          statusNeedsAttention
+            ? "border-amber-300 bg-amber-50 text-amber-950 shadow-sm"
+            : "border-slate-200 bg-slate-50 text-slate-600"
+        }`}
+      >
+        {statusNeedsAttention ? <AlertTriangle className="mt-0.5 shrink-0 text-amber-600" size={22} /> : null}
+        <p className="leading-6">{statusMessage}</p>
+      </div>
+
       {isLoading ? (
         <div className="mt-6 rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-6 text-slate-600">
           Carregando funcionários...
@@ -376,8 +389,6 @@ export function EmployeeRecordsList({ clientId, canManage }: { clientId: string;
           </table>
         </div>
       )}
-
-      <p className="mt-4 text-sm text-slate-500">{statusMessage}</p>
     </section>
   )
 }

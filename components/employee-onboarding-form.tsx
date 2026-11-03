@@ -74,6 +74,8 @@ type LookupRecord = {
   metadata?: Record<string, string | number | boolean | null>
 }
 
+const emptyLookupCatalog: NonNullable<EmployeeOnboardingFormProps["lookupCatalog"]> = {}
+
 const viewerLabels: Record<FieldAudience, string> = {
   employee: "Funcionário",
   client: "DP",
@@ -361,8 +363,9 @@ export function EmployeeOnboardingForm({
   publicToken = null,
   clientId = null,
   canManage = true,
-  lookupCatalog = {},
+  lookupCatalog: lookupCatalogProp,
 }: EmployeeOnboardingFormProps) {
+  const lookupCatalog = lookupCatalogProp ?? emptyLookupCatalog
   const editRecordId = initialRecordId
   const [viewer, setViewer] = useState<FieldAudience>(variant === "employee" ? "employee" : "client")
   const [activeSection, setActiveSection] = useState(getSectionsForAudience(viewer)[0]?.id ?? "")
