@@ -76,6 +76,12 @@ const initialValues = presetFieldMeta.reduce<Record<string, string | boolean>>((
   return accumulator
 }, {})
 
+function calculateMonthlyHours(weeklyHours: string) {
+  const normalized = weeklyHours.replace(",", ".").replace(/[^0-9.]/g, "")
+  const parsed = Number.parseFloat(normalized)
+  return Number.isFinite(parsed) ? (parsed * 5).toFixed(2) : ""
+}
+
 export function ClientDefaultsForm({ client, lookupCatalog = {} }: ClientDefaultsFormProps) {
   const [values, setValues] = useState<Record<string, string | boolean>>({
     ...initialValues,
@@ -114,6 +120,17 @@ export function ClientDefaultsForm({ client, lookupCatalog = {} }: ClientDefault
   }, [])
 
   function updateValue(key: string, value: string | boolean) {
+    if (key === "horas_semanais" && typeof value === "string") {
+      setValues((previous) => ({
+        ...previous,
+        horas_semanais: value,
+        horas_mensais: calculateMonthlyHours(value),
+      }))
+      return
+    }
+
+    if (key === "horas_mensais") return
+
     setValues((previous) => ({
       ...previous,
       [key]: value,
@@ -183,6 +200,7 @@ export function ClientDefaultsForm({ client, lookupCatalog = {} }: ClientDefault
                 key={field.key}
                 field={field}
                 value={values[field.key]}
+                readOnly={field.key === "horas_mensais"}
                 optionsOverride={
                   dynamicReferenceFieldKeys.includes(
                     field.key as (typeof dynamicReferenceFieldKeys)[number]
@@ -224,11 +242,13 @@ export function ClientDefaultsForm({ client, lookupCatalog = {} }: ClientDefault
 function PresetField({
   field,
   value,
+  readOnly = false,
   optionsOverride,
   onChange,
 }: {
   field: PresetFieldMeta
   value: string | boolean | undefined
+  readOnly?: boolean
   optionsOverride?: FieldOption[]
   onChange: (value: string | boolean) => void
 }) {
@@ -271,9 +291,14 @@ function PresetField({
       <input
         type={field.type}
         value={String(value ?? "")}
+        readOnly={readOnly}
         onChange={(event) => onChange(event.target.value)}
         placeholder={field.placeholder}
-        className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-slate-900 outline-none transition focus:border-yellow-400 focus:ring-2 focus:ring-yellow-200"
+        className={`w-full rounded-2xl border px-4 py-3 outline-none transition ${
+          readOnly
+            ? "border-slate-200 bg-slate-100 text-slate-500"
+            : "border-slate-300 bg-white text-slate-900 focus:border-yellow-400 focus:ring-2 focus:ring-yellow-200"
+        }`}
       />
     </div>
   )

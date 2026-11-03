@@ -453,6 +453,15 @@ export function EmployeeOnboardingForm({
           ])
         ) as FormState
 
+        if (
+          hasFilledValue(normalizedDefaults.horas_semanais) &&
+          !hasFilledValue(normalizedDefaults.horas_mensais)
+        ) {
+          normalizedDefaults.horas_mensais = calculateMonthlyHours(
+            String(normalizedDefaults.horas_semanais)
+          )
+        }
+
         for (const key of dynamicReferenceFieldKeys) {
           const code = String(normalizedDefaults[key] ?? "")
           const selectedRecord = (lookupCatalog[key] ?? []).find((record) => record.code === code)
@@ -603,6 +612,15 @@ export function EmployeeOnboardingForm({
                   typeof value === "boolean" ? value : value == null ? "" : String(value),
                 ])
               ) as FormState
+
+              if (
+                hasFilledValue(normalizedDefaults.horas_semanais) &&
+                !hasFilledValue(normalizedDefaults.horas_mensais)
+              ) {
+                normalizedDefaults.horas_mensais = calculateMonthlyHours(
+                  String(normalizedDefaults.horas_semanais)
+                )
+              }
 
               for (const key of dynamicReferenceFieldKeys) {
                 const code = String(normalizedDefaults[key] ?? "")

@@ -173,7 +173,8 @@ export function buildContmaticImportPackage(
   // No cadastro FUNC estes campos são inteiros (smallint), embora a tela os
   // represente com casas decimais, por exemplo 44.00 e 220.00.
   const weeklyHours = integerText(data.horas_semanais)
-  const monthlyHours = integerText(data.horas_mensais)
+  const informedMonthlyHours = integerText(data.horas_mensais, "")
+  const monthlyHours = informedMonthlyHours || String(Number(weeklyHours) * 5)
   const salary = asText(data.salario).replace(",", ".")
   const notes = "CADASTRO GERADO PELO PALSYS - CONFERIR ANTES DE TRANSMITIR AO ESOCIAL"
 

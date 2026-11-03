@@ -483,7 +483,7 @@ export const formSections: FormSection[] = [
       { key: "regime_jornada", label: "Regime de jornada", type: "select", audience: "client", options: regimeJornadaOptions, requiredForExport: true },
       { key: "grau_risco", label: "Grau de risco", type: "select", audience: "client", options: grauRiscoOptions, requiredForExport: true },
       { key: "codigo_admissao", label: "Código de admissão", type: "select", audience: "client", options: codigoAdmissaoOptions, requiredForExport: true },
-      { key: "horas_semanais", label: "Horas semanais", type: "text", audience: "client", placeholder: "44.00" },
+      { key: "horas_semanais", label: "Horas semanais", type: "text", audience: "client", placeholder: "44.00", requiredForExport: true },
       { key: "horas_mensais", label: "Horas mensais", type: "text", audience: "client", placeholder: "220.00" },
       { key: "experiencia_qtde_dias", label: "Qtde. de dias de experiência", type: "number", audience: "client" },
       { key: "experiencia_termino", label: "Término da experiência", type: "date", audience: "client" },

@@ -12,7 +12,8 @@ Object.assign(payload, {
   cpf: "12345678901",
   pis: "12345678901",
   horas_semanais: "44.00",
-  horas_mensais: "220.00",
+  // A tela pode não persistir o valor calculado; o pacote deve derivar 44 × 5.
+  horas_mensais: "",
   salario: "2000.00",
   cnh_numero: "01019312457",
   uf_cnh: "SP",
