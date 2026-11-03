@@ -1,6 +1,6 @@
 import Link from "next/link"
 import { redirect } from "next/navigation"
-import { BarChart3, Building2, CheckCircle2, ClipboardList, Database, FileSpreadsheet, Shield, Sparkles, Users } from "lucide-react"
+import { BarChart3, Building2, ClipboardList, Database, Shield, Sparkles, Users } from "lucide-react"
 import { listEmployeeRecords } from "@/lib/cadastro-repository"
 import { workflowStatusLabels, type WorkflowStatus } from "@/lib/employee-form-config"
 import { LogoutButton } from "@/components/logout-button"
@@ -63,28 +63,21 @@ export default async function PainelPage() {
               icone: Building2,
               acao: "Gerenciar clientes",
             },
+            {
+              titulo: "Admissao de funcionarios",
+              descricao: "Envie convites, revise documentos e conclua os cadastros das empresas.",
+              href: "/painel/cadastros",
+              icone: ClipboardList,
+              acao: "Abrir cadastros",
+            },
           ]
         : [
             {
-              titulo: "Cadastro de funcionarios",
-              descricao: "Acompanhe convites, revise dados e finalize os cadastros da empresa.",
+              titulo: "Consulta de funcionarios",
+              descricao: "Consulte cadastros e documentos encaminhados ao escritorio.",
               href: "/painel/cadastros",
               icone: ClipboardList,
-              acao: "Abrir modulo",
-            },
-            {
-              titulo: "Exportacao de planilha",
-              descricao: "Gere arquivos para conferencia interna ou para processos externos da empresa.",
-              href: "/painel/cadastros",
-              icone: FileSpreadsheet,
-              acao: "Ir para exportacao",
-            },
-            {
-              titulo: "Conferencia interna",
-              descricao: "Valide o que foi preenchido pelo funcionario antes do envio ao escritorio.",
-              href: "/painel/cadastros",
-              icone: CheckCircle2,
-              acao: "Concluir no painel",
+              acao: "Consultar",
             },
             {
               titulo: "Bases importadas",

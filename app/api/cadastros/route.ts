@@ -7,6 +7,7 @@ import {
   upsertEmployeeRecord,
 } from "@/lib/cadastro-repository"
 import { getCurrentSession } from "@/lib/auth-session"
+import { getClientRecordById } from "@/lib/client-repository"
 
 const deleteEmployeePayloadSchema = z.object({
   id: z.string().uuid(),
@@ -20,13 +21,28 @@ export async function GET(request: Request) {
       return Response.json({ ok: false, error: "Não autenticado." }, { status: 401 })
     }
 
+    if (!["subscriber_admin", "client_user"].includes(session.role)) {
+      return Response.json({ ok: false, error: "Acesso nao autorizado." }, { status: 403 })
+    }
+
     const url = new URL(request.url)
     const recordId = url.searchParams.get("id")
+    const requestedClientId = url.searchParams.get("clientId")
+    let scopedClientId = session.clientId
+
+    if (session.role === "subscriber_admin") {
+      if (!session.subscriberId || !requestedClientId) {
+        return Response.json({ ok: false, error: "Selecione a empresa do cadastro." }, { status: 400 })
+      }
+      const client = await getClientRecordById(session.subscriberId, requestedClientId)
+      if (!client) return Response.json({ ok: false, error: "Empresa nao encontrada." }, { status: 404 })
+      scopedClientId = client.id
+    }
 
     if (recordId) {
       const record = await getEmployeeRecordById(recordId, {
         subscriberId: session.subscriberId,
-        clientId: session.clientId,
+        clientId: scopedClientId,
       })
 
       return Response.json({
@@ -37,7 +53,7 @@ export async function GET(request: Request) {
 
     const records = await listEmployeeRecords(20, {
       subscriberId: session.subscriberId,
-      clientId: session.clientId,
+      clientId: scopedClientId,
     })
 
     return Response.json({
@@ -65,17 +81,20 @@ export async function POST(request: Request) {
       return Response.json({ ok: false, error: "Não autenticado." }, { status: 401 })
     }
 
-    if (session.role !== "client_user") {
+    if (session.role !== "subscriber_admin" || !session.subscriberId) {
       return Response.json(
-        { ok: false, error: "Somente usuários de cliente podem cadastrar funcionários." },
+        { ok: false, error: "Somente o escritorio/DP pode cadastrar funcionarios." },
         { status: 403 }
       )
     }
 
     const body = await request.json()
+    const clientId = z.string().uuid().parse(body.clientId)
+    const client = await getClientRecordById(session.subscriberId, clientId)
+    if (!client) return Response.json({ ok: false, error: "Empresa nao encontrada." }, { status: 404 })
     const payload = cadastroPayloadSchema.parse({
       ...body,
-      clientId: session.clientId,
+      clientId,
       subscriberId: session.subscriberId,
     })
     const saved = await upsertEmployeeRecord(payload)
@@ -106,17 +125,19 @@ export async function DELETE(request: Request) {
       return Response.json({ ok: false, error: "Não autenticado." }, { status: 401 })
     }
 
-    if (session.role !== "client_user") {
+    if (session.role !== "subscriber_admin" || !session.subscriberId) {
       return Response.json(
-        { ok: false, error: "Somente usuários de cliente podem excluir funcionários." },
+        { ok: false, error: "Somente o escritorio/DP pode excluir funcionarios." },
         { status: 403 }
       )
     }
 
     const payload = deleteEmployeePayloadSchema.parse(await request.json())
+    const record = await getEmployeeRecordById(payload.id, { subscriberId: session.subscriberId })
+    if (!record) return Response.json({ ok: false, error: "Cadastro nao encontrado." }, { status: 404 })
     await deleteEmployeeRecord(payload.id, {
       subscriberId: session.subscriberId,
-      clientId: session.clientId,
+      clientId: record.client_id,
     })
 
     return Response.json({ ok: true })

@@ -1,6 +1,8 @@
 import type { CadastroPayload, DependentPayload, WorkflowStatus } from "@/lib/cadastro-types"
 import { createInviteToken, sha256Hex } from "@/lib/auth-crypto"
 import { getSupabaseServerClient } from "@/lib/supabase-server"
+import { deleteEmployeeDocument, listEmployeeDocuments } from "@/lib/employee-document-repository"
+import { formSections } from "@/lib/employee-form-config"
 
 export type EmployeeRecordListItem = {
   id: string
@@ -176,6 +178,16 @@ export async function upsertEmployeeRecord(payload: CadastroPayload) {
   }
 
   await syncDependents(saved.id, payload.dependents)
+
+  if (["finalizado", "exportado"].includes(payload.workflowStatus)) {
+    const deleteAfter = new Date(Date.now() + 60 * 24 * 60 * 60 * 1000).toISOString()
+    const { error: retentionError } = await supabase
+      .from("employee_documents")
+      .update({ delete_after: deleteAfter })
+      .eq("employee_id", saved.id)
+
+    if (retentionError) throw retentionError
+  }
 
   return saved
 }
@@ -479,6 +491,15 @@ export async function submitEmployeeRecordByInviteToken(
     throw new Error("Este cadastro já foi enviado e não pode mais ser alterado pelo funcionário.")
   }
 
+  const employeeFieldKeys = new Set(
+    formSections
+      .filter((section) => section.audience === "employee")
+      .flatMap((section) => section.fields.map((field) => field.key))
+  )
+  const employeeData = Object.fromEntries(
+    Object.entries(payload.data).filter(([key]) => employeeFieldKeys.has(key))
+  )
+
   return upsertEmployeeRecord({
     id: record.id,
     clientId: record.client_id,
@@ -486,7 +507,10 @@ export async function submitEmployeeRecordByInviteToken(
     actor: "employee",
     workflowStatus: "preenchido_funcionario",
     inviteEmail: record.invite_email ?? String(payload.data.email ?? ""),
-    data: payload.data,
+    data: {
+      ...record.full_payload,
+      ...employeeData,
+    },
     dependents: payload.dependents,
   })
 }
@@ -500,6 +524,11 @@ export async function deleteEmployeeRecord(
 
   if (!record) {
     throw new Error("Cadastro do funcionário não encontrado.")
+  }
+
+  const documents = await listEmployeeDocuments(id)
+  for (const document of documents) {
+    await deleteEmployeeDocument(document.id, id)
   }
 
   const { error } = await supabase.from("employees").delete().eq("id", id)

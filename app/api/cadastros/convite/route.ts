@@ -16,9 +16,9 @@ export async function POST(request: Request) {
       return Response.json({ ok: false, error: "Não autenticado." }, { status: 401 })
     }
 
-    if (session.role !== "client_user") {
+    if (session.role !== "subscriber_admin" || !session.subscriberId) {
       return Response.json(
-        { ok: false, error: "Somente usuários de cliente podem disparar convites." },
+        { ok: false, error: "Somente o escritorio/DP pode disparar convites." },
         { status: 403 }
       )
     }
@@ -27,7 +27,7 @@ export async function POST(request: Request) {
     const origin = new URL(request.url).origin
     const invite = await createEmployeeInviteLink(payload.id, payload.inviteEmail, origin, {
       subscriberId: session.subscriberId,
-      clientId: session.clientId,
+      clientId: null,
     })
 
     await enviarEmailCadastroFuncionario({

@@ -345,7 +345,7 @@ export const workflowStatusLabels: Record<WorkflowStatus, string> = {
   rascunho_interno: "Rascunho interno",
   convite_enviado: "Convite enviado",
   preenchido_funcionario: "Preenchido pelo funcionario",
-  em_revisao_cliente: "Em revisao do cliente",
+  em_revisao_cliente: "Em revisao do DP",
   finalizado: "Finalizado",
   exportado: "Exportado",
 }
@@ -441,7 +441,7 @@ export const formSections: FormSection[] = [
   {
     id: "informacoes-adicionais-funcionario",
     title: "Informacoes adicionais",
-    description: "Dados extras que o funcionario pode preencher antes da revisao do cliente.",
+    description: "Dados extras que o funcionario pode preencher antes da revisao do DP.",
     audience: "employee",
     fields: [
       { key: "possui_residencia_propria", label: "Possui residencia propria", type: "checkbox", audience: "employee" },
@@ -458,7 +458,7 @@ export const formSections: FormSection[] = [
   {
     id: "dados-contratuais-cliente",
     title: "Dados contratuais",
-    description: "Campos preenchidos pelo cliente apos o retorno do funcionario.",
+    description: "Campos preenchidos pelo DP apos o retorno do funcionario.",
     audience: "client",
     fields: [
       { key: "matricula_esocial", label: "Matricula eSocial", type: "text", audience: "client" },
@@ -508,7 +508,7 @@ export const formSections: FormSection[] = [
   {
     id: "dados-bancarios-fgts-cliente",
     title: "Banco e FGTS",
-    description: "Campos complementares de fechamento preenchidos pelo cliente.",
+    description: "Campos complementares de fechamento preenchidos pelo DP.",
     audience: "client",
     fields: [
       { key: "banco", label: "Banco", type: "text", audience: "client" },

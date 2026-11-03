@@ -3,6 +3,16 @@ import Link from "next/link"
 
 const itensPrivacidade = [
   {
+    titulo: "Documentos do cadastro admissional",
+    texto:
+      "No cadastro de funcionarios, documentos pessoais podem ser armazenados em area privada depois da confirmacao de autorizacao do titular. Eles sao usados para sugerir o preenchimento dos dados pessoais e ficam acessiveis somente ao escritorio/DP e a empresa vinculada ao cadastro. Os arquivos possuem exclusao programada em ate 60 dias depois do encerramento do processo.",
+  },
+  {
+    titulo: "Leitura assistida dos documentos admissionais",
+    texto:
+      "Os documentos admissionais podem ser enviados a OpenAI exclusivamente para identificar os campos necessarios ao cadastro. A leitura produz sugestoes, nao toma decisoes trabalhistas e nao substitui a conferencia do DP. A solicitacao e feita sem habilitar armazenamento do resultado para treinamento ou historico da API.",
+  },
+  {
     titulo: "Explicador de holerites, férias e rescisões",
     texto:
       "Nesta ferramenta pública, o arquivo é enviado à OpenAI somente depois do consentimento do usuário e apenas para produzir a explicação solicitada. A PalSys não grava o documento nem o resultado no histórico. Para limitar abusos, guardamos somente dados técnicos mínimos da tentativa, como data, tamanho do arquivo, tipo identificado, resultado da operação e um código irreversível derivado do endereço de rede — nunca o endereço original.",
@@ -13,9 +23,9 @@ const itensPrivacidade = [
       "As soluções da PalSys são desenvolvidas para operar, sempre que aplicável, no ambiente local do cliente, escritório ou empresa contratante. Isso significa que os arquivos utilizados no processamento permanecem no computador, servidor ou pasta configurada pelo próprio usuário.",
   },
   {
-    titulo: "Arquivos não são armazenados em servidores da PalSys",
+    titulo: "Armazenamento somente quando a funcionalidade exige",
     texto:
-      "Os documentos processados pelos sistemas não são enviados nem armazenados em servidores da PalSys, salvo quando a própria funcionalidade contratada exigir integração externa específica e expressamente configurada pelo usuário.",
+      "As automacoes locais nao enviam nem armazenam documentos em servidores da PalSys. Excecoes, como o cadastro admissional, sao identificadas na propria funcionalidade, exigem autorizacao e utilizam armazenamento privado com prazo de exclusao.",
   },
   {
     titulo: "Leitura temporária para execução da rotina",
@@ -106,10 +116,10 @@ export default function PrivacidadeDosSistemasPage() {
             <div className="rounded-2xl border border-blue-100 bg-blue-50 p-6">
               <h2 className="text-2xl font-bold text-slate-900">Resumo objetivo</h2>
               <p className="mt-4 leading-8 text-slate-700">
-                Os arquivos usados pelas automações permanecem no ambiente definido
-                pelo cliente. A PalSys não copia, não armazena e não mantém em nuvem
-                os documentos processados, salvo quando uma integração externa fizer
-                parte explícita da própria solução contratada.
+                As automacoes locais mantem os arquivos no ambiente definido pelo cliente.
+                Quando uma funcionalidade em nuvem precisa armazenar documentos, como o
+                cadastro admissional, isso e informado ao usuario, exige autorizacao,
+                possui acesso restrito e prazo de exclusao.
               </p>
             </div>
 

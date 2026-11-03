@@ -103,6 +103,28 @@ create table if not exists public.dependents (
   updated_at timestamptz not null default now()
 );
 
+create table if not exists public.employee_documents (
+  id uuid primary key default gen_random_uuid(),
+  employee_id uuid not null references public.employees(id) on delete cascade,
+  document_type text not null check (document_type in (
+    'rg_cin', 'cnh', 'comprovante_endereco', 'ctps', 'pis_nis',
+    'certidao_civil', 'comprovante_bancario', 'aso', 'dependente', 'outro'
+  )),
+  storage_path text not null unique,
+  original_name text not null,
+  mime_type text not null,
+  size_bytes integer not null check (size_bytes > 0 and size_bytes <= 12582912),
+  uploaded_by text not null check (uploaded_by in ('employee', 'dp')),
+  consent_at timestamptz not null,
+  analysis_status text not null default 'pending' check (analysis_status in ('pending', 'processing', 'completed', 'failed')),
+  extracted_fields jsonb not null default '[]'::jsonb,
+  analysis_warnings jsonb not null default '[]'::jsonb,
+  analysis_error text,
+  delete_after timestamptz not null default (now() + interval '60 days'),
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
 create table if not exists public.reference_catalog_items (
   id uuid primary key default gen_random_uuid(),
   client_id uuid not null references public.clients(id) on delete cascade,
@@ -154,6 +176,11 @@ create trigger dependents_set_updated_at
 before update on public.dependents
 for each row execute procedure public.set_updated_at();
 
+drop trigger if exists employee_documents_set_updated_at on public.employee_documents;
+create trigger employee_documents_set_updated_at
+before update on public.employee_documents
+for each row execute procedure public.set_updated_at();
+
 drop trigger if exists reference_catalog_items_set_updated_at on public.reference_catalog_items;
 create trigger reference_catalog_items_set_updated_at
 before update on public.reference_catalog_items
@@ -172,6 +199,8 @@ create index if not exists employees_client_id_idx on public.employees(client_id
 create index if not exists employees_subscriber_id_idx on public.employees(subscriber_id);
 create index if not exists employees_workflow_status_idx on public.employees(workflow_status);
 create index if not exists dependents_employee_id_idx on public.dependents(employee_id);
+create index if not exists employee_documents_employee_id_idx on public.employee_documents(employee_id, created_at desc);
+create index if not exists employee_documents_delete_after_idx on public.employee_documents(delete_after);
 create index if not exists reference_catalog_items_client_type_idx
 on public.reference_catalog_items(client_id, reference_type);
 
@@ -180,6 +209,7 @@ alter table public.app_users enable row level security;
 alter table public.clients enable row level security;
 alter table public.employees enable row level security;
 alter table public.dependents enable row level security;
+alter table public.employee_documents enable row level security;
 alter table public.reference_catalog_items enable row level security;
 alter table public.event_requests enable row level security;
 alter table public.receipt_analysis_requests enable row level security;
@@ -190,6 +220,7 @@ revoke all privileges on table
   public.clients,
   public.employees,
   public.dependents,
+  public.employee_documents,
   public.reference_catalog_items,
   public.event_requests,
   public.receipt_analysis_requests
@@ -201,6 +232,7 @@ grant select, insert, update, delete on table
   public.clients,
   public.employees,
   public.dependents,
+  public.employee_documents,
   public.reference_catalog_items,
   public.event_requests,
   public.receipt_analysis_requests
@@ -240,6 +272,26 @@ for all
 to service_role
 using (true)
 with check (true);
+
+create policy "service role full employee documents"
+on public.employee_documents
+for all
+to service_role
+using (true)
+with check (true);
+
+insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+values (
+  'employee-documents',
+  'employee-documents',
+  false,
+  12582912,
+  array['application/pdf', 'image/jpeg', 'image/png']
+)
+on conflict (id) do update set
+  public = excluded.public,
+  file_size_limit = excluded.file_size_limit,
+  allowed_mime_types = excluded.allowed_mime_types;
 
 create policy "service role full reference_catalog_items"
 on public.reference_catalog_items

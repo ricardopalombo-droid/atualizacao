@@ -20,7 +20,7 @@ const statusLabels: Record<string, string> = {
   rascunho_interno: "Rascunho interno",
   convite_enviado: "Convite enviado",
   preenchido_funcionario: "Preenchido pelo funcionario",
-  em_revisao_cliente: "Em revisao do cliente",
+  em_revisao_cliente: "Em revisao do DP",
   finalizado: "Finalizado",
   exportado: "Exportado",
 }
@@ -32,7 +32,7 @@ const phoenixStatusLabels: Record<string, string> = {
   falha_no_phoenix: "Falha no Phoenix",
 }
 
-export function EmployeeRecordsList() {
+export function EmployeeRecordsList({ clientId, canManage }: { clientId: string; canManage: boolean }) {
   const [records, setRecords] = useState<EmployeeRecord[]>([])
   const [statusMessage, setStatusMessage] = useState("Carregando funcionarios da empresa.")
   const [isLoading, setIsLoading] = useState(true)
@@ -41,13 +41,13 @@ export function EmployeeRecordsList() {
 
   useEffect(() => {
     void loadRecords()
-  }, [])
+  }, [clientId])
 
   async function loadRecords() {
     setIsLoading(true)
 
     try {
-      const response = await fetch("/api/cadastros", {
+      const response = await fetch(`/api/cadastros?clientId=${encodeURIComponent(clientId)}`, {
         method: "GET",
         cache: "no-store",
       })
@@ -196,15 +196,15 @@ export function EmployeeRecordsList() {
         <div>
           <h2 className="text-2xl font-bold text-slate-900">Funcionarios desta empresa</h2>
           <p className="mt-2 text-slate-600">
-            Esta area pertence ao cliente e ajuda a acompanhar convites, revisoes e envios dos funcionarios da propria empresa.
+            O DP administra convites e revisoes; a empresa possui acesso de consulta aos cadastros e documentos.
           </p>
         </div>
-        <Link
-          href="/painel/cadastros"
+        {canManage ? <Link
+          href={`/painel/cadastros?clientId=${encodeURIComponent(clientId)}`}
           className="inline-flex items-center justify-center rounded-xl border border-slate-300 px-5 py-3 font-semibold text-slate-700 hover:bg-slate-100"
         >
           Novo funcionario
-        </Link>
+        </Link> : null}
       </div>
 
       {isLoading ? (
@@ -258,12 +258,12 @@ export function EmployeeRecordsList() {
                   <td className="px-4 py-3">
                     <div className="flex flex-wrap gap-2">
                       <Link
-                        href={`/painel/cadastros?id=${record.id}`}
+                        href={`/painel/cadastros?clientId=${encodeURIComponent(clientId)}&id=${record.id}`}
                         className="inline-flex items-center justify-center rounded-lg bg-slate-900 px-4 py-2 font-semibold text-white hover:bg-slate-800"
                       >
-                        Continuar edicao
+                        {canManage ? "Revisar cadastro" : "Consultar"}
                       </Link>
-                      {["finalizado", "exportado"].includes(record.workflow_status) && (
+                      {canManage && ["finalizado", "exportado"].includes(record.workflow_status) && (
                         <>
                           {(getPhoenixStatus(record) === "pronto_para_phoenix" ||
                             getPhoenixStatus(record) === "falha_no_phoenix") && (
@@ -310,7 +310,7 @@ export function EmployeeRecordsList() {
                           )}
                         </>
                       )}
-                      <button
+                      {canManage ? <button
                         type="button"
                         onClick={() => void handleDelete(record)}
                         disabled={isDeletingId === record.id}
@@ -318,7 +318,7 @@ export function EmployeeRecordsList() {
                       >
                         <Trash2 size={16} />
                         {isDeletingId === record.id ? "Excluindo..." : "Excluir"}
-                      </button>
+                      </button> : null}
                     </div>
                   </td>
                 </tr>

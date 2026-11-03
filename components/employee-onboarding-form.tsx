@@ -27,6 +27,8 @@ import {
   workflowStatusOrder,
 } from "@/lib/employee-form-config"
 import { exportEmployeeWorkbook } from "@/lib/planilha-export"
+import { EmployeeDocuments } from "@/components/employee-documents"
+import type { EmployeeDocumentExtractedField } from "@/lib/employee-document-types"
 
 type FormState = Record<string, string | boolean>
 
@@ -55,6 +57,8 @@ type EmployeeOnboardingFormProps = {
   variant?: "client" | "employee"
   initialRecordId?: string | null
   publicToken?: string | null
+  clientId?: string | null
+  canManage?: boolean
   lookupCatalog?: Partial<
     Record<
       "cargo" | "horario" | "sindicato" | "local" | "departamento" | "setor" | "secao",
@@ -71,7 +75,7 @@ type LookupRecord = {
 
 const viewerLabels: Record<FieldAudience, string> = {
   employee: "Funcionário",
-  client: "Cliente",
+  client: "DP",
 }
 
 const emptyDependentForm: DependentFormState = {
@@ -309,6 +313,8 @@ export function EmployeeOnboardingForm({
   variant = "client",
   initialRecordId = null,
   publicToken = null,
+  clientId = null,
+  canManage = true,
   lookupCatalog = {},
 }: EmployeeOnboardingFormProps) {
   const editRecordId = initialRecordId
@@ -322,8 +328,8 @@ export function EmployeeOnboardingForm({
   const [isSaving, setIsSaving] = useState(false)
   const [statusMessage, setStatusMessage] = useState(
     variant === "employee"
-      ? "Preencha suas informacoes iniciais e envie para a empresa revisar."
-      : "Envie o convite, acompanhe o preenchimento e conclua o cadastro da empresa."
+      ? "Preencha suas informacoes iniciais e envie para o DP revisar."
+      : "Envie o convite, acompanhe o preenchimento e conclua a revisao do DP."
   )
 
   const currentSections = useMemo(() => getSectionsForAudience(viewer), [viewer])
@@ -368,7 +374,10 @@ export function EmployeeOnboardingForm({
 
     async function loadClientDefaults() {
       try {
-        const response = await fetch("/api/clientes?current=1", {
+        const defaultsUrl = clientId
+          ? `/api/clientes?id=${encodeURIComponent(clientId)}`
+          : "/api/clientes?current=1"
+        const response = await fetch(defaultsUrl, {
           method: "GET",
           cache: "no-store",
         })
@@ -385,10 +394,13 @@ export function EmployeeOnboardingForm({
           return
         }
 
-        setFormData((previous) => ({
-          ...previous,
-          ...result.record!.employee_defaults,
-        }))
+        const normalizedDefaults = Object.fromEntries(
+          Object.entries(result.record.employee_defaults).map(([key, value]) => [
+            key,
+            typeof value === "boolean" ? value : value == null ? "" : String(value),
+          ])
+        ) as FormState
+        setFormData((previous) => ({ ...previous, ...normalizedDefaults }))
         setStatusMessage("Os padroes contabeis da empresa ja foram aplicados neste novo cadastro.")
       } catch {
         // Mantem o fluxo atual se a leitura dos padroes falhar.
@@ -400,7 +412,7 @@ export function EmployeeOnboardingForm({
     return () => {
       isMounted = false
     }
-  }, [editRecordId, publicToken, variant])
+  }, [clientId, editRecordId, publicToken, variant])
 
   useEffect(() => {
     const recalculatedExperienceFields = buildExperienceFields(
@@ -523,7 +535,7 @@ export function EmployeeOnboardingForm({
   }, [editRecordId, publicToken, variant])
 
   function updateField(key: string, value: string | boolean) {
-    if (employeeReadOnly) {
+    if (employeeReadOnly || (variant === "client" && !canManage)) {
       return
     }
 
@@ -767,6 +779,7 @@ export function EmployeeOnboardingForm({
         },
         body: JSON.stringify({
           id: recordId,
+          clientId,
           actor: viewer,
           workflowStatus: nextStatus,
           inviteEmail: String(formData.convite_email ?? formData.email ?? ""),
@@ -793,8 +806,25 @@ export function EmployeeOnboardingForm({
     }
   }
 
+  function applyDocumentFields(fields: EmployeeDocumentExtractedField[]) {
+    if (!canManage && variant === "client") return
+    setFormData((previous) => {
+      const next = { ...previous }
+      for (const field of fields) {
+        const current = next[field.key]
+        if (current === undefined || current === false || String(current).trim() === "") {
+          next[field.key] = field.value
+        }
+      }
+      if (next.ctps_digital && fields.some((field) => field.key === "cpf")) {
+        Object.assign(next, buildDigitalCtpsFields(next.cpf))
+      }
+      return next
+    })
+  }
+
   async function saveDraft() {
-    await persist("rascunho_interno", "Rascunho salvo no banco. O cliente ainda pode revisar tudo antes do envio.")
+    await persist("rascunho_interno", "Rascunho salvo. O DP ainda pode revisar tudo antes do envio.")
   }
 
   async function sendInvite() {
@@ -883,7 +913,7 @@ export function EmployeeOnboardingForm({
         setRecordId(result.id)
         setWorkflow(
           "preenchido_funcionario",
-          "Cadastro básico enviado. Agora o cliente deve revisar e completar os campos internos."
+          "Cadastro básico enviado. Agora o DP deve revisar e completar os campos internos."
         )
       } catch (error) {
         setStatusMessage(error instanceof Error ? error.message : "Erro ao enviar cadastro básico.")
@@ -896,14 +926,14 @@ export function EmployeeOnboardingForm({
 
     await persist(
       "preenchido_funcionario",
-      "Cadastro básico enviado. Agora o cliente deve revisar e completar os campos internos."
+      "Cadastro básico enviado. Agora o DP deve revisar e completar os campos internos."
     )
   }
 
   async function moveToClientReview() {
     const savedId = await persist(
       "em_revisao_cliente",
-      "O cadastro entrou em revisão do cliente. Complete dados contratuais, banco, eSocial e validações."
+      "O cadastro entrou em revisao do DP. Complete dados contratuais, banco, eSocial e validacoes."
     )
     if (savedId) {
       changeViewer("client")
@@ -992,6 +1022,15 @@ export function EmployeeOnboardingForm({
           <RequiredFieldsNotice missingRequiredFields={missingRequiredFields} />
         ) : null}
 
+        <EmployeeDocuments
+          employeeId={recordId}
+          publicToken={publicToken}
+          canUpload={!employeeReadOnly && (variant === "employee" || canManage)}
+          canApply={!employeeReadOnly && (variant === "employee" || canManage)}
+          currentValues={formData}
+          onApplyFields={applyDocumentFields}
+        />
+
         {canSwitchViewer ? (
           <div className="mt-6 flex flex-wrap gap-3">
             <button
@@ -1016,7 +1055,7 @@ export function EmployeeOnboardingForm({
               }`}
             >
               <UsersRound size={16} />
-              Visão da empresa
+              Visão do DP
             </button>
           </div>
         ) : null}
@@ -1087,6 +1126,7 @@ export function EmployeeOnboardingForm({
                   }
                   readOnly={
                     employeeReadOnly ||
+                    (variant === "client" && !canManage) ||
                     (variant === "employee" ? field.audience === "client" : false) ||
                     (field.key === "ctps_numero" && Boolean(formData.ctps_digital)) ||
                     (field.key === "ctps_serie" && Boolean(formData.ctps_digital)) ||
@@ -1117,7 +1157,7 @@ export function EmployeeOnboardingForm({
           </div>
         ) : null}
 
-        <ActionPanel
+        {variant === "employee" || canManage ? <ActionPanel
           variant={variant}
           viewer={viewer}
           status={status}
@@ -1131,7 +1171,11 @@ export function EmployeeOnboardingForm({
           onMoveToClientReview={moveToClientReview}
           onFinalizeRecord={finalizeRecord}
           onExport={exportToWorkbook}
-        />
+        /> : (
+          <div className="mt-6 rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm font-medium text-slate-600">
+            A empresa possui acesso de consulta. A revisao e a finalizacao sao exclusivas do DP.
+          </div>
+        )}
       </div>
     </div>
   )
@@ -1717,8 +1761,8 @@ function ActionPanel({
         <strong className="text-slate-900">Acoes da etapa</strong>
         <p className="mt-2 text-slate-600">
           {variant === "employee"
-            ? "Nesta etapa, voce preenche as informacoes iniciais. A revisao e a conclusao do cadastro ficam com a empresa."
-            : "Nesta etapa, a empresa acompanha o preenchimento, revisa as informacoes e conclui o cadastro antes da exportacao."}
+            ? "Nesta etapa, voce preenche as informacoes pessoais. A revisao e a conclusao do cadastro ficam com o DP."
+            : "Nesta etapa, o DP acompanha o preenchimento, revisa as informacoes e conclui o cadastro antes da exportacao."}
         </p>
       </div>
 
