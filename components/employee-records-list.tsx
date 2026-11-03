@@ -19,8 +19,8 @@ type EmployeeRecord = {
 const statusLabels: Record<string, string> = {
   rascunho_interno: "Rascunho interno",
   convite_enviado: "Convite enviado",
-  preenchido_funcionario: "Preenchido pelo funcionario",
-  em_revisao_cliente: "Em revisao do DP",
+  preenchido_funcionario: "Preenchido pelo funcionário",
+  em_revisao_cliente: "Em revisão do DP",
   finalizado: "Finalizado",
   exportado: "Exportado",
 }
@@ -34,7 +34,7 @@ const phoenixStatusLabels: Record<string, string> = {
 
 export function EmployeeRecordsList({ clientId, canManage }: { clientId: string; canManage: boolean }) {
   const [records, setRecords] = useState<EmployeeRecord[]>([])
-  const [statusMessage, setStatusMessage] = useState("Carregando funcionarios da empresa.")
+  const [statusMessage, setStatusMessage] = useState("Carregando funcionários da empresa.")
   const [isLoading, setIsLoading] = useState(true)
   const [isDeletingId, setIsDeletingId] = useState<string | null>(null)
   const [isUpdatingPhoenixId, setIsUpdatingPhoenixId] = useState<string | null>(null)
@@ -58,14 +58,14 @@ export function EmployeeRecordsList({ clientId, canManage }: { clientId: string;
       }
 
       if (!response.ok || !result.ok) {
-        setStatusMessage(result.error ?? "Nao foi possivel carregar os funcionarios.")
+        setStatusMessage(result.error ?? "Não foi possível carregar os funcionários.")
         return
       }
 
       setRecords(result.records ?? [])
-      setStatusMessage("Funcionarios carregados com sucesso.")
+      setStatusMessage("Funcionários carregados com sucesso.")
     } catch (error) {
-      setStatusMessage(error instanceof Error ? error.message : "Erro ao carregar funcionarios.")
+      setStatusMessage(error instanceof Error ? error.message : "Erro ao carregar funcionários.")
     } finally {
       setIsLoading(false)
     }
@@ -154,7 +154,7 @@ export function EmployeeRecordsList({ clientId, canManage }: { clientId: string;
 
   async function handleDelete(record: EmployeeRecord) {
     const confirmed = window.confirm(
-      `Excluir o funcionario ${record.employee_name || "sem nome informado"}? Essa acao remove o cadastro salvo.`
+      `Excluir o funcionário ${record.employee_name || "sem nome informado"}? Essa ação remove o cadastro salvo.`
     )
 
     if (!confirmed) {
@@ -177,14 +177,14 @@ export function EmployeeRecordsList({ clientId, canManage }: { clientId: string;
       const result = (await response.json()) as { ok: boolean; error?: string }
 
       if (!response.ok || !result.ok) {
-        setStatusMessage(result.error ?? "Nao foi possivel excluir o funcionario.")
+        setStatusMessage(result.error ?? "Não foi possível excluir o funcionário.")
         return
       }
 
       setRecords((previous) => previous.filter((item) => item.id !== record.id))
-      setStatusMessage("Funcionario excluido com sucesso.")
+      setStatusMessage("Funcionário excluído com sucesso.")
     } catch (error) {
-      setStatusMessage(error instanceof Error ? error.message : "Erro ao excluir funcionario.")
+      setStatusMessage(error instanceof Error ? error.message : "Erro ao excluir funcionário.")
     } finally {
       setIsDeletingId(null)
     }
@@ -194,7 +194,7 @@ export function EmployeeRecordsList({ clientId, canManage }: { clientId: string;
     <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
       <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-slate-900">Funcionarios desta empresa</h2>
+          <h2 className="text-2xl font-bold text-slate-900">Funcionários desta empresa</h2>
           <p className="mt-2 text-slate-600">
             O DP administra convites e revisoes; a empresa possui acesso de consulta aos cadastros e documentos.
           </p>
@@ -203,29 +203,29 @@ export function EmployeeRecordsList({ clientId, canManage }: { clientId: string;
           href={`/painel/cadastros?clientId=${encodeURIComponent(clientId)}`}
           className="inline-flex items-center justify-center rounded-xl border border-slate-300 px-5 py-3 font-semibold text-slate-700 hover:bg-slate-100"
         >
-          Novo funcionario
+          Novo funcionário
         </Link> : null}
       </div>
 
       {isLoading ? (
         <div className="mt-6 rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-6 text-slate-600">
-          Carregando funcionarios...
+          Carregando funcionários...
         </div>
       ) : records.length === 0 ? (
         <div className="mt-6 rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-6 text-slate-600">
-          Ainda nao ha funcionarios cadastrados para esta empresa.
+          Ainda não há funcionários cadastrados para esta empresa.
         </div>
       ) : (
         <div className="mt-6 overflow-hidden rounded-2xl border border-slate-200">
           <table className="min-w-full divide-y divide-slate-200">
             <thead className="bg-slate-50">
               <tr className="text-left text-sm font-semibold text-slate-700">
-                <th className="px-4 py-3">Funcionario</th>
+                <th className="px-4 py-3">Funcionário</th>
                 <th className="px-4 py-3">E-mail</th>
                 <th className="px-4 py-3">Status</th>
                 <th className="px-4 py-3">Phoenix</th>
                 <th className="px-4 py-3">Atualizado</th>
-                <th className="px-4 py-3">Acao</th>
+                <th className="px-4 py-3">Ação</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-200 bg-white">

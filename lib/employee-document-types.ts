@@ -18,13 +18,13 @@ export type EmployeeDocumentType = z.infer<typeof employeeDocumentTypeSchema>
 export const employeeDocumentTypeLabels: Record<EmployeeDocumentType, string> = {
   rg_cin: "RG ou CIN",
   cnh: "CNH",
-  comprovante_endereco: "Comprovante de endereco",
+  comprovante_endereco: "Comprovante de endereço",
   ctps: "CTPS",
   pis_nis: "PIS/NIS",
-  certidao_civil: "Certidao civil",
-  comprovante_bancario: "Comprovante bancario",
+  certidao_civil: "Certidão civil",
+  comprovante_bancario: "Comprovante bancário",
   aso: "ASO",
-  dependente: "Documento de dependente",
+  dependente: "Documento do dependente",
   outro: "Outro documento",
 }
 

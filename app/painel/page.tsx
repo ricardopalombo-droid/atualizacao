@@ -64,7 +64,7 @@ export default async function PainelPage() {
               acao: "Gerenciar clientes",
             },
             {
-              titulo: "Admissao de funcionarios",
+              titulo: "Admissão de funcionários",
               descricao: "Envie convites, revise documentos e conclua os cadastros das empresas.",
               href: "/painel/cadastros",
               icone: ClipboardList,
@@ -73,7 +73,7 @@ export default async function PainelPage() {
           ]
         : [
             {
-              titulo: "Consulta de funcionarios",
+              titulo: "Consulta de funcionários",
               descricao: "Consulte cadastros e documentos encaminhados ao escritorio.",
               href: "/painel/cadastros",
               icone: ClipboardList,
@@ -97,17 +97,17 @@ export default async function PainelPage() {
 
   const titleByRole =
     session.role === "palsys_admin"
-      ? "Operacao administrativa da plataforma"
+        ? "Operação administrativa da plataforma"
       : session.role === "subscriber_admin"
-        ? "Operacao da carteira do escritorio"
-        : "Operacao de cadastros da empresa"
+        ? "Operação da carteira do escritório"
+        : "Operação de cadastros da empresa"
 
   const descriptionByRole =
     session.role === "palsys_admin"
       ? "Este acesso administra a plataforma, os assinantes e os limites contratados."
       : session.role === "subscriber_admin"
         ? "Este acesso administra clientes, acompanha a fila do Phoenix e opera a carteira do escritorio."
-        : "Este acesso administra os funcionarios da empresa, revisa os dados recebidos e prepara o envio ao escritorio."
+        : "Este acesso consulta os funcionários e os documentos enviados ao escritório."
 
   return (
     <main className="min-h-screen bg-slate-50">

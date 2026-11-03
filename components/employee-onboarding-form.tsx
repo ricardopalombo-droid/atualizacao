@@ -3,7 +3,6 @@
 import { useEffect, useMemo, useState } from "react"
 import {
   CheckCircle2,
-  Download,
   Link2,
   Mail,
   Pencil,
@@ -26,7 +25,6 @@ import {
   workflowStatusLabels,
   workflowStatusOrder,
 } from "@/lib/employee-form-config"
-import { exportEmployeeWorkbook } from "@/lib/planilha-export"
 import { EmployeeDocuments } from "@/components/employee-documents"
 import type { EmployeeDocumentExtractedField } from "@/lib/employee-document-types"
 
@@ -77,6 +75,11 @@ const viewerLabels: Record<FieldAudience, string> = {
   employee: "Funcionário",
   client: "DP",
 }
+
+const brazilStateCodes = new Set([
+  "AC", "AL", "AP", "AM", "BA", "CE", "DF", "ES", "GO", "MA", "MT", "MS",
+  "MG", "PA", "PB", "PR", "PE", "PI", "RJ", "RN", "RS", "RO", "RR", "SC", "SP", "SE", "TO",
+])
 
 const emptyDependentForm: DependentFormState = {
   id: null,
@@ -328,8 +331,8 @@ export function EmployeeOnboardingForm({
   const [isSaving, setIsSaving] = useState(false)
   const [statusMessage, setStatusMessage] = useState(
     variant === "employee"
-      ? "Preencha suas informacoes iniciais e envie para o DP revisar."
-      : "Envie o convite, acompanhe o preenchimento e conclua a revisao do DP."
+      ? "Preencha suas informações pessoais e envie para o DP revisar."
+      : "Envie o convite, acompanhe o preenchimento e conclua a revisão do DP."
   )
 
   const currentSections = useMemo(() => getSectionsForAudience(viewer), [viewer])
@@ -440,6 +443,13 @@ export function EmployeeOnboardingForm({
     formData.experiencia_termino,
     formData.experiencia_termino_prorrogacao,
   ])
+
+  useEffect(() => {
+    const uf = String(formData.uf ?? "").trim().toUpperCase()
+    if (!formData.pais && brazilStateCodes.has(uf)) {
+      setFormData((previous) => ({ ...previous, pais: "Brasil" }))
+    }
+  }, [formData.pais, formData.uf])
 
   useEffect(() => {
     if (!editRecordId && !publicToken) {
@@ -576,6 +586,16 @@ export function EmployeeOnboardingForm({
     }
 
     if (key === "horas_mensais") {
+      return
+    }
+
+    if (key === "uf" && typeof value === "string") {
+      const normalizedUf = value.trim().toUpperCase()
+      setFormData((previous) => ({
+        ...previous,
+        uf: value,
+        ...(!previous.pais && brazilStateCodes.has(normalizedUf) ? { pais: "Brasil" } : {}),
+      }))
       return
     }
 
@@ -819,6 +839,10 @@ export function EmployeeOnboardingForm({
       if (next.ctps_digital && fields.some((field) => field.key === "cpf")) {
         Object.assign(next, buildDigitalCtpsFields(next.cpf))
       }
+      const uf = String(next.uf ?? "").trim().toUpperCase()
+      if (!next.pais && brazilStateCodes.has(uf)) {
+        next.pais = "Brasil"
+      }
       return next
     })
   }
@@ -831,7 +855,7 @@ export function EmployeeOnboardingForm({
     const email = String(formData.convite_email ?? formData.email ?? "")
 
     if (!email) {
-      setStatusMessage("Informe o e-mail do funcionario para enviar o link de acesso ao cadastro.")
+      setStatusMessage("Informe o e-mail do funcionário para enviar o link de acesso ao cadastro.")
       return
     }
 
@@ -842,7 +866,7 @@ export function EmployeeOnboardingForm({
     if (!currentRecordId) {
       const savedId = await persist(
         "rascunho_interno",
-        "Cadastro salvo. Agora o convite sera enviado para o funcionario."
+        "Cadastro salvo. Agora o convite será enviado para o funcionário."
       )
 
       if (!savedId) {
@@ -933,7 +957,7 @@ export function EmployeeOnboardingForm({
   async function moveToClientReview() {
     const savedId = await persist(
       "em_revisao_cliente",
-      "O cadastro entrou em revisao do DP. Complete dados contratuais, banco, eSocial e validacoes."
+      "O cadastro entrou em revisão do DP. Complete os dados contratuais, bancários, do eSocial e as validações."
     )
     if (savedId) {
       changeViewer("client")
@@ -941,15 +965,6 @@ export function EmployeeOnboardingForm({
   }
 
   async function finalizeRecord() {
-    await persist("finalizado", "Cadastro finalizado. A planilha agora pode ser gerada.")
-  }
-
-  function exportToWorkbook() {
-    if (status !== "finalizado" && status !== "exportado") {
-      setStatusMessage("Finalize o cadastro antes de gerar a planilha.")
-      return
-    }
-
     if (missingRequiredFields.length > 0) {
       const preview = missingRequiredFields.slice(0, 6).map((field) => field.label).join(", ")
       const suffix =
@@ -957,34 +972,10 @@ export function EmployeeOnboardingForm({
           ? ` e mais ${missingRequiredFields.length - 6} campo(s).`
           : "."
 
-      setStatusMessage(`Preencha os campos obrigatorios antes de exportar: ${preview}${suffix}`)
+      setStatusMessage(`Preencha os campos obrigatórios antes de finalizar: ${preview}${suffix}`)
       return
     }
-
-    exportEmployeeWorkbook({
-      ...formData,
-      dependentes: dependents.map((dependent) => ({
-        codigo: dependent.id ?? "",
-        nome_parentesco: dependent.relationshipName,
-        cpf: dependent.cpf,
-        grau_parentesco: dependent.relationshipDegree,
-        nascimento: dependent.birthDate,
-        data_entrega_registro: dependent.registryDeliveryDate,
-        naturalidade: dependent.naturality,
-        cartorio: dependent.registryOffice,
-        registro: dependent.registryNumber,
-        livro: dependent.bookNumber,
-        folha: dependent.sheetNumber,
-        data_inicio_situacao: dependent.situationStartDate,
-        motivo_situacao: dependent.situationMotive,
-        irrf: dependent.irrf,
-        salario_familia: dependent.familySalary,
-        pensao_alimenticia: dependent.alimony,
-        convenio_assistencia_saude: dependent.healthPlan,
-        observacoes: dependent.notes,
-      })),
-    })
-    setWorkflow("exportado", "Planilha gerada com sucesso para a próxima etapa operacional.")
+    await persist("finalizado", "Cadastro finalizado e pronto para a próxima etapa.")
   }
 
   const currentStatusIndex = workflowStatusOrder.indexOf(status)
@@ -1170,10 +1161,9 @@ export function EmployeeOnboardingForm({
           onSubmitEmployeeData={submitEmployeeData}
           onMoveToClientReview={moveToClientReview}
           onFinalizeRecord={finalizeRecord}
-          onExport={exportToWorkbook}
         /> : (
           <div className="mt-6 rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm font-medium text-slate-600">
-            A empresa possui acesso de consulta. A revisao e a finalizacao sao exclusivas do DP.
+            A empresa possui acesso de consulta. A revisão e a finalização são exclusivas do DP.
           </div>
         )}
       </div>
@@ -1200,7 +1190,7 @@ function WorkflowOverview({
           <div>
             <h2 className="text-2xl font-bold text-slate-900">Como funciona o cadastro</h2>
             <p className="mt-2 max-w-3xl leading-7 text-slate-600">
-              O cadastro comeca com o funcionario, que preenche as informacoes iniciais pelo link recebido. Depois, a empresa revisa os dados, completa as informacoes internas e conclui o processo.
+              O cadastro começa com o funcionário, que preenche as informações pessoais pelo link recebido. Depois, o DP revisa os dados, completa as informações internas e conclui o processo.
             </p>
           </div>
         </div>
@@ -1208,27 +1198,27 @@ function WorkflowOverview({
         <div className="mt-6 grid gap-4 md:grid-cols-3">
           <WorkflowCard
             title="1. Envio do convite"
-            description="A empresa informa o e-mail do funcionario para enviar o link de acesso ao cadastro."
+            description="O DP informa o e-mail do funcionário para enviar o link de acesso ao cadastro."
             highlighted={status === "convite_enviado"}
           />
           <WorkflowCard
             title="2. Preenchimento inicial"
-            description="O funcionario preenche seus dados pessoais, endereco, documentos e dependentes."
+            description="O funcionário preenche seus dados pessoais, endereço, documentos e dependentes."
             highlighted={status === "preenchido_funcionario"}
           />
           <WorkflowCard
-            title="3. Revisao da empresa"
-            description="A empresa confere as informacoes, completa os dados internos e conclui o cadastro."
+            title="3. Revisão do DP"
+            description="O DP confere as informações, completa os dados internos e conclui o cadastro."
             highlighted={status === "em_revisao_cliente" || status === "finalizado" || status === "exportado"}
           />
         </div>
       </div>
 
       <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-        <h3 className="text-xl font-semibold text-slate-900">Convite do funcionario</h3>
-        <p className="mt-2 text-slate-600">Digite o e-mail do funcionario para enviar o link de acesso ao cadastro.</p>
+        <h3 className="text-xl font-semibold text-slate-900">Convite do funcionário</h3>
+        <p className="mt-2 text-slate-600">Digite o e-mail do funcionário para enviar o link de acesso ao cadastro.</p>
         <label className="mt-6 block text-sm font-semibold text-slate-700" htmlFor="convite_email">
-          E-mail do funcionario
+          E-mail do funcionário
         </label>
         <input
           id="convite_email"
@@ -1239,7 +1229,7 @@ function WorkflowOverview({
           className="mt-2 w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-slate-900 outline-none transition focus:border-yellow-400 focus:ring-2 focus:ring-yellow-200"
         />
         <div className="mt-6 rounded-2xl bg-slate-50 p-4 text-sm text-slate-600">
-          Link da area do funcionario: <strong>/cadastro/funcionario</strong>
+          Link da área do funcionário: <strong>/cadastro/funcionario</strong>
         </div>
       </div>
     </section>
@@ -1290,9 +1280,9 @@ function RequiredFieldsNotice({
   if (missingRequiredFields.length === 0) {
     return (
       <section className="mt-6 rounded-3xl border border-green-200 bg-green-50 p-6">
-        <strong className="text-green-800">Checklist de exportacao concluido</strong>
+        <strong className="text-green-800">Checklist do cadastro concluído</strong>
         <p className="mt-2 text-green-700">
-          Os campos obrigatorios destacados pelo sistema de destino ja foram preenchidos.
+          Todos os campos obrigatórios já foram preenchidos.
         </p>
       </section>
     )
@@ -1301,10 +1291,10 @@ function RequiredFieldsNotice({
   return (
     <section className="mt-6 rounded-3xl border border-amber-200 bg-amber-50 p-6">
       <strong className="text-amber-900">
-        Ainda faltam {missingRequiredFields.length} campo(s) obrigatorio(s) para exportar
+        Ainda faltam {missingRequiredFields.length} campo(s) obrigatório(s) para concluir
       </strong>
       <p className="mt-2 text-amber-800">
-        Corrija os itens abaixo antes de gerar a planilha final. Clique em qualquer item para ir direto ao campo.
+        Corrija os itens abaixo antes de finalizar o cadastro. Clique em qualquer item para ir direto ao campo.
       </p>
       <div className="mt-4 flex flex-wrap gap-2">
         {missingRequiredFields.map((field) => (
@@ -1347,7 +1337,7 @@ function DependentsSection({
         <div>
           <h3 className="text-2xl font-bold text-slate-900">Dependentes</h3>
           <p className="mt-2 text-slate-600">
-            Cadastre os dependentes do funcionário para compor a aba específica da planilha.
+            Cadastre os dependentes do funcionário que devem fazer parte da admissão.
           </p>
         </div>
         <div className="rounded-2xl bg-white px-4 py-3 text-sm font-semibold text-slate-700">
@@ -1739,7 +1729,6 @@ function ActionPanel({
   onSubmitEmployeeData,
   onMoveToClientReview,
   onFinalizeRecord,
-  onExport,
 }: {
   variant: "client" | "employee"
   viewer: FieldAudience
@@ -1753,16 +1742,15 @@ function ActionPanel({
   onSubmitEmployeeData: () => Promise<void>
   onMoveToClientReview: () => Promise<void>
   onFinalizeRecord: () => Promise<void>
-  onExport: () => void
 }) {
   return (
     <section className="mt-6 flex flex-col gap-4 rounded-3xl border border-slate-200 bg-white p-6 md:flex-row md:items-center md:justify-between">
       <div>
-        <strong className="text-slate-900">Acoes da etapa</strong>
+        <strong className="text-slate-900">Ações desta etapa</strong>
         <p className="mt-2 text-slate-600">
           {variant === "employee"
-            ? "Nesta etapa, voce preenche as informacoes pessoais. A revisao e a conclusao do cadastro ficam com o DP."
-            : "Nesta etapa, o DP acompanha o preenchimento, revisa as informacoes e conclui o cadastro antes da exportacao."}
+            ? "Confira seus dados pessoais e, quando estiver tudo certo, envie o cadastro para o DP."
+            : "O DP acompanha o preenchimento, revisa as informações e conclui o cadastro."}
         </p>
       </div>
 
@@ -1791,7 +1779,7 @@ function ActionPanel({
               <button
                 type="button"
                 onClick={onMoveToClientReview}
-                disabled={isSaving}
+                disabled={isSaving || missingRequiredFieldCount > 0}
                 className="inline-flex items-center gap-2 rounded-xl border border-slate-300 px-4 py-3 font-semibold text-slate-700 hover:bg-slate-100"
               >
                 <UsersRound size={18} />
@@ -1805,20 +1793,9 @@ function ActionPanel({
                 disabled={isSaving}
                 className="rounded-xl bg-yellow-400 px-4 py-3 font-bold text-slate-900 hover:brightness-95"
               >
-                {isSaving ? "Finalizando..." : "Finalizar cadastro"}
+                {isSaving ? "Finalizando..." : missingRequiredFieldCount > 0 ? `Faltam ${missingRequiredFieldCount} campos` : "Finalizar cadastro"}
               </button>
             ) : null}
-            <button
-              type="button"
-              onClick={onExport}
-              disabled={missingRequiredFieldCount > 0}
-              className="inline-flex items-center gap-2 rounded-xl border border-slate-300 px-4 py-3 font-semibold text-slate-700 hover:bg-slate-100"
-            >
-              <Download size={18} />
-              {missingRequiredFieldCount > 0
-                ? `Exportacao bloqueada (${missingRequiredFieldCount})`
-                : "Exportar planilha"}
-            </button>
           </>
         ) : (
           <button
@@ -1828,7 +1805,7 @@ function ActionPanel({
             className="inline-flex items-center gap-2 rounded-xl bg-yellow-400 px-4 py-3 font-bold text-slate-900 hover:brightness-95"
           >
             <SendHorizontal size={18} />
-            {isSaving ? "Enviando..." : "Enviar cadastro básico"}
+            {isSaving ? "Enviando..." : "Confirmar e enviar para o DP"}
           </button>
         )}
       </div>

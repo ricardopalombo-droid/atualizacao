@@ -63,7 +63,7 @@ export function EmployeeDocuments({
           { cache: "no-store" }
         )
         const result = await response.json() as { ok: boolean; records?: EmployeeDocumentRecord[]; error?: string }
-        if (!response.ok || !result.ok) throw new Error(result.error ?? "Nao foi possivel carregar os documentos.")
+        if (!response.ok || !result.ok) throw new Error(result.error ?? "Não foi possível carregar os documentos.")
         if (active) setRecords(result.records ?? [])
       } catch (error) {
         if (active) setMessage(error instanceof Error ? error.message : "Erro ao carregar documentos.")
@@ -117,14 +117,14 @@ export function EmployeeDocuments({
 
       const response = await fetch("/api/cadastros/documentos", { method: "POST", body })
       const result = await response.json() as { ok: boolean; record?: EmployeeDocumentRecord; error?: string }
-      if (!response.ok || !result.ok || !result.record) throw new Error(result.error ?? "Nao foi possivel anexar o documento.")
+      if (!response.ok || !result.ok || !result.record) throw new Error(result.error ?? "Não foi possível anexar o documento.")
 
       setRecords((previous) => [result.record!, ...previous])
       if (inputRef.current) inputRef.current.value = ""
       setMessage(
         result.record.analysis_status === "completed"
-          ? "Documento salvo e lido. Confira as sugestoes antes de aplica-las."
-          : `Documento salvo, mas a leitura precisa de atencao: ${result.record.analysis_error ?? "nao concluida"}`
+          ? "Documento salvo e lido. Confira as sugestões antes de aplicá-las."
+          : `Documento salvo, mas a leitura precisa de atenção: ${result.record.analysis_error ?? "não concluída"}`
       )
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Erro ao enviar documento.")
@@ -141,7 +141,7 @@ export function EmployeeDocuments({
         { cache: "no-store" }
       )
       const result = await response.json() as { ok: boolean; signedUrl?: string; error?: string }
-      if (!response.ok || !result.ok || !result.signedUrl) throw new Error(result.error ?? "Documento indisponivel.")
+      if (!response.ok || !result.ok || !result.signedUrl) throw new Error(result.error ?? "Documento indisponível.")
       window.open(result.signedUrl, "_blank", "noopener,noreferrer")
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Erro ao abrir documento.")
@@ -158,7 +158,7 @@ export function EmployeeDocuments({
         body: JSON.stringify({ employeeId, documentId: record.id, token: publicToken ?? "" }),
       })
       const result = await response.json() as { ok: boolean; error?: string }
-      if (!response.ok || !result.ok) throw new Error(result.error ?? "Nao foi possivel excluir o documento.")
+      if (!response.ok || !result.ok) throw new Error(result.error ?? "Não foi possível excluir o documento.")
       setRecords((previous) => previous.filter((item) => item.id !== record.id))
       setMessage("Documento excluido.")
     } catch (error) {
@@ -175,9 +175,9 @@ export function EmployeeDocuments({
           <FileCheck2 size={22} />
         </div>
         <div>
-          <h3 className="text-xl font-bold text-slate-900">Documentos do funcionario</h3>
+          <h3 className="text-xl font-bold text-slate-900">Documentos do funcionário</h3>
           <p className="mt-1 text-sm leading-6 text-slate-600">
-            Envie PDF, JPG ou PNG de ate 12 MB. Os dados lidos sao apenas sugestoes e precisam ser conferidos.
+            Envie PDF, JPG ou PNG de até 12 MB. Os dados lidos são apenas sugestões e precisam ser conferidos.
           </p>
         </div>
       </div>
@@ -225,7 +225,7 @@ export function EmployeeDocuments({
             onChange={(event) => setConsent(event.target.checked)}
             className="mt-1 h-4 w-4"
           />
-          Confirmo que o titular autorizou o armazenamento privado e a leitura deste documento para o cadastro admissional, com exclusao programada em ate 60 dias apos o encerramento.
+          Confirmo que o titular autorizou o armazenamento privado e a leitura deste documento para o cadastro admissional, com exclusão programada em até 60 dias após o encerramento.
         </label>
       ) : null}
 
@@ -244,7 +244,7 @@ export function EmployeeDocuments({
                     {employeeDocumentTypeLabels[record.document_type]} - {formatBytes(record.size_bytes)} - enviado em {formatDate(record.created_at)}
                   </p>
                   <p className={`mt-2 text-xs font-bold ${record.analysis_status === "completed" ? "text-emerald-700" : record.analysis_status === "failed" ? "text-amber-700" : "text-sky-700"}`}>
-                    {record.analysis_status === "completed" ? `${record.extracted_fields.length} campo(s) identificado(s)` : record.analysis_status === "failed" ? `Leitura nao concluida: ${record.analysis_error ?? "verifique o arquivo"}` : "Leitura em andamento"}
+                    {record.analysis_status === "completed" ? `${record.extracted_fields.length} campo(s) identificado(s)` : record.analysis_status === "failed" ? `Leitura não concluída: ${record.analysis_error ?? "verifique o arquivo"}` : "Leitura em andamento"}
                   </p>
                 </div>
                 <div className="flex gap-2">
@@ -277,9 +277,9 @@ export function EmployeeDocuments({
         <div className="mt-5 rounded-2xl border border-slate-200 bg-white p-4">
           <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
             <div>
-              <h4 className="font-bold text-slate-900">Sugestoes encontradas</h4>
+              <h4 className="font-bold text-slate-900">Sugestões encontradas</h4>
               <p className="mt-1 text-xs text-slate-500">
-                {emptyFieldSuggestions.length} campo(s) vazio(s) podem ser preenchidos. {conflictingSuggestions.length} divergencia(s) devem ser conferidas manualmente.
+                {emptyFieldSuggestions.length} campo(s) vazio(s) podem ser preenchidos. {conflictingSuggestions.length} divergência(s) devem ser conferidas manualmente.
               </p>
             </div>
             {canApply && emptyFieldSuggestions.length > 0 ? (

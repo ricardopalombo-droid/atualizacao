@@ -46,13 +46,13 @@ export default async function CadastrosPage({
         <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
           <div>
             <span className="inline-flex rounded-full bg-yellow-100 px-4 py-1 text-sm font-bold text-yellow-800">
-              {canManage ? "Operacao do escritorio/DP" : "Consulta da empresa"}
+              {canManage ? "Operação do escritório/DP" : "Consulta da empresa"}
             </span>
           <h1 className="mt-4 text-4xl font-bold text-slate-900">Painel de cadastros de funcionários</h1>
             <p className="mt-3 max-w-3xl text-slate-600">
               {canManage
                 ? `Cadastros da empresa ${selectedClient?.name ?? "selecionada"}: envie convites, revise documentos e conclua os dados internos.`
-                : "A empresa pode consultar os cadastros e documentos. A revisao e a finalizacao sao realizadas pelo DP."}
+                : "A empresa pode consultar os cadastros e documentos. A revisão e a finalização são realizadas pelo DP."}
             </p>
           </div>
 
