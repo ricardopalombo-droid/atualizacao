@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useMemo, useState, type ReactNode } from "react"
 import {
   CheckCircle2,
   Link2,
@@ -383,6 +383,7 @@ export function EmployeeOnboardingForm({
   const employeeReadOnly =
     variant === "employee" &&
     ["preenchido_funcionario", "em_revisao_cliente", "finalizado", "exportado"].includes(status)
+  const dpWaitingForEmployee = variant === "client" && status === "convite_enviado"
 
   useEffect(() => {
     if (variant !== "client" || editRecordId || publicToken) {
@@ -419,6 +420,19 @@ export function EmployeeOnboardingForm({
             typeof value === "boolean" ? value : value == null ? "" : String(value),
           ])
         ) as FormState
+
+        for (const key of dynamicReferenceFieldKeys) {
+          const code = String(normalizedDefaults[key] ?? "")
+          const selectedRecord = (lookupCatalog[key] ?? []).find((record) => record.code === code)
+
+          if (selectedRecord) {
+            normalizedDefaults[`${key}_descricao`] = selectedRecord.label
+            if (key === "cargo") {
+              normalizedDefaults.cargo_cbo = String(selectedRecord.metadata?.cbo_esocial ?? "")
+            }
+          }
+        }
+
         setFormData((previous) => ({ ...previous, ...normalizedDefaults }))
         setStatusMessage("Os padroes contabeis da empresa ja foram aplicados neste novo cadastro.")
       } catch {
@@ -431,7 +445,7 @@ export function EmployeeOnboardingForm({
     return () => {
       isMounted = false
     }
-  }, [clientId, editRecordId, publicToken, variant])
+  }, [clientId, editRecordId, lookupCatalog, publicToken, variant])
 
   useEffect(() => {
     const recalculatedExperienceFields = buildExperienceFields(
@@ -564,7 +578,7 @@ export function EmployeeOnboardingForm({
   }, [clientId, editRecordId, publicToken, variant])
 
   function updateField(key: string, value: string | boolean) {
-    if (employeeReadOnly || (variant === "client" && !canManage)) {
+    if (employeeReadOnly || dpWaitingForEmployee || (variant === "client" && !canManage)) {
       return
     }
 
@@ -878,22 +892,25 @@ export function EmployeeOnboardingForm({
       return
     }
 
+    const missingInviteFields = [
+      { key: "data_admissao", label: "data de admissão" },
+      { key: "cargo", label: "cargo" },
+      { key: "salario", label: "salário" },
+    ].filter((field) => !hasFilledValue(formData[field.key]))
+
+    if (missingInviteFields.length > 0) {
+      setStatusMessage(
+        `Antes de enviar o convite, informe: ${missingInviteFields.map((field) => field.label).join(", ")}.`
+      )
+      return
+    }
+
     updateField("convite_email", email)
 
-    let currentRecordId = recordId
-
-    if (!currentRecordId) {
-      const savedId = await persist(
-        "rascunho_interno",
-        "Cadastro salvo. Agora o convite será enviado para o funcionário."
-      )
-
-      if (!savedId) {
-        return
-      }
-
-      currentRecordId = savedId
-    }
+    const currentRecordId = await persist(
+      "rascunho_interno",
+      "Dados da admissão salvos. Agora o convite será enviado para o funcionário."
+    )
 
     if (!currentRecordId) {
       setStatusMessage("Salve o cadastro antes de disparar o link.")
@@ -1056,7 +1073,9 @@ export function EmployeeOnboardingForm({
           status={status}
           canManage={canManage}
           isSaving={isSaving}
-          onInviteEmailChange={(value) => updateField("convite_email", value)}
+          cargoOptions={lookupOptionsByKey.cargo}
+          scheduleOptions={lookupOptionsByKey.horario}
+          onFieldChange={updateField}
           onSendInvite={sendInvite}
         />
       ) : null}
@@ -1095,8 +1114,8 @@ export function EmployeeOnboardingForm({
         <EmployeeDocuments
           employeeId={recordId}
           publicToken={publicToken}
-          canUpload={!employeeReadOnly && (variant === "employee" || canManage)}
-          canApply={!employeeReadOnly && (variant === "employee" || canManage)}
+          canUpload={!employeeReadOnly && !dpWaitingForEmployee && (variant === "employee" || canManage)}
+          canApply={!employeeReadOnly && !dpWaitingForEmployee && (variant === "employee" || canManage)}
           currentValues={formData}
           onApplyFields={applyDocumentFields}
         />
@@ -1196,6 +1215,7 @@ export function EmployeeOnboardingForm({
                   }
                   readOnly={
                     employeeReadOnly ||
+                    dpWaitingForEmployee ||
                     (variant === "client" && !canManage) ||
                     (variant === "employee" ? field.audience === "client" : false) ||
                     (field.key === "ctps_numero" && Boolean(formData.ctps_digital)) ||
@@ -1256,16 +1276,24 @@ function WorkflowOverview({
   status,
   canManage,
   isSaving,
-  onInviteEmailChange,
+  cargoOptions,
+  scheduleOptions,
+  onFieldChange,
   onSendInvite,
 }: {
   formData: FormState
   status: WorkflowStatus
   canManage: boolean
   isSaving: boolean
-  onInviteEmailChange: (value: string) => void
+  cargoOptions: FieldOption[]
+  scheduleOptions: FieldOption[]
+  onFieldChange: (key: string, value: string | boolean) => void
   onSendInvite: () => Promise<void>
 }) {
+  const inviteSent = status === "convite_enviado"
+  const inviteClosed = ["preenchido_funcionario", "em_revisao_cliente", "finalizado", "exportado"].includes(status)
+  const inviteReadOnly = !canManage || isSaving || inviteSent || inviteClosed
+
   return (
     <section className="grid gap-4 lg:grid-cols-[1.6fr_1fr]">
       <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
@@ -1310,12 +1338,63 @@ function WorkflowOverview({
           id="convite_email"
           type="email"
           value={String(formData.convite_email ?? "")}
-          disabled={!canManage || isSaving}
-          onChange={(event) => onInviteEmailChange(event.target.value)}
+          disabled={inviteReadOnly}
+          onChange={(event) => onFieldChange("convite_email", event.target.value)}
           placeholder="funcionario@empresa.com"
           className="mt-2 w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-slate-900 outline-none transition focus:border-yellow-400 focus:ring-2 focus:ring-yellow-200 disabled:bg-slate-100 disabled:text-slate-500"
         />
-        {canManage ? (
+
+        <div className="mt-4 grid gap-4 sm:grid-cols-2">
+          <InviteField label="Data de admissão *">
+            <input
+              type="date"
+              value={String(formData.data_admissao ?? "")}
+              disabled={inviteReadOnly}
+              onChange={(event) => onFieldChange("data_admissao", event.target.value)}
+              className="w-full rounded-xl border border-slate-300 bg-white px-3 py-3 text-slate-900 outline-none transition focus:border-yellow-400 focus:ring-2 focus:ring-yellow-200 disabled:bg-slate-100 disabled:text-slate-500"
+            />
+          </InviteField>
+          <InviteField label="Salário *">
+            <input
+              type="number"
+              min="0"
+              step="0.01"
+              value={String(formData.salario ?? "")}
+              disabled={inviteReadOnly}
+              onChange={(event) => onFieldChange("salario", event.target.value)}
+              placeholder="0,00"
+              className="w-full rounded-xl border border-slate-300 bg-white px-3 py-3 text-slate-900 outline-none transition focus:border-yellow-400 focus:ring-2 focus:ring-yellow-200 disabled:bg-slate-100 disabled:text-slate-500"
+            />
+          </InviteField>
+        </div>
+
+        <InviteField label="Cargo *" className="mt-4">
+          <select
+            value={String(formData.cargo ?? "")}
+            disabled={inviteReadOnly}
+            onChange={(event) => onFieldChange("cargo", event.target.value)}
+            className="w-full rounded-xl border border-slate-300 bg-white px-3 py-3 text-slate-900 outline-none transition focus:border-yellow-400 focus:ring-2 focus:ring-yellow-200 disabled:bg-slate-100 disabled:text-slate-500"
+          >
+            {cargoOptions.map((option) => (
+              <option key={option.value} value={option.value}>{option.label}</option>
+            ))}
+          </select>
+        </InviteField>
+
+        <InviteField label="Horário" className="mt-4">
+          <select
+            value={String(formData.horario ?? "")}
+            disabled={inviteReadOnly}
+            onChange={(event) => onFieldChange("horario", event.target.value)}
+            className="w-full rounded-xl border border-slate-300 bg-white px-3 py-3 text-slate-900 outline-none transition focus:border-yellow-400 focus:ring-2 focus:ring-yellow-200 disabled:bg-slate-100 disabled:text-slate-500"
+          >
+            {scheduleOptions.map((option) => (
+              <option key={option.value} value={option.value}>{option.label}</option>
+            ))}
+          </select>
+        </InviteField>
+
+        {canManage && !inviteSent && !inviteClosed ? (
           <button
             type="button"
             onClick={() => void onSendInvite()}
@@ -1326,11 +1405,33 @@ function WorkflowOverview({
             {isSaving ? "Processando..." : "Disparar link"}
           </button>
         ) : null}
+        {inviteSent ? (
+          <div className="mt-4 rounded-xl border border-sky-200 bg-sky-50 px-4 py-3 text-sm font-semibold text-sky-800">
+            Convite enviado. Aguarde o funcionário concluir o preenchimento.
+          </div>
+        ) : null}
         <div className="mt-6 rounded-2xl bg-slate-50 p-4 text-sm text-slate-600">
           Link da área do funcionário: <strong>/cadastro/funcionario</strong>
         </div>
       </div>
     </section>
+  )
+}
+
+function InviteField({
+  label,
+  className = "",
+  children,
+}: {
+  label: string
+  className?: string
+  children: ReactNode
+}) {
+  return (
+    <label className={`block text-sm font-semibold text-slate-700 ${className}`}>
+      <span className="mb-2 block">{label}</span>
+      {children}
+    </label>
   )
 }
 
@@ -1860,16 +1961,23 @@ function ActionPanel({
       <div className="flex flex-wrap gap-3">
         {variant === "client" ? (
           <>
-            <button
-              type="button"
-              onClick={onSaveDraft}
-              disabled={isSaving}
-              className="inline-flex items-center gap-2 rounded-xl border border-slate-300 px-4 py-3 font-semibold text-slate-700 hover:bg-slate-100"
-            >
-              <Save size={18} />
-              {isSaving ? "Salvando..." : "Salvar rascunho"}
-            </button>
-            {status === "preenchido_funcionario" || status === "convite_enviado" ? (
+            {status === "rascunho_interno" ? (
+              <button
+                type="button"
+                onClick={onSaveDraft}
+                disabled={isSaving}
+                className="inline-flex items-center gap-2 rounded-xl border border-slate-300 px-4 py-3 font-semibold text-slate-700 hover:bg-slate-100"
+              >
+                <Save size={18} />
+                {isSaving ? "Salvando..." : "Salvar rascunho"}
+              </button>
+            ) : null}
+            {status === "convite_enviado" ? (
+              <span className="inline-flex items-center rounded-xl bg-sky-50 px-4 py-3 font-semibold text-sky-800">
+                Aguardando o funcionário
+              </span>
+            ) : null}
+            {status === "preenchido_funcionario" ? (
               <button
                 type="button"
                 onClick={onMoveToClientReview}
@@ -1880,7 +1988,9 @@ function ActionPanel({
                 Iniciar revisão
               </button>
             ) : null}
-            {viewer === "client" && currentStatusIndex < workflowStatusOrder.indexOf("finalizado") ? (
+            {viewer === "client" &&
+            !["rascunho_interno", "convite_enviado"].includes(status) &&
+            currentStatusIndex < workflowStatusOrder.indexOf("finalizado") ? (
               <button
                 type="button"
                 onClick={onFinalizeRecord}
