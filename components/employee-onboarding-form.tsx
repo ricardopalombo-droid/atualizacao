@@ -17,6 +17,7 @@ import {
   defaultFormValues,
   dynamicReferenceFieldKeys,
   getSectionsForAudience,
+  requiredEmployeeFields,
   requiredExportFields,
   type FieldAudience,
   type FieldOption,
@@ -275,6 +276,16 @@ function getMissingRequiredFields(formData: FormState) {
     })
 }
 
+function getMissingEmployeeRequiredFields(formData: FormState) {
+  return requiredEmployeeFields.filter((field) => {
+    if (field.key === "ctps_uf" && formData.ctps_digital) {
+      return false
+    }
+
+    return !hasFilledValue(formData[field.key])
+  })
+}
+
 function normalizeCpfDigits(value: string | boolean | undefined) {
   return String(value ?? "").replace(/\D/g, "")
 }
@@ -365,6 +376,10 @@ export function EmployeeOnboardingForm({
     [lookupCatalog]
   )
   const missingRequiredFields = useMemo(() => getMissingRequiredFields(formData), [formData])
+  const missingEmployeeRequiredFields = useMemo(
+    () => getMissingEmployeeRequiredFields(formData),
+    [formData]
+  )
   const employeeReadOnly =
     variant === "employee" &&
     ["preenchido_funcionario", "em_revisao_cliente", "finalizado", "exportado"].includes(status)
@@ -916,6 +931,19 @@ export function EmployeeOnboardingForm({
 
   async function submitEmployeeData() {
     if (variant === "employee") {
+      if (missingEmployeeRequiredFields.length > 0) {
+        const firstMissingField = missingEmployeeRequiredFields[0]
+        setActiveSection(firstMissingField.sectionId)
+        setStatusMessage(
+          `Preencha os ${missingEmployeeRequiredFields.length} campo(s) obrigatório(s) antes de enviar o cadastro.`
+        )
+        setTimeout(() => {
+          document.getElementById(firstMissingField.key)?.scrollIntoView({ behavior: "smooth", block: "center" })
+          document.getElementById(firstMissingField.key)?.focus()
+        }, 0)
+        return
+      }
+
       setIsSaving(true)
 
       try {
@@ -1051,6 +1079,14 @@ export function EmployeeOnboardingForm({
 
         {variant === "client" ? (
           <RequiredFieldsNotice missingRequiredFields={missingRequiredFields} />
+        ) : null}
+
+        {variant === "employee" && !employeeReadOnly ? (
+          <RequiredFieldsNotice
+            missingRequiredFields={missingEmployeeRequiredFields}
+            employeeMode
+            onSelectField={(field) => setActiveSection(field.sectionId ?? "")}
+          />
         ) : null}
 
         <EmployeeDocuments
@@ -1195,7 +1231,9 @@ export function EmployeeOnboardingForm({
           isSaving={isSaving}
           employeeReadOnly={employeeReadOnly}
           currentStatusIndex={currentStatusIndex}
-          missingRequiredFieldCount={missingRequiredFields.length}
+          missingRequiredFieldCount={
+            variant === "employee" ? missingEmployeeRequiredFields.length : missingRequiredFields.length
+          }
           onSaveDraft={saveDraft}
           onSendInvite={sendInvite}
           onSubmitEmployeeData={submitEmployeeData}
@@ -1299,12 +1337,17 @@ function WorkflowCard({
 
 function RequiredFieldsNotice({
   missingRequiredFields,
+  employeeMode = false,
+  onSelectField,
 }: {
-  missingRequiredFields: Array<{ key: string; label: string }>
+  missingRequiredFields: Array<{ key: string; label: string; sectionId?: string }>
+  employeeMode?: boolean
+  onSelectField?: (field: { key: string; label: string; sectionId?: string }) => void
 }) {
-  function focusRequiredField(fieldKey: string) {
+  function focusRequiredField(field: { key: string; label: string; sectionId?: string }) {
+    onSelectField?.(field)
     setTimeout(() => {
-      const target = document.getElementById(fieldKey)
+      const target = document.getElementById(field.key)
 
       if (!target) {
         return
@@ -1334,14 +1377,16 @@ function RequiredFieldsNotice({
         Ainda faltam {missingRequiredFields.length} campo(s) obrigatório(s) para concluir
       </strong>
       <p className="mt-2 text-amber-800">
-        Corrija os itens abaixo antes de finalizar o cadastro. Clique em qualquer item para ir direto ao campo.
+        {employeeMode
+          ? "Preencha os itens abaixo antes de enviar seu cadastro. Clique em qualquer item para ir direto ao campo."
+          : "Corrija os itens abaixo antes de finalizar o cadastro. Clique em qualquer item para ir direto ao campo."}
       </p>
       <div className="mt-4 flex flex-wrap gap-2">
         {missingRequiredFields.map((field) => (
           <button
             key={field.key}
             type="button"
-            onClick={() => focusRequiredField(field.key)}
+            onClick={() => focusRequiredField(field)}
             className="inline-flex rounded-full border border-amber-300 bg-white px-3 py-1 text-sm font-medium text-amber-900 hover:bg-amber-100"
           >
             {field.label}
@@ -1841,11 +1886,15 @@ function ActionPanel({
           <button
             type="button"
             onClick={onSubmitEmployeeData}
-            disabled={isSaving || employeeReadOnly}
-            className="inline-flex items-center gap-2 rounded-xl bg-yellow-400 px-4 py-3 font-bold text-slate-900 hover:brightness-95"
+            disabled={isSaving || employeeReadOnly || missingRequiredFieldCount > 0}
+            className="inline-flex items-center gap-2 rounded-xl bg-yellow-400 px-4 py-3 font-bold text-slate-900 hover:brightness-95 disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-500"
           >
             <SendHorizontal size={18} />
-            {isSaving ? "Enviando..." : "Confirmar e enviar para o DP"}
+            {isSaving
+              ? "Enviando..."
+              : missingRequiredFieldCount > 0
+                ? `Preencha ${missingRequiredFieldCount} campo(s) obrigatório(s)`
+                : "Confirmar e enviar para o DP"}
           </button>
         )}
       </div>

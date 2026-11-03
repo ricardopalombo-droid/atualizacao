@@ -154,7 +154,7 @@ export function EmployeeRecordsList({ clientId, canManage }: { clientId: string;
 
   async function handleDelete(record: EmployeeRecord) {
     const confirmed = window.confirm(
-      `Excluir o funcionário ${record.employee_name || "sem nome informado"}? Essa ação remove o cadastro salvo.`
+      `Excluir o funcionário ${record.employee_name || "sem nome informado"}? Esta ação excluirá permanentemente o cadastro e todos os documentos anexados. Não será possível desfazer.`
     )
 
     if (!confirmed) {
@@ -182,7 +182,7 @@ export function EmployeeRecordsList({ clientId, canManage }: { clientId: string;
       }
 
       setRecords((previous) => previous.filter((item) => item.id !== record.id))
-      setStatusMessage("Funcionário excluído com sucesso.")
+      setStatusMessage("Funcionário e documentos anexados excluídos com sucesso.")
     } catch (error) {
       setStatusMessage(error instanceof Error ? error.message : "Erro ao excluir funcionário.")
     } finally {

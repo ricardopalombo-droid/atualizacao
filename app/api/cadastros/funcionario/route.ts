@@ -1,6 +1,7 @@
 import { z } from "zod"
 import { dependentPayloadSchema } from "@/lib/cadastro-types"
 import { getEmployeeRecordByInviteToken, submitEmployeeRecordByInviteToken } from "@/lib/cadastro-repository"
+import { requiredEmployeeFields } from "@/lib/employee-form-config"
 
 const publicEmployeeSubmitSchema = z.object({
   token: z.string().min(20, "Token inválido."),
@@ -44,6 +45,28 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     const payload = publicEmployeeSubmitSchema.parse(await request.json())
+    const usesDigitalCtps = payload.data.ctps_digital === true
+    const missingRequiredFields = requiredEmployeeFields.filter((field) => {
+      if (usesDigitalCtps && field.key === "ctps_uf") {
+        return false
+      }
+
+      const value = payload.data[field.key]
+      return typeof value !== "string" || value.trim().length === 0
+    })
+
+    if (missingRequiredFields.length > 0) {
+      return Response.json(
+        {
+          ok: false,
+          error: `Preencha os campos obrigatórios antes de enviar: ${missingRequiredFields
+            .map((field) => field.label)
+            .join(", ")}.`,
+        },
+        { status: 400 }
+      )
+    }
+
     const saved = await submitEmployeeRecordByInviteToken(payload.token, {
       data: payload.data,
       dependents: payload.dependents,
