@@ -468,6 +468,7 @@ export const formSections: FormSection[] = [
     audience: "client",
     fields: [
       { key: "matricula_esocial", label: "Matrícula eSocial", type: "text", audience: "client", requiredForExport: true },
+      { key: "registro_funcionario", label: "Registro do funcionário", type: "text", audience: "client", requiredForExport: true },
       { key: "data_admissao", label: "Data de admissão", type: "date", audience: "client", requiredForExport: true },
       { key: "indicativo_admissao", label: "Indicativo de admissão", type: "select", audience: "client", options: indicativoAdmissaoOptions, requiredForExport: true },
       { key: "sindicato", label: "Sindicato representante", type: "select", audience: "client", requiredForExport: true },
@@ -506,7 +507,6 @@ export const formSections: FormSection[] = [
       { key: "data_exame_medico", label: "Data do exame médico", type: "date", audience: "client" },
       { key: "validade_exame_medico", label: "Validade do exame médico (meses)", type: "number", audience: "client" },
       { key: "data_saida", label: "Data de saida", type: "date", audience: "client" },
-      { key: "registro_funcionario", label: "Registro do funcionário", type: "text", audience: "client", requiredForExport: true },
       { key: "folha_ficha", label: "Folha/Ficha", type: "text", audience: "client" },
       { key: "chapa", label: "Chapa", type: "text", audience: "client" },
     ],
