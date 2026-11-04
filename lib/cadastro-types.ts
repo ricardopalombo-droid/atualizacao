@@ -15,6 +15,7 @@ export const dependentPayloadSchema = z.object({
   id: z.string().uuid().optional().nullable(),
   relationshipName: z.string().default(""),
   cpf: z.string().default(""),
+  rg: z.string().default(""),
   relationshipDegree: z.string().default(""),
   birthDate: z.string().default(""),
   registryDeliveryDate: z.string().default(""),

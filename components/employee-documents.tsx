@@ -17,11 +17,26 @@ type Props = {
   canApply: boolean
   currentValues: Record<string, string | boolean>
   onApplyFields: (fields: EmployeeDocumentExtractedField[]) => void
+  onApplyDependentFields: (fields: EmployeeDocumentExtractedField[]) => void
 }
 
 const fieldLabels = Object.fromEntries(
   formSections.flatMap((section) => section.fields.map((field) => [field.key, field.label]))
 ) as Record<string, string>
+
+Object.assign(fieldLabels, {
+  dependente_nome: "Nome do dependente",
+  dependente_cpf: "CPF do dependente",
+  dependente_rg: "RG do dependente",
+  dependente_data_nascimento: "Nascimento do dependente",
+  dependente_naturalidade: "Naturalidade do dependente",
+  dependente_filiacao_1: "Filiação 1",
+  dependente_filiacao_2: "Filiação 2",
+})
+
+function isDependentField(field: EmployeeDocumentExtractedField) {
+  return field.key.startsWith("dependente_")
+}
 
 function formatBytes(bytes: number) {
   if (bytes < 1024 * 1024) return `${Math.max(1, Math.round(bytes / 1024))} KB`
@@ -47,6 +62,7 @@ export function EmployeeDocuments({
   canApply,
   currentValues,
   onApplyFields,
+  onApplyDependentFields,
 }: Props) {
   const inputRef = useRef<HTMLInputElement>(null)
   const [records, setRecords] = useState<EmployeeDocumentRecord[]>([])
@@ -95,6 +111,7 @@ export function EmployeeDocuments({
 
   const emptyFieldSuggestions = useMemo(
     () => availableFields.filter((field) => {
+      if (isDependentField(field)) return false
       const current = currentValues[field.key]
       return current === undefined || current === false || String(current).trim() === ""
     }),
@@ -105,6 +122,7 @@ export function EmployeeDocuments({
     () => {
       const seen = new Set<string>()
       return availableFields.filter((field) => {
+        if (isDependentField(field)) return false
         const current = currentValues[field.key]
         if (current === undefined || current === false || String(current).trim() === "") return false
         if (normalizeComparableValue(current) === normalizeComparableValue(field.value)) return false
@@ -116,6 +134,11 @@ export function EmployeeDocuments({
       })
     },
     [availableFields, currentValues]
+  )
+
+  const dependentSuggestions = useMemo(
+    () => availableFields.filter(isDependentField),
+    [availableFields]
   )
 
   async function uploadSelectedFile() {
@@ -316,6 +339,26 @@ export function EmployeeDocuments({
               </button>
             ) : null}
           </div>
+          {canApply && dependentSuggestions.length > 0 ? (
+            <div className="mt-4 flex flex-col gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 p-4 md:flex-row md:items-center md:justify-between">
+              <div>
+                <h5 className="font-bold text-emerald-950">Possível dependente encontrado</h5>
+                <p className="mt-1 text-xs leading-5 text-emerald-800">
+                  Prepare um rascunho e confira o parentesco e as incidências antes de adicionar.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  onApplyDependentFields(dependentSuggestions)
+                  setMessage("Rascunho do dependente preparado. Confira os dados antes de adicionar.")
+                }}
+                className="rounded-xl bg-emerald-700 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-800"
+              >
+                Preparar dependente
+              </button>
+            </div>
+          ) : null}
           {conflictingSuggestions.length > 0 ? (
             <div className="mt-4 rounded-2xl border border-amber-200 bg-amber-50 p-4">
               <h5 className="font-bold text-amber-900">Divergências para conferir</h5>

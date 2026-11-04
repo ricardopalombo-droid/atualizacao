@@ -61,6 +61,13 @@ export const extractableEmployeeFieldKeys = [
   "bairro",
   "cidade",
   "uf",
+  "dependente_nome",
+  "dependente_cpf",
+  "dependente_rg",
+  "dependente_data_nascimento",
+  "dependente_naturalidade",
+  "dependente_filiacao_1",
+  "dependente_filiacao_2",
 ] as const
 
 export type ExtractableEmployeeFieldKey = (typeof extractableEmployeeFieldKeys)[number]

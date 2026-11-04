@@ -70,6 +70,10 @@ Valores de selecao devem seguir estes formatos quando houver informacao suficien
 - orgao emissor CNH DETRAN: "1 - DETRAN (Departamento Estadual de Transito do Estado de Sao Paulo)".
 
 Regras importantes:
+- quando o documento for do tipo dependente, use apenas os campos com prefixo dependente_ para
+  os dados do titular e sua filiacao; nao devolva esses dados nos campos do funcionario;
+- em documento de dependente, extraia nome, CPF, RG, data de nascimento, naturalidade e os dois
+  nomes de filiacao quando estiverem visiveis; nao presuma sozinho o grau de parentesco;
 - quando RG/CIN, CNH ou certidao informar nacionalidade brasileira, extraia tambem pais_origem como "Brasil";
 - em CNH, extraia a UF de emissão no campo uf_cnh quando estiver visível;
 - em certidao de casamento sem averbacao de divorcio, separacao ou obito, o estado civil atual e

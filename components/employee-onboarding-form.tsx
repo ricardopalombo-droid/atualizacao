@@ -37,6 +37,7 @@ type DependentFormState = {
   id: string | null
   relationshipName: string
   cpf: string
+  rg: string
   relationshipDegree: string
   birthDate: string
   registryDeliveryDate: string
@@ -90,6 +91,7 @@ const emptyDependentForm: DependentFormState = {
   id: null,
   relationshipName: "",
   cpf: "",
+  rg: "",
   relationshipDegree: "",
   birthDate: "",
   registryDeliveryDate: "",
@@ -322,6 +324,15 @@ function getMissingEmployeeRequiredFields(formData: FormState) {
 
 function normalizeCpfDigits(value: string | boolean | undefined) {
   return String(value ?? "").replace(/\D/g, "")
+}
+
+function normalizePersonName(value: string | boolean | undefined) {
+  return String(value ?? "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .trim()
+    .toLocaleUpperCase("pt-BR")
+    .replace(/\s+/g, " ")
 }
 
 function buildDigitalCtpsFields(cpfValue: string | boolean | undefined) {
@@ -663,6 +674,7 @@ export function EmployeeOnboardingForm({
             id: dependent.id,
             relationshipName: dependent.relationship_name ?? "",
             cpf: dependent.cpf ?? "",
+            rg: String(dependent.full_payload?.rg ?? ""),
             relationshipDegree: dependent.relationship_degree ?? "",
             birthDate: dependent.birth_date ?? "",
             registryDeliveryDate: dependent.registry_delivery_date ?? "",
@@ -874,6 +886,16 @@ export function EmployeeOnboardingForm({
       return
     }
 
+    if (!dependentForm.relationshipDegree) {
+      setStatusMessage("Informe o tipo de parentesco do dependente antes de salvar.")
+      return
+    }
+
+    if (normalizeCpfDigits(dependentForm.cpf).length !== 11) {
+      setStatusMessage("Informe o CPF completo do dependente antes de salvar.")
+      return
+    }
+
     if (dependentForm.irrf && dependentForm.alimony) {
       setStatusMessage("IRRF e Pensão Alimentícia não podem ser marcados ao mesmo tempo.")
       return
@@ -1007,6 +1029,41 @@ export function EmployeeOnboardingForm({
       }
       return next
     })
+  }
+
+  function prepareDependentFromDocument(fields: EmployeeDocumentExtractedField[]) {
+    if (employeeReadOnly || (variant === "client" && !canManage)) return
+
+    const suggestions = new Map(fields.map((field) => [field.key, field.value.trim()]))
+    const employeeName = normalizePersonName(formData.nome_completo)
+    const parentNames = [
+      suggestions.get("dependente_filiacao_1") ?? "",
+      suggestions.get("dependente_filiacao_2") ?? "",
+    ]
+    const employeeFoundInParentage = parentNames.some(
+      (name) => normalizePersonName(name) === employeeName && employeeName.length > 0
+    )
+
+    setDependentForm({
+      ...emptyDependentForm,
+      relationshipName: suggestions.get("dependente_nome") ?? "",
+      cpf: suggestions.get("dependente_cpf") ?? "",
+      rg: suggestions.get("dependente_rg") ?? "",
+      relationshipDegree: employeeFoundInParentage ? "1 - Filho(a) válido" : "",
+      birthDate: suggestions.get("dependente_data_nascimento") ?? "",
+      naturality: suggestions.get("dependente_naturalidade") ?? "",
+      situationStartDate: String(formData.data_admissao ?? ""),
+      notes: parentNames.some(Boolean)
+        ? `Filiação identificada no documento: ${parentNames.filter(Boolean).join(" / ")}`
+        : "",
+    })
+    setViewer("employee")
+    setActiveSection("__dependentes__")
+    setStatusMessage(
+      employeeFoundInParentage
+        ? "Possível filho identificado. Confira os dados e clique em Adicionar dependente."
+        : "Documento de dependente lido. Confira o parentesco antes de adicionar."
+    )
   }
 
   async function saveDraft() {
@@ -1247,6 +1304,7 @@ export function EmployeeOnboardingForm({
           canApply={!employeeReadOnly && !dpWaitingForEmployee && (variant === "employee" || canManage)}
           currentValues={formData}
           onApplyFields={applyDocumentFields}
+          onApplyDependentFields={prepareDependentFromDocument}
         />
 
         {canSwitchViewer ? (
@@ -1761,6 +1819,13 @@ function DependentsSection({
           readOnly={readOnly}
         />
         <SimpleField
+          label="RG"
+          value={dependentForm.rg}
+          onChange={(value) => onFieldChange("rg", value)}
+          placeholder="Número do RG"
+          readOnly={readOnly}
+        />
+        <SimpleField
           label="Grau de parentesco"
           type="select"
           value={dependentForm.relationshipDegree}
@@ -1921,6 +1986,13 @@ function DependentsSectionPhoenix({
           value={dependentForm.cpf}
           onChange={(value) => onFieldChange("cpf", value)}
           placeholder="000.000.000-00"
+          readOnly={readOnly}
+        />
+        <SimpleField
+          label="RG"
+          value={dependentForm.rg}
+          onChange={(value) => onFieldChange("rg", value)}
+          placeholder="Número do RG"
           readOnly={readOnly}
         />
         <SimpleField

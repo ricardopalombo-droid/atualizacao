@@ -61,6 +61,7 @@ function mapDependentPayload(dependent: DependentPayload, employeeId: string) {
     registry_delivery_date: dependent.registryDeliveryDate || null,
     full_payload: {
       naturality: dependent.naturality || "",
+      rg: dependent.rg || "",
       registryOffice: dependent.registryOffice || "",
       registryNumber: dependent.registryNumber || "",
       bookNumber: dependent.bookNumber || "",
@@ -110,6 +111,7 @@ function buildDependentsForPayload(dependents: DependentPayload[]) {
     codigo: dependent.id ?? "",
     nome_parentesco: dependent.relationshipName,
     cpf: dependent.cpf,
+    rg: dependent.rg,
     grau_parentesco: dependent.relationshipDegree,
     nascimento: dependent.birthDate,
     data_entrega_registro: dependent.registryDeliveryDate,

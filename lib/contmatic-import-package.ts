@@ -189,6 +189,22 @@ function validatePackageData(record: EmployeeRecordDetail, companyAlias: string)
     missing.push("UF da CNH")
   }
 
+  ;(record.dependents ?? []).forEach((dependent, index) => {
+    const dependentNumber = index + 1
+    if (!asText(dependent.relationship_name)) {
+      missing.push(`Nome do dependente ${dependentNumber}`)
+    }
+    if (!asText(dependent.relationship_degree)) {
+      missing.push(`Grau de parentesco do dependente ${dependentNumber}`)
+    }
+    if (!asText(dependent.birth_date)) {
+      missing.push(`Data de nascimento do dependente ${dependentNumber}`)
+    }
+    if (onlyDigits(dependent.cpf).length !== 11) {
+      missing.push(`CPF completo do dependente ${dependentNumber}`)
+    }
+  })
+
   if (missing.length > 0) {
     throw new Error(`Preencha antes de gerar o pacote: ${Array.from(new Set(missing)).join(", ")}.`)
   }
@@ -201,7 +217,7 @@ const temporaryCadgwInsert = "INSERT INTO public.cadgw (apelido, razaosocial, en
 export async function buildContmaticImportPackage(
   record: EmployeeRecordDetail,
   rawCompanyAlias: string | null | undefined
-): ContmaticImportPackage {
+): Promise<ContmaticImportPackage> {
   const data = record.full_payload
   const companyAlias = asText(rawCompanyAlias)
   const employeeCode = validatePackageData(record, companyAlias)
@@ -230,6 +246,13 @@ export async function buildContmaticImportPackage(
   const informedMonthlyHours = integerText(data.horas_mensais, "")
   const monthlyHours = informedMonthlyHours || String(Number(weeklyHours) * 5)
   const salary = asText(data.salario).replace(",", ".")
+  const dependents = record.dependents ?? []
+  const familySalaryDependents = dependents.filter((dependent) =>
+    booleanValue(dependent.full_payload.familySalary)
+  ).length
+  const irrfDependents = dependents.filter((dependent) =>
+    booleanValue(dependent.full_payload.irrf)
+  ).length
   const notes = "CADASTRO GERADO PELO PALSYS - CONFERIR ANTES DE TRANSMITIR AO ESOCIAL"
 
   const statements = [
@@ -240,7 +263,7 @@ export async function buildContmaticImportPackage(
     insert("func", [
       "apelidopg", "funcid", "numregistro", "numchapa", "nome", "endereco", "numero", "compl", "bairro", "cidade", "uf", "cep", "fone", "datanasc", "nomepai", "nomemae", "estcivil", "sexo", "ctpsserieuf", "pis", "cpf", "rg", "titeleitor", "zona", "secao", "reservista", "carthabilt", "tpsanguinio", "naturalidade", "ufnasc", "nacionalidade", "datachegada", "situacaocaged", "grauinstr", "vinculoempreg", "admrefgts", "tipocontrato", "validadeexmed", "op13ferres", "dataadmissao", "dataopcaofgts", "dataexmedico", "datatransf", "datarescisao", "numcontfgts", "numbanco", "numerocc", "tiposalario", "codsind", "tptributsind", "qtdehsmensal", "qtdehssemana", "tempoexper", "tempoprorrog", "codlocal", "coddepto", "codsetor", "codsecao", "codrisco", "emissorrg", "emissorufrg", "dataexprg", "dataexpctps", "tipovisto", "numrne", "validaderne", "dataexpctpsex", "valctpsex", "numctpsex", "datacadpis", "matriculasind", "nomeconsreg", "numconsreg", "siglaconsreg", "regiaoconsreg", "partcipa", "qtdedepsalfam", "qtdedepirrf", "codhorario", "observacao", "datatransferenciasaida",
     ], [
-      companyAlias, employeeCode, employeeRegistration, employeeBadge, employeeName, asText(data.logradouro), asText(data.numero), asText(data.complemento), asText(data.bairro), asText(data.cidade), asText(data.uf), asText(data.cep), asText(data.telefone || data.celular), asText(data.data_nascimento), asText(data.nome_pai), asText(data.nome_mae), leadingCode(data.estado_civil), leadingCode(data.sexo), ctpsNumber, onlyDigits(data.pis), formatCpf(data.cpf), asText(data.rg_numero), asText(data.titulo_eleitor), asText(data.zona_eleitoral), asText(data.secao_eleitoral), "", asText(data.cnh_numero), asText(data.tipo_sanguineo) || null, naturality.city, naturality.state, leadingCode(data.nacionalidade, "10"), null, leadingCode(data.caged, "0"), leadingCode(data.grau_instrucao), leadingCode(data.vinculo_empregaticio), leadingCode(data.codigo_admissao || data.indicativo_admissao, "0"), leadingCode(data.tipo_contrato), asText(data.validade_exame_medico) || "0", "0", admissionDate, admissionDate, asText(data.data_exame_medico) || null, null, asText(data.data_saida) || null, null, asText(data.banco) || null, asText(data.numero_conta), "0", asText(data.sindicato), leadingCode(data.tipo_tributacao_sindical, "0"), monthlyHours, weeklyHours, asText(data.experiencia_qtde_dias) || "0", asText(data.experiencia_qtde_dias_prorrogacao) || "0", asText(data.local) || "0", asText(data.departamento) || "0", asText(data.setor) || "0", asText(data.secao) || "0", leadingCode(data.grau_risco, "1"), leadingCode(data.rg_orgao_emissor), asText(data.uf_rg), asText(data.rg_data_expedicao) || null, asText(data.ctps_data_expedicao) || null, null, "", null, null, null, null, null, null, null, "", null, null, "false", "0", "0", asText(data.horario) || "0", notes, null,
+      companyAlias, employeeCode, employeeRegistration, employeeBadge, employeeName, asText(data.logradouro), asText(data.numero), asText(data.complemento), asText(data.bairro), asText(data.cidade), asText(data.uf), asText(data.cep), asText(data.telefone || data.celular), asText(data.data_nascimento), asText(data.nome_pai), asText(data.nome_mae), leadingCode(data.estado_civil), leadingCode(data.sexo), ctpsNumber, onlyDigits(data.pis), formatCpf(data.cpf), asText(data.rg_numero), asText(data.titulo_eleitor), asText(data.zona_eleitoral), asText(data.secao_eleitoral), "", asText(data.cnh_numero), asText(data.tipo_sanguineo) || null, naturality.city, naturality.state, leadingCode(data.nacionalidade, "10"), null, leadingCode(data.caged, "0"), leadingCode(data.grau_instrucao), leadingCode(data.vinculo_empregaticio), leadingCode(data.codigo_admissao || data.indicativo_admissao, "0"), leadingCode(data.tipo_contrato), asText(data.validade_exame_medico) || "0", "0", admissionDate, admissionDate, asText(data.data_exame_medico) || null, null, asText(data.data_saida) || null, null, asText(data.banco) || null, asText(data.numero_conta), "0", asText(data.sindicato), leadingCode(data.tipo_tributacao_sindical, "0"), monthlyHours, weeklyHours, asText(data.experiencia_qtde_dias) || "0", asText(data.experiencia_qtde_dias_prorrogacao) || "0", asText(data.local) || "0", asText(data.departamento) || "0", asText(data.setor) || "0", asText(data.secao) || "0", leadingCode(data.grau_risco, "1"), leadingCode(data.rg_orgao_emissor), asText(data.uf_rg), asText(data.rg_data_expedicao) || null, asText(data.ctps_data_expedicao) || null, null, "", null, null, null, null, null, null, null, "", null, null, "false", String(familySalaryDependents), String(irrfDependents), asText(data.horario) || "0", notes, null,
     ]),
     insert("funcaux", ["apelidopg", "funcid", "racacor", "int1", "int2", "int3", "int4", "float1", "float2", "str1", "str2", "data1", "data2"], [
       companyAlias, employeeCode, contmaticRaceCode(data.raca_cor), "0", "0", "0", "0", "0", "0", null, "", null, null,
@@ -277,6 +300,59 @@ export async function buildContmaticImportPackage(
     ]),
   ]
 
+  dependents.forEach((dependent, index) => {
+    const dependentId = String(index + 1)
+    const dependentData = dependent.full_payload
+    const dependentNaturality = naturalityParts(dependentData.naturality)
+    const situationStartDate = asText(dependentData.situationStartDate) || admissionDate
+
+    statements.push(
+      insert("depfun", [
+        "apelidopg", "dependentid", "func", "nomedep", "datanasc", "tipoparentesco",
+        "datatermincidirrf", "datatermincidsalfam", "naturalidade", "cartorio", "registro",
+        "livro", "folha",
+      ], [
+        companyAlias, dependentId, employeeCode, asText(dependent.relationship_name),
+        asText(dependent.birth_date), "0", null, null, dependentNaturality.city,
+        asText(dependentData.registryOffice), asText(dependentData.registryNumber),
+        asText(dependentData.bookNumber), asText(dependentData.sheetNumber) || "0",
+      ]),
+      insert("depenaux", [
+        "apelidopg", "depenauxid", "tipoempregado", "codempregado", "dependenteid", "cpf",
+        "rg", "pis", "titeleitor", "depenaux_int_1", "depenaux_int_2", "depenaux_int_3",
+        "depenaux_int_4", "depenaux_int_5", "depenaux_flo_1", "depenaux_flo_2",
+        "depenaux_flo_3", "depenaux_flo_4", "depenaux_flo_5", "depenaux_flo_6",
+        "depenaux_cha_1", "depenaux_cha_2", "depenaux_cha_3", "depenaux_cha_4",
+        "depenaux_cha_5", "depenaux_cha_6", "depenaux_cha_7", "depenaux_cha_8",
+        "depenaux_cha_9", "depenaux_dat_1", "depenaux_dat_2", "depenaux_dat_3",
+        "depenaux_dat_4", "depenaux_log_1", "depenaux_log_2", "depenaux_log_3",
+      ], [
+        companyAlias, dependentId, "1", employeeCode, dependentId, formatCpf(dependent.cpf),
+        asText(dependentData.rg), "", "", "0", "0", "0", "0", "0", "0", "0", "0",
+        "0", "0", "0", "", "", "", "", "", "", "", "", "", null, null, null,
+        null, "false", "false", "false",
+      ]),
+      insert("dephistf", [
+        "apelidopg", "id", "funcid", "codigo", "parentesco", "datainicial", "datafinal",
+        "convenio", "ir", "salfam", "pensaoalimenticia", "motivo", "dephistf_int1",
+        "dephistf_int2", "dephistf_int3", "dephistf_int4", "dephistf_int5", "dephistf_str1",
+        "dephistf_str2", "dephistf_str3", "dephistf_str4", "dephistf_str5", "dephistf_float1",
+        "dephistf_float2", "dephistf_float3", "dephistf_float4", "dephistf_float5",
+        "dephistf_date1", "dephistf_date2", "dephistf_date3", "dephistf_date4",
+        "dephistf_date5", "dephistf_bool1", "dephistf_bool2", "dephistf_bool3",
+        "dephistf_bool4", "dephistf_bool5",
+      ], [
+        companyAlias, dependentId, employeeCode, dependentId,
+        leadingCode(dependent.relationship_degree, "0"), situationStartDate,
+        asText(dependent.registry_delivery_date) || null, booleanValue(dependentData.healthPlan),
+        booleanValue(dependentData.irrf), booleanValue(dependentData.familySalary),
+        booleanValue(dependentData.alimony), asText(dependentData.situationMotive), "0", "0", "0",
+        "0", "0", "", "", "", "", "", "0", "0", "0", "0", "0", null, null, null,
+        null, null, "false", "false", "false", "false", "false",
+      ])
+    )
+  })
+
   const safeAlias = companyAlias.replace(/[^a-zA-Z0-9_-]/g, "_")
 
   return {
@@ -290,7 +366,9 @@ export async function buildContmaticImportPackage(
     warnings: [
       "A empresa temporária ZZLIMPA precisa não existir antes da importação.",
       "Depois da importação, exclua manualmente a ZZLIMPA no Contmatic.",
-      "O pacote contém somente o funcionário selecionado e seus registros auxiliares mínimos.",
+      dependents.length > 0
+        ? `O pacote contém o funcionário selecionado e ${dependents.length} dependente(s), além dos registros auxiliares mínimos.`
+        : "O pacote contém somente o funcionário selecionado e seus registros auxiliares mínimos.",
     ],
   }
 }
