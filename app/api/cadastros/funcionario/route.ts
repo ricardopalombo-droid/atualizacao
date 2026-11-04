@@ -81,9 +81,13 @@ export async function POST(request: Request) {
     console.error(error)
 
     const message = error instanceof z.ZodError
-      ? "Há informações antigas incompatíveis neste cadastro. Atualize a página e tente novamente."
+      ? `Há informações incompatíveis no cadastro: ${error.issues
+          .map((issue) => `${issue.path.join(".") || "dados"}: ${issue.message}`)
+          .join("; ")}`
       : error instanceof Error
         ? error.message
+        : error && typeof error === "object" && "message" in error
+          ? String(error.message)
         : "Erro ao enviar cadastro do funcionário"
 
     return Response.json(

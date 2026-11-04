@@ -87,7 +87,7 @@ async function syncDependents(employeeId: string, dependents: DependentPayload[]
     })
 
     if (upsertError) {
-      throw upsertError
+      throw new Error(`Não foi possível salvar os dependentes: ${upsertError.message}`)
     }
   }
 
@@ -95,13 +95,13 @@ async function syncDependents(employeeId: string, dependents: DependentPayload[]
   let deleteQuery = supabase.from("dependents").delete().eq("employee_id", employeeId)
 
   if (currentIds.length > 0) {
-    deleteQuery = deleteQuery.not("id", "in", `(${currentIds.map((id) => `'${id}'`).join(",")})`)
+    deleteQuery = deleteQuery.not("id", "in", `(${currentIds.join(",")})`)
   }
 
   const { error: deleteError } = await deleteQuery
 
   if (deleteError) {
-    throw deleteError
+    throw new Error(`Não foi possível sincronizar os dependentes: ${deleteError.message}`)
   }
 }
 
@@ -150,6 +150,12 @@ export async function upsertEmployeeRecord(payload: CadastroPayload) {
   const data = payload.data
   const timestamps = statusTimestamps(payload.workflowStatus)
 
+  // Em cadastros existentes, grave primeiro os dependentes. Assim, uma falha
+  // nessa etapa não encerra o convite do funcionário antes da hora.
+  if (payload.id) {
+    await syncDependents(payload.id, payload.dependents)
+  }
+
   const record = {
     id: payload.id ?? undefined,
     client_id: payload.clientId ?? null,
@@ -179,7 +185,9 @@ export async function upsertEmployeeRecord(payload: CadastroPayload) {
     throw error
   }
 
-  await syncDependents(saved.id, payload.dependents)
+  if (!payload.id) {
+    await syncDependents(saved.id, payload.dependents)
+  }
 
   if (["finalizado", "exportado"].includes(payload.workflowStatus)) {
     const deleteAfter = new Date(Date.now() + 60 * 24 * 60 * 60 * 1000).toISOString()
