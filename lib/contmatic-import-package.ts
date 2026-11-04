@@ -7,6 +7,7 @@ type SqlValue = string | number | boolean | null | undefined
 export type ContmaticImportPackage = {
   companyAlias: string
   employeeCode: string
+  employeeCodes?: string[]
   employeeFileName: string
   generalFileName: string
   zipFileName: string
@@ -216,7 +217,8 @@ const temporaryCadgwInsert = "INSERT INTO public.cadgw (apelido, razaosocial, en
 
 export async function buildContmaticImportPackage(
   record: EmployeeRecordDetail,
-  rawCompanyAlias: string | null | undefined
+  rawCompanyAlias: string | null | undefined,
+  options: { includeTemporaryCompany?: boolean } = {}
 ): Promise<ContmaticImportPackage> {
   const data = record.full_payload
   const companyAlias = asText(rawCompanyAlias)
@@ -256,7 +258,7 @@ export async function buildContmaticImportPackage(
   const notes = "CADASTRO GERADO PELO PALSYS - CONFERIR ANTES DE TRANSMITIR AO ESOCIAL"
 
   const statements = [
-    temporaryCadgwInsert,
+    ...(options.includeTemporaryCompany === false ? [] : [temporaryCadgwInsert]),
     insert("cargofun", ["apelidopg", "func", "codcargo", "motivo", "dataalteracao"], [
       companyAlias, employeeCode, asText(data.cargo), "Admissão", admissionDate,
     ]),
@@ -358,6 +360,7 @@ export async function buildContmaticImportPackage(
   return {
     companyAlias,
     employeeCode,
+    employeeCodes: [employeeCode],
     employeeFileName: `generated_script_empresa_${safeAlias}.sql`,
     generalFileName: `generated_script_geral_${safeAlias}.sql`,
     zipFileName: `Script_${safeAlias}.zip`,
@@ -369,6 +372,49 @@ export async function buildContmaticImportPackage(
       dependents.length > 0
         ? `O pacote contém o funcionário selecionado e ${dependents.length} dependente(s), além dos registros auxiliares mínimos.`
         : "O pacote contém somente o funcionário selecionado e seus registros auxiliares mínimos.",
+    ],
+  }
+}
+
+export async function buildContmaticImportPackageBatch(
+  records: EmployeeRecordDetail[],
+  rawCompanyAlias: string | null | undefined
+): Promise<ContmaticImportPackage> {
+  if (records.length === 0) {
+    throw new Error("Selecione ao menos um funcionário para gerar o pacote Contmatic.")
+  }
+
+  if (records.length > 50) {
+    throw new Error("Gere no máximo 50 funcionários por pacote Contmatic.")
+  }
+
+  const packages: ContmaticImportPackage[] = []
+  for (const [index, record] of records.entries()) {
+    packages.push(
+      await buildContmaticImportPackage(record, rawCompanyAlias, {
+        includeTemporaryCompany: index === 0,
+      })
+    )
+  }
+
+  const employeeCodes = packages.map((item) => item.employeeCode)
+  const duplicateCodes = employeeCodes.filter((code, index) => employeeCodes.indexOf(code) !== index)
+  if (duplicateCodes.length > 0) {
+    throw new Error(
+      `Existem Registros de funcionário repetidos no lote: ${Array.from(new Set(duplicateCodes)).join(", ")}.`
+    )
+  }
+
+  const firstPackage = packages[0]
+  return {
+    ...firstPackage,
+    employeeCodes,
+    employeeSql: packages.map((item) => item.employeeSql.trim()).join("\r\n") + "\r\n",
+    generalSql: packages.map((item) => item.generalSql.trim()).filter(Boolean).join("\r\n") + "\r\n",
+    warnings: [
+      "A empresa temporária ZZLIMPA precisa não existir antes da importação.",
+      "Depois da importação, exclua manualmente a ZZLIMPA no Contmatic.",
+      `O pacote contém ${packages.length} funcionário(s), seus registros auxiliares e os dependentes adicionados.`,
     ],
   }
 }

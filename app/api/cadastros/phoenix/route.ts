@@ -1,6 +1,6 @@
 ﻿import { buildPhoenixStructuredPayload } from "@/lib/phoenix-payload"
 import { getCurrentSession } from "@/lib/auth-session"
-import { buildContmaticImportPackage } from "@/lib/contmatic-import-package"
+import { buildContmaticImportPackage, buildContmaticImportPackageBatch } from "@/lib/contmatic-import-package"
 import { getEmployeeRecordById, listEmployeeRecords, updateEmployeePhoenixStatus } from "@/lib/cadastro-repository"
 import { getSupabaseServerClient } from "@/lib/supabase-server"
 import { z } from "zod"
@@ -243,6 +243,67 @@ export async function GET(request: Request) {
           updatedAt: item.updated_at,
           phoenixStatusUpdatedAt: item.phoenix_status_updated_at,
         })),
+      })
+    }
+
+    const batchIdsParam = url.searchParams.get("ids")
+    if (batchIdsParam && url.searchParams.get("download") === "package") {
+      if (session.role !== "subscriber_admin") {
+        return Response.json(
+          { ok: false, error: "Somente o escritório/DP pode gerar o pacote Contmatic." },
+          { status: 403 }
+        )
+      }
+
+      const recordIds = z.array(z.string().uuid()).min(1).max(50).parse(
+        Array.from(new Set(batchIdsParam.split(",").map((item) => item.trim()).filter(Boolean)))
+      )
+      const records = await Promise.all(
+        recordIds.map((recordId) => getEmployeeRecordForPhoenixScope(session, recordId))
+      )
+
+      if (records.some((record) => !record)) {
+        return Response.json({ ok: false, error: "Um ou mais cadastros não foram encontrados." }, { status: 404 })
+      }
+
+      const scopedRecords = records.filter((record) => record !== null)
+      if (scopedRecords.some((record) => !["finalizado", "exportado"].includes(record.workflow_status))) {
+        return Response.json(
+          { ok: false, error: "Todos os funcionários do lote precisam estar finalizados." },
+          { status: 409 }
+        )
+      }
+
+      const firstClientId = scopedRecords[0].client_id
+      if (!firstClientId || scopedRecords.some((record) => record.client_id !== firstClientId)) {
+        return Response.json(
+          { ok: false, error: "Selecione somente funcionários da mesma empresa." },
+          { status: 409 }
+        )
+      }
+
+      const clientInfo = await getClientInfoById(firstClientId)
+      const importPackage = await buildContmaticImportPackageBatch(
+        scopedRecords,
+        clientInfo.contmaticNickname
+      )
+      const zip = new JSZip()
+      zip.file(importPackage.employeeFileName, importPackage.employeeSql)
+      zip.file(importPackage.generalFileName, importPackage.generalSql)
+      const zipBuffer = await zip.generateAsync({
+        type: "uint8array",
+        compression: "DEFLATE",
+        compressionOptions: { level: 9 },
+      })
+
+      return new Response(zipBuffer, {
+        status: 200,
+        headers: {
+          "Content-Type": "application/zip",
+          "Content-Disposition": `attachment; filename="${importPackage.zipFileName}"`,
+          "Cache-Control": "no-store",
+          "X-PalSys-Employee-Count": String(scopedRecords.length),
+        },
       })
     }
 

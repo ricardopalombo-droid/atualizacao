@@ -38,6 +38,8 @@ export function EmployeeRecordsList({ clientId, canManage }: { clientId: string;
   const [isLoading, setIsLoading] = useState(true)
   const [isDeletingId, setIsDeletingId] = useState<string | null>(null)
   const [isUpdatingPhoenixId, setIsUpdatingPhoenixId] = useState<string | null>(null)
+  const [selectedPackageIds, setSelectedPackageIds] = useState<Set<string>>(new Set())
+  const [isGeneratingBatch, setIsGeneratingBatch] = useState(false)
   const statusNeedsAttention = /preencha|erro|falha|não foi possível|informe|obrigat/i.test(statusMessage)
 
   useEffect(() => {
@@ -64,6 +66,7 @@ export function EmployeeRecordsList({ clientId, canManage }: { clientId: string;
       }
 
       setRecords(result.records ?? [])
+      setSelectedPackageIds(new Set())
       setStatusMessage("Funcionários carregados com sucesso.")
     } catch (error) {
       setStatusMessage(error instanceof Error ? error.message : "Erro ao carregar funcionários.")
@@ -82,6 +85,108 @@ export function EmployeeRecordsList({ clientId, canManage }: { clientId: string;
     }
 
     return null
+  }
+
+  function canIncludeInPackage(record: EmployeeRecord) {
+    const phoenixStatus = getPhoenixStatus(record)
+    return (
+      ["finalizado", "exportado"].includes(record.workflow_status) &&
+      ["pronto_para_phoenix", "falha_no_phoenix"].includes(phoenixStatus ?? "")
+    )
+  }
+
+  function togglePackageSelection(recordId: string) {
+    setSelectedPackageIds((previous) => {
+      const next = new Set(previous)
+      if (next.has(recordId)) next.delete(recordId)
+      else next.add(recordId)
+      return next
+    })
+  }
+
+  async function handleBatchPackage() {
+    const selectedRecords = records.filter(
+      (record) => selectedPackageIds.has(record.id) && canIncludeInPackage(record)
+    )
+    if (selectedRecords.length === 0) {
+      setStatusMessage("Selecione ao menos um funcionário pronto para gerar o pacote.")
+      return
+    }
+
+    if (
+      !window.confirm(
+        `Gerar um único pacote com ${selectedRecords.length} funcionário(s)? Confirme antes que a empresa ZZLIMPA não existe no Contmatic.`
+      )
+    ) {
+      return
+    }
+
+    setIsGeneratingBatch(true)
+    try {
+      const ids = selectedRecords.map((record) => record.id)
+      const packageResponse = await fetch(
+        `/api/cadastros/phoenix?ids=${encodeURIComponent(ids.join(","))}&download=package`,
+        { method: "GET", cache: "no-store" }
+      )
+
+      if (!packageResponse.ok) {
+        const packageError = (await packageResponse.json().catch(() => null)) as { error?: string } | null
+        throw new Error(packageError?.error ?? "Não foi possível gerar o pacote Contmatic em lote.")
+      }
+
+      const disposition = packageResponse.headers.get("Content-Disposition") ?? ""
+      const filename = disposition.match(/filename="([^"]+)"/)?.[1] ?? "Script_Contmatic.zip"
+      const packageBlob = await packageResponse.blob()
+      const packageUrl = URL.createObjectURL(packageBlob)
+      const downloadLink = document.createElement("a")
+      downloadLink.href = packageUrl
+      downloadLink.download = filename
+      document.body.appendChild(downloadLink)
+      downloadLink.click()
+      downloadLink.remove()
+      URL.revokeObjectURL(packageUrl)
+
+      const statusUpdates = await Promise.all(
+        ids.map(async (id) => {
+          const response = await fetch("/api/cadastros/phoenix", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              id,
+              action: "start",
+              note: `Pacote Contmatic gerado em lote com ${ids.length} funcionário(s).`,
+            }),
+          })
+          const result = (await response.json()) as {
+            ok: boolean
+            phoenixStatus?: string
+            phoenixStatusUpdatedAt?: string | null
+            phoenixStatusNote?: string | null
+            error?: string
+          }
+          if (!response.ok || !result.ok) throw new Error(result.error ?? "Falha ao atualizar o lote.")
+          return { id, ...result }
+        })
+      )
+
+      const updatesById = new Map(statusUpdates.map((update) => [update.id, update]))
+      setRecords((previous) => previous.map((record) => {
+        const update = updatesById.get(record.id)
+        if (!update) return record
+        return {
+          ...record,
+          phoenix_status: update.phoenixStatus ?? record.phoenix_status,
+          phoenix_status_updated_at: update.phoenixStatusUpdatedAt ?? record.phoenix_status_updated_at,
+          phoenix_status_note: update.phoenixStatusNote ?? record.phoenix_status_note,
+        }
+      }))
+      setSelectedPackageIds(new Set())
+      setStatusMessage(`Pacote Contmatic gerado com ${ids.length} funcionário(s).`)
+    } catch (error) {
+      setStatusMessage(error instanceof Error ? error.message : "Erro ao gerar o pacote em lote.")
+    } finally {
+      setIsGeneratingBatch(false)
+    }
   }
 
   async function handlePhoenixAction(record: EmployeeRecord, action: "start" | "complete" | "fail" | "reset") {
@@ -174,6 +279,13 @@ export function EmployeeRecordsList({ clientId, canManage }: { clientId: string;
             : item
         )
       )
+      if (action === "start") {
+        setSelectedPackageIds((previous) => {
+          const next = new Set(previous)
+          next.delete(record.id)
+          return next
+        })
+      }
 
       const actionMessage =
         action === "start"
@@ -222,6 +334,11 @@ export function EmployeeRecordsList({ clientId, canManage }: { clientId: string;
       }
 
       setRecords((previous) => previous.filter((item) => item.id !== record.id))
+      setSelectedPackageIds((previous) => {
+        const next = new Set(previous)
+        next.delete(record.id)
+        return next
+      })
       setStatusMessage("Funcionário e documentos anexados excluídos com sucesso.")
     } catch (error) {
       setStatusMessage(error instanceof Error ? error.message : "Erro ao excluir funcionário.")
@@ -236,7 +353,7 @@ export function EmployeeRecordsList({ clientId, canManage }: { clientId: string;
         <div>
           <h2 className="text-2xl font-bold text-slate-900">Funcionários desta empresa</h2>
           <p className="mt-2 text-slate-600">
-            O DP administra convites e revisoes; a empresa possui acesso de consulta aos cadastros e documentos.
+            O DP administra convites e revisões; a empresa possui acesso de consulta aos cadastros e documentos.
           </p>
         </div>
         {canManage ? <Link
@@ -259,6 +376,28 @@ export function EmployeeRecordsList({ clientId, canManage }: { clientId: string;
         <p className="leading-6">{statusMessage}</p>
       </div>
 
+      {canManage && records.some(canIncludeInPackage) ? (
+        <div className="mt-5 flex flex-col gap-3 rounded-2xl border border-sky-200 bg-sky-50 p-4 md:flex-row md:items-center md:justify-between">
+          <div>
+            <p className="font-bold text-sky-950">Pacote com vários funcionários</p>
+            <p className="mt-1 text-sm text-sky-800">
+              Marque os funcionários prontos da tabela. Todos serão reunidos nos mesmos dois arquivos SQL.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={() => void handleBatchPackage()}
+            disabled={selectedPackageIds.size === 0 || isGeneratingBatch}
+            className="inline-flex items-center justify-center gap-2 rounded-xl bg-sky-700 px-5 py-3 font-semibold text-white hover:bg-sky-800 disabled:opacity-60"
+          >
+            <FileArchive size={18} />
+            {isGeneratingBatch
+              ? "Gerando pacote..."
+              : `Gerar pacote selecionado (${selectedPackageIds.size})`}
+          </button>
+        </div>
+      ) : null}
+
       {isLoading ? (
         <div className="mt-6 rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-6 text-slate-600">
           Carregando funcionários...
@@ -272,6 +411,26 @@ export function EmployeeRecordsList({ clientId, canManage }: { clientId: string;
           <table className="min-w-full divide-y divide-slate-200">
             <thead className="bg-slate-50">
               <tr className="text-left text-sm font-semibold text-slate-700">
+                {canManage ? (
+                  <th className="w-12 px-4 py-3">
+                    <input
+                      type="checkbox"
+                      aria-label="Selecionar todos os funcionários prontos"
+                      checked={
+                        records.filter(canIncludeInPackage).length > 0 &&
+                        records.filter(canIncludeInPackage).every((record) => selectedPackageIds.has(record.id))
+                      }
+                      onChange={(event) => {
+                        setSelectedPackageIds(
+                          event.target.checked
+                            ? new Set(records.filter(canIncludeInPackage).map((record) => record.id))
+                            : new Set()
+                        )
+                      }}
+                      className="h-4 w-4"
+                    />
+                  </th>
+                ) : null}
                 <th className="px-4 py-3">Funcionário</th>
                 <th className="px-4 py-3">E-mail</th>
                 <th className="px-4 py-3">Status</th>
@@ -283,6 +442,18 @@ export function EmployeeRecordsList({ clientId, canManage }: { clientId: string;
             <tbody className="divide-y divide-slate-200 bg-white">
               {records.map((record) => (
                 <tr key={record.id} className="text-sm text-slate-700">
+                  {canManage ? (
+                    <td className="px-4 py-3">
+                      <input
+                        type="checkbox"
+                        aria-label={`Selecionar ${record.employee_name || "funcionário"} para o pacote`}
+                        checked={selectedPackageIds.has(record.id)}
+                        disabled={!canIncludeInPackage(record)}
+                        onChange={() => togglePackageSelection(record.id)}
+                        className="h-4 w-4 disabled:opacity-30"
+                      />
+                    </td>
+                  ) : null}
                   <td className="px-4 py-3 font-medium text-slate-900">
                     {record.employee_name || "Sem nome informado"}
                   </td>

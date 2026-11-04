@@ -20,6 +20,12 @@ type Props = {
   onApplyDependentFields: (fields: EmployeeDocumentExtractedField[]) => void
 }
 
+type PendingDocument = {
+  id: string
+  file: File
+  documentType: EmployeeDocumentType
+}
+
 const fieldLabels = Object.fromEntries(
   formSections.flatMap((section) => section.fields.map((field) => [field.key, field.label]))
 ) as Record<string, string>
@@ -72,6 +78,7 @@ export function EmployeeDocuments({
   const [isUploading, setIsUploading] = useState(false)
   const [consent, setConsent] = useState(false)
   const [deletingId, setDeletingId] = useState<string | null>(null)
+  const [pendingDocuments, setPendingDocuments] = useState<PendingDocument[]>([])
 
   const tokenQuery = publicToken ? `&token=${encodeURIComponent(publicToken)}` : ""
 
@@ -141,40 +148,72 @@ export function EmployeeDocuments({
     [availableFields]
   )
 
-  async function uploadSelectedFile() {
-    const file = inputRef.current?.files?.[0]
-    if (!employeeId || !file) {
-      setMessage(employeeId ? "Selecione um arquivo." : "Salve o cadastro antes de anexar documentos.")
+  function addSelectedFiles() {
+    const files = Array.from(inputRef.current?.files ?? [])
+    if (!employeeId || files.length === 0) {
+      setMessage(employeeId ? "Selecione ao menos um arquivo." : "Salve o cadastro antes de anexar documentos.")
+      return
+    }
+
+    setPendingDocuments((previous) => [
+      ...previous,
+      ...files.map((file, index) => ({
+        id: `${Date.now()}-${index}-${file.name}`,
+        file,
+        documentType,
+      })),
+    ])
+    if (inputRef.current) inputRef.current.value = ""
+    setMessage(`${files.length} documento(s) adicionado(s) à lista. Indique os tipos e depois envie para leitura.`)
+  }
+
+  async function uploadPendingDocuments() {
+    if (!employeeId || pendingDocuments.length === 0) {
+      setMessage(employeeId ? "Adicione ao menos um documento à lista." : "Salve o cadastro antes de anexar documentos.")
+      return
+    }
+    if (!consent) {
+      setMessage("Confirme a autorização antes de enviar os documentos.")
       return
     }
 
     setIsUploading(true)
-    setMessage("Enviando e lendo o documento. Isso pode levar alguns segundos.")
+    setMessage(`Enviando e lendo ${pendingDocuments.length} documento(s). Aguarde a conclusão.`)
 
-    try {
-      const body = new FormData()
-      body.set("employeeId", employeeId)
-      body.set("documentType", documentType)
-      body.set("file", file)
-      body.set("consent", String(consent))
-      if (publicToken) body.set("token", publicToken)
+    const completed: EmployeeDocumentRecord[] = []
+    const failed: PendingDocument[] = []
+    const errors: string[] = []
 
-      const response = await fetch("/api/cadastros/documentos", { method: "POST", body })
-      const result = await response.json() as { ok: boolean; record?: EmployeeDocumentRecord; error?: string }
-      if (!response.ok || !result.ok || !result.record) throw new Error(result.error ?? "Não foi possível anexar o documento.")
+    for (const [index, pending] of pendingDocuments.entries()) {
+      try {
+        setMessage(`Enviando e lendo documento ${index + 1} de ${pendingDocuments.length}: ${pending.file.name}`)
+        const body = new FormData()
+        body.set("employeeId", employeeId)
+        body.set("documentType", pending.documentType)
+        body.set("file", pending.file)
+        body.set("consent", "true")
+        if (publicToken) body.set("token", publicToken)
 
-      setRecords((previous) => [result.record!, ...previous])
-      if (inputRef.current) inputRef.current.value = ""
-      setMessage(
-        result.record.analysis_status === "completed"
-          ? "Documento salvo e lido. Confira as sugestões antes de aplicá-las."
-          : `Documento salvo, mas a leitura precisa de atenção: ${result.record.analysis_error ?? "não concluída"}`
-      )
-    } catch (error) {
-      setMessage(error instanceof Error ? error.message : "Erro ao enviar documento.")
-    } finally {
-      setIsUploading(false)
+        const response = await fetch("/api/cadastros/documentos", { method: "POST", body })
+        const result = await response.json() as { ok: boolean; record?: EmployeeDocumentRecord; error?: string }
+        if (!response.ok || !result.ok || !result.record) {
+          throw new Error(result.error ?? "Não foi possível anexar o documento.")
+        }
+        completed.push(result.record)
+      } catch (error) {
+        failed.push(pending)
+        errors.push(`${pending.file.name}: ${error instanceof Error ? error.message : "erro ao enviar"}`)
+      }
     }
+
+    if (completed.length > 0) setRecords((previous) => [...completed.reverse(), ...previous])
+    setPendingDocuments(failed)
+    setMessage(
+      failed.length === 0
+        ? `${completed.length} documento(s) enviado(s) e lido(s). Confira as sugestões encontradas.`
+        : `${completed.length} documento(s) concluído(s) e ${failed.length} com erro. ${errors.join(" ")}`
+    )
+    setIsUploading(false)
   }
 
   async function openDocument(record: EmployeeDocumentRecord) {
@@ -241,17 +280,18 @@ export function EmployeeDocuments({
             <input
               ref={inputRef}
               type="file"
+              multiple
               accept="application/pdf,image/jpeg,image/png"
               className="rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm"
             />
             <button
               type="button"
-              onClick={() => void uploadSelectedFile()}
-              disabled={isUploading || !consent}
+              onClick={addSelectedFiles}
+              disabled={isUploading}
               className="inline-flex items-center justify-center gap-2 rounded-xl bg-sky-700 px-5 py-3 font-semibold text-white hover:bg-sky-800 disabled:opacity-60"
             >
-              {isUploading ? <LoaderCircle className="animate-spin" size={18} /> : <FileUp size={18} />}
-              {isUploading ? "Lendo..." : "Anexar e ler"}
+              <FileUp size={18} />
+              Adicionar à lista
             </button>
           </div>
         ) : (
@@ -259,6 +299,51 @@ export function EmployeeDocuments({
             Salve o rascunho ou envie o convite antes de anexar documentos.
           </p>
         )
+      ) : null}
+
+      {canUpload && employeeId && pendingDocuments.length > 0 ? (
+        <div className="mt-4 rounded-2xl border border-sky-200 bg-white p-4">
+          <div>
+            <h4 className="font-bold text-slate-900">Documentos preparados para envio</h4>
+            <p className="mt-1 text-xs leading-5 text-slate-500">
+              Confira o tipo de cada arquivo. Nenhum documento será enviado até você clicar no botão de leitura.
+            </p>
+          </div>
+          <div className="mt-3 space-y-2">
+            {pendingDocuments.map((pending) => (
+              <div key={pending.id} className="grid gap-3 rounded-xl border border-slate-200 bg-slate-50 p-3 md:grid-cols-[1fr_230px_auto] md:items-center">
+                <div>
+                  <p className="break-all text-sm font-semibold text-slate-900">{pending.file.name}</p>
+                  <p className="mt-1 text-xs text-slate-500">{formatBytes(pending.file.size)}</p>
+                </div>
+                <select
+                  value={pending.documentType}
+                  onChange={(event) => {
+                    const nextType = event.target.value as EmployeeDocumentType
+                    setPendingDocuments((previous) => previous.map((item) =>
+                      item.id === pending.id ? { ...item, documentType: nextType } : item
+                    ))
+                  }}
+                  disabled={isUploading}
+                  aria-label={`Tipo do documento ${pending.file.name}`}
+                  className="rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm"
+                >
+                  {Object.entries(employeeDocumentTypeLabels).map(([value, label]) => (
+                    <option key={value} value={value}>{label}</option>
+                  ))}
+                </select>
+                <button
+                  type="button"
+                  onClick={() => setPendingDocuments((previous) => previous.filter((item) => item.id !== pending.id))}
+                  disabled={isUploading}
+                  className="inline-flex items-center justify-center gap-2 rounded-lg border border-red-200 px-3 py-2 text-sm font-semibold text-red-700 hover:bg-red-50 disabled:opacity-60"
+                >
+                  <Trash2 size={16} /> Remover
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
       ) : null}
 
       {canUpload && employeeId ? (
@@ -271,6 +356,20 @@ export function EmployeeDocuments({
           />
           Confirmo que o titular autorizou o armazenamento privado e a leitura deste documento para o cadastro admissional, com exclusão programada em até 60 dias após o encerramento.
         </label>
+      ) : null}
+
+      {canUpload && employeeId && pendingDocuments.length > 0 ? (
+        <button
+          type="button"
+          onClick={() => void uploadPendingDocuments()}
+          disabled={isUploading || !consent}
+          className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-700 px-5 py-3 font-semibold text-white hover:bg-emerald-800 disabled:opacity-60"
+        >
+          {isUploading ? <LoaderCircle className="animate-spin" size={18} /> : <FileCheck2 size={18} />}
+          {isUploading
+            ? "Enviando e lendo documentos..."
+            : `Enviar e ler ${pendingDocuments.length} documento(s)`}
+        </button>
       ) : null}
 
       {message ? <p className="mt-4 text-sm font-medium text-slate-700">{message}</p> : null}
