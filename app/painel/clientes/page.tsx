@@ -2,6 +2,7 @@ import Link from "next/link"
 import { redirect } from "next/navigation"
 import { ClientManagement } from "@/components/client-management"
 import { getCurrentSession } from "@/lib/auth-session"
+import { getSubscriberRecord } from "@/lib/subscriber-repository"
 
 export default async function ClientesPage() {
   const session = await getCurrentSession()
@@ -10,9 +11,26 @@ export default async function ClientesPage() {
     redirect("/acesso")
   }
 
-  if (session.role !== "subscriber_admin") {
+  if (session.role !== "subscriber_admin" || !session.subscriberId) {
     redirect("/painel")
   }
+
+  const subscriber = await getSubscriberRecord(session.subscriberId)
+
+  if (!subscriber) {
+    redirect("/painel")
+  }
+
+  const pageTitle = subscriber.subscriber_type === "accounting_office"
+    ? "Clientes do escritório"
+    : subscriber.subscriber_type === "business_group"
+      ? "Empresas do grupo"
+      : "Minha empresa"
+  const pageDescription = subscriber.subscriber_type === "accounting_office"
+    ? "Cadastre as empresas atendidas pelo escritório e mantenha separado o código Contmatic de cada cliente."
+    : subscriber.subscriber_type === "business_group"
+      ? "Cadastre matriz, filiais e outras empresas do grupo. Cada código Contmatic corresponde a uma empresa separada."
+      : "Mantenha os dados da empresa e o código usado para gerar o script no destino correto da Contmatic."
 
   return (
     <main className="min-h-screen bg-slate-50 px-6 py-8">
@@ -20,12 +38,11 @@ export default async function ClientesPage() {
         <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
           <div>
             <span className="inline-flex rounded-full bg-yellow-100 px-4 py-1 text-sm font-bold text-yellow-800">
-              Módulo interno
+              Operação do assinante
             </span>
-            <h1 className="mt-4 text-4xl font-bold text-slate-900">Clientes do assinante</h1>
+            <h1 className="mt-4 text-4xl font-bold text-slate-900">{pageTitle}</h1>
             <p className="mt-3 max-w-3xl text-slate-600">
-              Cadastre as empresas que ficarão abaixo do assinante e prepare o sistema para separar
-              usuários, funcionários e exportações por cliente.
+              {pageDescription}
             </p>
           </div>
 
@@ -37,7 +54,7 @@ export default async function ClientesPage() {
           </Link>
         </div>
 
-        <ClientManagement />
+        <ClientManagement subscriberType={subscriber.subscriber_type} />
       </div>
     </main>
   )

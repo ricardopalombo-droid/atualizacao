@@ -4,6 +4,7 @@ create table if not exists public.subscribers (
   id uuid primary key default gen_random_uuid(),
   name text not null,
   email text,
+  subscriber_type text not null default 'accounting_office' check (subscriber_type in ('accounting_office', 'company', 'business_group')),
   max_clients integer not null default 1,
   max_employees integer not null default 100,
   created_at timestamptz not null default now(),
@@ -127,14 +128,14 @@ create table if not exists public.employee_documents (
 
 create table if not exists public.reference_catalog_items (
   id uuid primary key default gen_random_uuid(),
-  client_id uuid not null references public.clients(id) on delete cascade,
+  subscriber_id uuid not null references public.subscribers(id) on delete cascade,
   reference_type text not null check (reference_type in ('cargo', 'horario', 'sindicato', 'local', 'departamento', 'setor', 'secao')),
   code text not null,
   label text not null,
   metadata jsonb not null default '{}'::jsonb,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
-  constraint reference_catalog_items_unique_scope unique (client_id, reference_type, code)
+  constraint reference_catalog_items_unique_scope unique (subscriber_id, reference_type, code)
 );
 
 create or replace function public.set_updated_at()
@@ -201,8 +202,8 @@ create index if not exists employees_workflow_status_idx on public.employees(wor
 create index if not exists dependents_employee_id_idx on public.dependents(employee_id);
 create index if not exists employee_documents_employee_id_idx on public.employee_documents(employee_id, created_at desc);
 create index if not exists employee_documents_delete_after_idx on public.employee_documents(delete_after);
-create index if not exists reference_catalog_items_client_type_idx
-on public.reference_catalog_items(client_id, reference_type);
+create index if not exists reference_catalog_items_subscriber_type_idx
+on public.reference_catalog_items(subscriber_id, reference_type);
 
 alter table public.subscribers enable row level security;
 alter table public.app_users enable row level security;

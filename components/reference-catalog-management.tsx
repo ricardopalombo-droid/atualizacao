@@ -35,20 +35,20 @@ const helpByType: Record<ReferenceType, string> = {
   cargo: "Importe o PDF de cargos para alimentar o campo Cargo e reaproveitar o CBO do cadastro de origem.",
   horario: "Importe o PDF de horários para transformar o campo Horário em lista selecionável.",
   sindicato: "Importe o PDF de sindicatos para oferecer uma lista padronizada no cadastro contratual.",
-  local: "Importe o PDF de locais para oferecer uma lista padronizada por empresa.",
-  departamento: "Importe o PDF de departamentos para oferecer uma lista padronizada por empresa.",
-  setor: "Importe o PDF de setores para oferecer uma lista padronizada por empresa.",
-  secao: "Importe o PDF de seções para oferecer uma lista padronizada por empresa.",
+  local: "Importe o PDF de locais para oferecer uma lista padronizada a todas as empresas do assinante.",
+  departamento: "Importe o PDF de departamentos para oferecer uma lista padronizada a todas as empresas do assinante.",
+  setor: "Importe o PDF de setores para oferecer uma lista padronizada a todas as empresas do assinante.",
+  secao: "Importe o PDF de seções para oferecer uma lista padronizada a todas as empresas do assinante.",
 }
 
 const replaceWarningByType: Record<ReferenceType, string> = {
-  cargo: "Esta importação vai substituir toda a base atual de cargos desta empresa pelo conteúdo do novo PDF.",
-  horario: "Esta importação vai substituir toda a base atual de horários desta empresa pelo conteúdo do novo PDF.",
-  sindicato: "Esta importação vai substituir toda a base atual de sindicatos desta empresa pelo conteúdo do novo PDF.",
-  local: "Esta importação vai substituir toda a base atual de locais desta empresa pelo conteúdo do novo PDF.",
-  departamento: "Esta importação vai substituir toda a base atual de departamentos desta empresa pelo conteúdo do novo PDF.",
-  setor: "Esta importação vai substituir toda a base atual de setores desta empresa pelo conteúdo do novo PDF.",
-  secao: "Esta importação vai substituir toda a base atual de seções desta empresa pelo conteúdo do novo PDF.",
+  cargo: "Esta importação vai substituir a base compartilhada atual de cargos pelo conteúdo do novo PDF.",
+  horario: "Esta importação vai substituir a base compartilhada atual de horários pelo conteúdo do novo PDF.",
+  sindicato: "Esta importação vai substituir a base compartilhada atual de sindicatos pelo conteúdo do novo PDF.",
+  local: "Esta importação vai substituir a base compartilhada atual de locais pelo conteúdo do novo PDF.",
+  departamento: "Esta importação vai substituir a base compartilhada atual de departamentos pelo conteúdo do novo PDF.",
+  setor: "Esta importação vai substituir a base compartilhada atual de setores pelo conteúdo do novo PDF.",
+  secao: "Esta importação vai substituir a base compartilhada atual de seções pelo conteúdo do novo PDF.",
 }
 
 const referenceTypes: ReferenceType[] = [
@@ -73,7 +73,7 @@ export function ReferenceCatalogManagement() {
   })
   const [selectedFiles, setSelectedFiles] = useState<Partial<Record<ReferenceType, File | null>>>({})
   const [statusMessage, setStatusMessage] = useState(
-    "Importe os PDFs das bases da sua empresa para alimentar as listas internas do cadastro."
+    "Importe os PDFs uma única vez. As listas serão usadas por todas as empresas deste assinante."
   )
   const [isLoading, setIsLoading] = useState(true)
   const [isUploading, setIsUploading] = useState<ReferenceType | null>(null)
@@ -107,7 +107,7 @@ export function ReferenceCatalogManagement() {
       }>(response)
 
       if (!response.ok || !result.ok || !result.summary) {
-        setStatusMessage(result.error ?? "Não foi possível carregar as bases da empresa.")
+        setStatusMessage(result.error ?? "Não foi possível carregar as bases compartilhadas.")
         return
       }
 
@@ -224,7 +224,7 @@ export function ReferenceCatalogManagement() {
           <div>
             <h2 className="text-2xl font-bold text-slate-900">Resumo das bases importadas</h2>
             <p className="mt-2 text-slate-600">
-              Esta conferência pertence à empresa e ajuda a validar se os PDFs da própria base foram lidos corretamente.
+              Estas referências pertencem ao assinante e ficam disponíveis para todas as empresas vinculadas.
             </p>
           </div>
           <div className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-4 py-2 text-sm font-semibold text-slate-700">

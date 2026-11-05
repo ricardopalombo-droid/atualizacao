@@ -3,10 +3,13 @@
 import { useEffect, useState } from "react"
 import { Building2, Pencil, Plus, Shield, Trash2 } from "lucide-react"
 
+type SubscriberType = "accounting_office" | "company" | "business_group"
+
 type SubscriberRecord = {
   id: string
   name: string
   email: string | null
+  subscriber_type: SubscriberType
   max_clients: number
   max_employees: number
   admin_name: string | null
@@ -18,6 +21,7 @@ type FormState = {
   id: string | null
   name: string
   email: string
+  subscriberType: SubscriberType
   maxClients: string
   maxEmployees: string
   adminName: string
@@ -29,6 +33,7 @@ const initialForm: FormState = {
   id: null,
   name: "",
   email: "",
+  subscriberType: "accounting_office",
   maxClients: "10",
   maxEmployees: "1000",
   adminName: "",
@@ -88,6 +93,7 @@ export function SubscriberManagement() {
       id: record.id,
       name: record.name,
       email: record.email ?? "",
+      subscriberType: record.subscriber_type,
       maxClients: String(record.max_clients),
       maxEmployees: String(record.max_employees),
       adminName: record.admin_name ?? "",
@@ -160,6 +166,7 @@ export function SubscriberManagement() {
           id: form.id,
           name: form.name,
           email: form.email,
+          subscriberType: form.subscriberType,
           maxClients: Number(form.maxClients),
           maxEmployees: Number(form.maxEmployees),
           adminName: form.adminName,
@@ -208,7 +215,7 @@ export function SubscriberManagement() {
             <div>
               <h2 className="text-2xl font-bold text-slate-900">Cadastro de assinantes</h2>
               <p className="mt-2 leading-7 text-slate-600">
-                Esta área pertence à equipe PalSys para criar escritórios assinantes, definir limites e organizar o acesso administrativo de cada conta.
+                Esta área pertence à equipe PalSys para criar escritórios, empresas e grupos empresariais, definir limites e organizar o acesso administrativo de cada conta.
               </p>
             </div>
           </div>
@@ -216,11 +223,24 @@ export function SubscriberManagement() {
           <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
             <Field label="Nome do assinante" value={form.name} onChange={(value) => updateField("name", value)} placeholder="Ex.: Escritório X" />
             <Field label="E-mail comercial" type="email" value={form.email} onChange={(value) => updateField("email", value)} placeholder="contato@escritorio.com.br" />
-            <Field label="Limite de clientes" type="number" value={form.maxClients} onChange={(value) => updateField("maxClients", value)} placeholder="10" />
+            <SelectField
+              label="Perfil do assinante"
+              value={form.subscriberType}
+              onChange={(value) => {
+                updateField("subscriberType", value as SubscriberType)
+                if (value === "company") updateField("maxClients", "1")
+              }}
+              options={[
+                { value: "accounting_office", label: "Escritório contábil" },
+                { value: "company", label: "Empresa" },
+                { value: "business_group", label: "Grupo empresarial" },
+              ]}
+            />
+            <Field label={form.subscriberType === "accounting_office" ? "Limite de clientes" : "Limite de empresas"} type="number" value={form.maxClients} onChange={(value) => updateField("maxClients", value)} placeholder="10" disabled={form.subscriberType === "company"} />
             <Field label="Limite de funcionários" type="number" value={form.maxEmployees} onChange={(value) => updateField("maxEmployees", value)} placeholder="1000" />
             <Field label="Responsável pelo assinante" value={form.adminName} onChange={(value) => updateField("adminName", value)} placeholder="Ex.: Maria Oliveira" />
             <Field label="E-mail de acesso do assinante" type="email" value={form.accessEmail} onChange={(value) => updateField("accessEmail", value)} placeholder="admin@escritorio.com.br" />
-            <Field label={form.id ? "Nova senha do assinante" : "Senha provisória"} type="password" value={form.temporaryPassword} onChange={(value) => updateField("temporaryPassword", value)} placeholder={form.id ? "Informe a nova senha" : "Defina a senha inicial"} />
+            <Field label={form.id ? "Nova senha do assinante (opcional)" : "Senha provisória"} type="password" value={form.temporaryPassword} onChange={(value) => updateField("temporaryPassword", value)} placeholder={form.id ? "Preencha apenas se quiser trocar" : "Defina a senha inicial"} />
 
             <div className="flex flex-wrap items-center gap-3 pt-2">
               <button
@@ -273,8 +293,9 @@ export function SubscriberManagement() {
                 <thead className="bg-slate-50">
                   <tr className="text-left text-sm font-semibold text-slate-700">
                     <th className="px-4 py-3">Assinante</th>
+                    <th className="px-4 py-3">Perfil</th>
                     <th className="px-4 py-3">Login</th>
-                    <th className="px-4 py-3">Limite de clientes</th>
+                    <th className="px-4 py-3">Limite de empresas/clientes</th>
                     <th className="px-4 py-3">Limite de funcionários</th>
                     <th className="px-4 py-3">Atualizado</th>
                     <th className="px-4 py-3">Acao</th>
@@ -287,6 +308,7 @@ export function SubscriberManagement() {
                         <div>{record.name}</div>
                         <div className="text-xs text-slate-500">{record.admin_name || "Sem responsável"}</div>
                       </td>
+                      <td className="px-4 py-3">{formatSubscriberType(record.subscriber_type)}</td>
                       <td className="px-4 py-3">{record.access_email || record.email || "Sem e-mail"}</td>
                       <td className="px-4 py-3">{record.max_clients}</td>
                       <td className="px-4 py-3">{record.max_employees}</td>
@@ -330,12 +352,14 @@ function Field({
   onChange,
   placeholder,
   type = "text",
+  disabled = false,
 }: {
   label: string
   value: string
   onChange: (value: string) => void
   placeholder?: string
   type?: "text" | "email" | "number" | "password"
+  disabled?: boolean
 }) {
   return (
     <div>
@@ -345,10 +369,44 @@ function Field({
         value={value}
         onChange={(event) => onChange(event.target.value)}
         placeholder={placeholder}
-        className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-slate-900 outline-none transition focus:border-yellow-400 focus:ring-2 focus:ring-yellow-200"
+        disabled={disabled}
+        className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-slate-900 outline-none transition focus:border-yellow-400 focus:ring-2 focus:ring-yellow-200 disabled:bg-slate-100 disabled:text-slate-500"
       />
     </div>
   )
+}
+
+function SelectField({
+  label,
+  value,
+  onChange,
+  options,
+}: {
+  label: string
+  value: string
+  onChange: (value: string) => void
+  options: Array<{ value: string; label: string }>
+}) {
+  return (
+    <div>
+      <label className="mb-2 block text-sm font-semibold text-slate-700">{label}</label>
+      <select
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-slate-900 outline-none transition focus:border-yellow-400 focus:ring-2 focus:ring-yellow-200"
+      >
+        {options.map((option) => (
+          <option key={option.value} value={option.value}>{option.label}</option>
+        ))}
+      </select>
+    </div>
+  )
+}
+
+function formatSubscriberType(value: SubscriberType) {
+  if (value === "company") return "Empresa"
+  if (value === "business_group") return "Grupo empresarial"
+  return "Escritório contábil"
 }
 
 function formatDateTime(value: string) {

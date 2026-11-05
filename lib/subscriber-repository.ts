@@ -2,9 +2,13 @@ import { z } from "zod"
 import { createInviteToken, hashPassword, sha256Hex } from "@/lib/auth-crypto"
 import { getSupabaseServerClient } from "@/lib/supabase-server"
 
+export const subscriberTypeSchema = z.enum(["accounting_office", "company", "business_group"])
+export type SubscriberType = z.infer<typeof subscriberTypeSchema>
+
 export const subscriberPayloadSchema = z.object({
   name: z.string().trim().min(2, "Informe o nome do assinante."),
   email: z.string().trim().email("Informe um e-mail válido."),
+  subscriberType: subscriberTypeSchema,
   maxClients: z.coerce.number().int().positive().max(10000),
   maxEmployees: z.coerce.number().int().positive().max(1000000),
   adminName: z.string().trim().min(2, "Informe o nome do responsável pelo assinante."),
@@ -18,6 +22,7 @@ export type SubscriberRecordListItem = {
   id: string
   name: string
   email: string | null
+  subscriber_type: SubscriberType
   max_clients: number
   max_employees: number
   admin_name: string | null
@@ -59,10 +64,11 @@ export async function createSubscriberRecord(payload: SubscriberPayload) {
     .insert({
       name: payload.name,
       email: payload.email,
-      max_clients: payload.maxClients,
+      subscriber_type: payload.subscriberType,
+      max_clients: payload.subscriberType === "company" ? 1 : payload.maxClients,
       max_employees: payload.maxEmployees,
     })
-    .select("id, name, email, max_clients, max_employees, updated_at")
+    .select("id, name, email, subscriber_type, max_clients, max_employees, updated_at")
     .single()
 
   if (subscriberError) {
@@ -87,6 +93,19 @@ export async function createSubscriberRecord(payload: SubscriberPayload) {
     throw userError
   }
 
+  if (payload.subscriberType === "company") {
+    const { error: clientError } = await supabase.from("clients").insert({
+      subscriber_id: subscriber.id,
+      name: payload.name,
+      email: payload.email,
+      max_employees: payload.maxEmployees,
+    })
+
+    if (clientError) {
+      throw clientError
+    }
+  }
+
   return {
     ...subscriber,
     admin_name: payload.adminName,
@@ -96,20 +115,34 @@ export async function createSubscriberRecord(payload: SubscriberPayload) {
 
 export async function updateSubscriberRecord(
   id: string,
-  payload: SubscriberPayload
+  payload: Omit<SubscriberPayload, "temporaryPassword"> & { temporaryPassword?: string }
 ) {
   const supabase = getSupabaseServerClient()
+
+  const { count: clientCount, error: clientCountError } = await supabase
+    .from("clients")
+    .select("id", { count: "exact", head: true })
+    .eq("subscriber_id", id)
+
+  if (clientCountError) {
+    throw clientCountError
+  }
+
+  if (payload.subscriberType === "company" && (clientCount ?? 0) > 1) {
+    throw new Error("Um assinante do perfil Empresa pode possuir somente uma empresa. Remova as empresas excedentes ou use Grupo empresarial.")
+  }
 
   const { data: subscriber, error: subscriberError } = await supabase
     .from("subscribers")
     .update({
       name: payload.name,
       email: payload.email,
-      max_clients: payload.maxClients,
+      subscriber_type: payload.subscriberType,
+      max_clients: payload.subscriberType === "company" ? 1 : payload.maxClients,
       max_employees: payload.maxEmployees,
     })
     .eq("id", id)
-    .select("id, name, email, max_clients, max_employees, updated_at")
+    .select("id, name, email, subscriber_type, max_clients, max_employees, updated_at")
     .single()
 
   if (subscriberError) {
@@ -149,19 +182,37 @@ export async function updateSubscriberRecord(
     }
   }
 
-  const password = hashPassword(payload.temporaryPassword)
+  const userUpdates: Record<string, string> = {
+    email: payload.accessEmail,
+    full_name: payload.adminName,
+  }
+
+  if (payload.temporaryPassword) {
+    const password = hashPassword(payload.temporaryPassword)
+    userUpdates.password_hash = password.hash
+    userUpdates.password_salt = password.salt
+  }
+
   const { error: userError } = await supabase
     .from("app_users")
-    .update({
-      email: payload.accessEmail,
-      full_name: payload.adminName,
-      password_hash: password.hash,
-      password_salt: password.salt,
-    })
+    .update(userUpdates)
     .eq("id", adminUser.id)
 
   if (userError) {
     throw userError
+  }
+
+  if (payload.subscriberType === "company" && (clientCount ?? 0) === 0) {
+    const { error: clientError } = await supabase.from("clients").insert({
+      subscriber_id: id,
+      name: payload.name,
+      email: payload.email,
+      max_employees: payload.maxEmployees,
+    })
+
+    if (clientError) {
+      throw clientError
+    }
   }
 
   return {
@@ -176,7 +227,7 @@ export async function listSubscriberRecords(limit = 100): Promise<SubscriberReco
 
   const { data, error } = await supabase
     .from("subscribers")
-    .select("id, name, email, max_clients, max_employees, updated_at")
+    .select("id, name, email, subscriber_type, max_clients, max_employees, updated_at")
     .order("updated_at", { ascending: false })
     .limit(limit)
 
@@ -230,6 +281,21 @@ export async function deleteSubscriberRecord(id: string) {
   }
 }
 
+export async function getSubscriberRecord(id: string) {
+  const supabase = getSupabaseServerClient()
+  const { data, error } = await supabase
+    .from("subscribers")
+    .select("id, name, email, subscriber_type, max_clients, max_employees, updated_at")
+    .eq("id", id)
+    .maybeSingle()
+
+  if (error) {
+    throw error
+  }
+
+  return data as (Omit<SubscriberRecordListItem, "admin_name" | "access_email"> | null)
+}
+
 export async function ensureSubscriberAccessForPurchase(input: {
   officeName: string
   accessEmail: string
@@ -266,6 +332,7 @@ export async function ensureSubscriberAccessForPurchase(input: {
     .insert({
       name: officeName,
       email: accessEmail,
+      subscriber_type: "accounting_office",
       max_clients: DEFAULT_PURCHASED_SUBSCRIBER_LIMITS.maxClients,
       max_employees: DEFAULT_PURCHASED_SUBSCRIBER_LIMITS.maxEmployees,
     })

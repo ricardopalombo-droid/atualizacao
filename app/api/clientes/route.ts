@@ -18,8 +18,8 @@ const updateClientPayloadSchema = z.object({
   cnpj: z.string().trim().optional().or(z.literal("")),
   contmaticNickname: z.string().trim().optional().or(z.literal("")),
   maxEmployees: z.coerce.number().int().positive().max(100000).optional(),
-  contactName: z.string().trim().min(2, "Informe o nome do responsável."),
-  accessEmail: z.string().trim().email("Informe um e-mail de acesso valido."),
+  contactName: z.string().trim().optional().or(z.literal("")),
+  accessEmail: z.string().trim().email("Informe um e-mail de acesso valido.").optional().or(z.literal("")),
   temporaryPassword: z.string().optional().or(z.literal("")),
   employeeDefaults: z.record(z.string(), z.union([z.string(), z.boolean(), z.number(), z.null()])).default({}),
 })

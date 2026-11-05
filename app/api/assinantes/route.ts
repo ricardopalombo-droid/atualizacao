@@ -4,6 +4,7 @@ import {
   deleteSubscriberRecord,
   listSubscriberRecords,
   subscriberPayloadSchema,
+  subscriberTypeSchema,
   updateSubscriberRecord,
 } from "@/lib/subscriber-repository"
 import { getCurrentSession } from "@/lib/auth-session"
@@ -12,11 +13,12 @@ const updateSubscriberPayloadSchema = z.object({
   id: z.string().uuid(),
   name: z.string().trim().min(2, "Informe o nome do assinante."),
   email: z.string().trim().email("Informe um e-mail válido."),
+  subscriberType: subscriberTypeSchema,
   maxClients: z.coerce.number().int().positive().max(10000),
   maxEmployees: z.coerce.number().int().positive().max(1000000),
   adminName: z.string().trim().min(2, "Informe o nome do responsável pelo assinante."),
   accessEmail: z.string().trim().email("Informe um e-mail de acesso válido."),
-  temporaryPassword: z.string().min(6, "A senha provisória deve ter pelo menos 6 caracteres."),
+  temporaryPassword: z.string().min(6, "A nova senha deve ter pelo menos 6 caracteres.").optional().or(z.literal("")),
 })
 
 const deleteSubscriberPayloadSchema = z.object({

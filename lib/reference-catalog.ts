@@ -15,7 +15,7 @@ export type ReferenceType = z.infer<typeof referenceTypeSchema>
 
 export type ReferenceCatalogItem = {
   id: string
-  client_id: string
+  subscriber_id: string
   reference_type: ReferenceType
   code: string
   label: string
@@ -549,7 +549,7 @@ export async function parseReferencePdf(buffer: Buffer, referenceType: Reference
 }
 
 export async function replaceReferenceCatalog(
-  clientId: string,
+  subscriberId: string,
   referenceType: ReferenceType,
   items: ParsedReferenceItem[]
 ) {
@@ -563,7 +563,7 @@ export async function replaceReferenceCatalog(
   const { error: deleteExistingError } = await supabase
     .from("reference_catalog_items")
     .delete()
-    .eq("client_id", clientId)
+    .eq("subscriber_id", subscriberId)
     .eq("reference_type", referenceType)
 
   if (deleteExistingError) {
@@ -571,7 +571,7 @@ export async function replaceReferenceCatalog(
   }
 
   const payload = uniqueItems.map((item) => ({
-    client_id: clientId,
+    subscriber_id: subscriberId,
     reference_type: referenceType,
     code: item.code,
     label: item.label,
@@ -588,15 +588,15 @@ export async function replaceReferenceCatalog(
 }
 
 export async function listReferenceCatalog(
-  clientId: string,
+  subscriberId: string,
   referenceType?: ReferenceType
 ): Promise<ReferenceCatalogItem[]> {
   const supabase = getSupabaseServerClient()
 
   let query = supabase
     .from("reference_catalog_items")
-    .select("id, client_id, reference_type, code, label, metadata, updated_at")
-    .eq("client_id", clientId)
+    .select("id, subscriber_id, reference_type, code, label, metadata, updated_at")
+    .eq("subscriber_id", subscriberId)
     .order("code", { ascending: true })
 
   if (referenceType) {
@@ -612,8 +612,8 @@ export async function listReferenceCatalog(
   return (data as ReferenceCatalogItem[] | null) ?? []
 }
 
-export async function getReferenceCatalogSummary(clientId: string) {
-  const records = await listReferenceCatalog(clientId)
+export async function getReferenceCatalogSummary(subscriberId: string) {
+  const records = await listReferenceCatalog(subscriberId)
 
   const grouped = {
     cargo: [] as ReferenceCatalogItem[],

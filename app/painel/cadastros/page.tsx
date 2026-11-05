@@ -36,8 +36,8 @@ export default async function CadastrosPage({
 
   if (canManage && !selectedClient) redirect("/painel/clientes")
 
-  const lookupCatalog = selectedClientId
-    ? await getReferenceCatalogSummary(selectedClientId)
+  const lookupCatalog = session.subscriberId
+    ? await getReferenceCatalogSummary(session.subscriberId)
     : { cargo: [], horario: [], sindicato: [] }
 
   return (

@@ -4,6 +4,7 @@ import { ClientDefaultsForm } from "@/components/client-defaults-form"
 import { getCurrentSession } from "@/lib/auth-session"
 import { getClientRecordById } from "@/lib/client-repository"
 import { getReferenceCatalogSummary } from "@/lib/reference-catalog"
+import { getSubscriberRecord } from "@/lib/subscriber-repository"
 
 export default async function ClientePadroesPage({
   params,
@@ -22,12 +23,13 @@ export default async function ClientePadroesPage({
   }
 
   const client = await getClientRecordById(session.subscriberId, resolvedParams.id)
+  const subscriber = await getSubscriberRecord(session.subscriberId)
 
-  if (!client) {
+  if (!client || !subscriber) {
     notFound()
   }
 
-  const lookupCatalog = await getReferenceCatalogSummary(client.id)
+  const lookupCatalog = await getReferenceCatalogSummary(session.subscriberId)
 
   return (
     <main className="min-h-screen bg-slate-50 px-6 py-8">
@@ -39,7 +41,7 @@ export default async function ClientePadroesPage({
             </span>
             <h1 className="mt-4 text-4xl font-bold text-slate-900">Padrões contábeis de {client.name}</h1>
             <p className="mt-3 max-w-3xl text-slate-600">
-              Configure aqui os valores internos que normalmente se repetem nesta empresa. Esses padrões vão acelerar a revisão do cadastro pela empresa cliente.
+              Configure os valores próprios desta empresa. Cargos, horários, sindicatos e demais bases importadas são compartilhados por todo o {subscriber.subscriber_type === "accounting_office" ? "escritório" : subscriber.subscriber_type === "business_group" ? "grupo empresarial" : "assinante"}.
             </p>
           </div>
 

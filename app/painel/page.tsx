@@ -8,6 +8,7 @@ import { getCurrentSession } from "@/lib/auth-session"
 import { getSiteAccessSummary } from "@/lib/site-analytics"
 import { getEventUserAdminSummary } from "@/lib/event-history"
 import { getReceiptAnalysisAdminSummary } from "@/lib/receipt-access"
+import { getSubscriberRecord } from "@/lib/subscriber-repository"
 
 export default async function PainelPage() {
   const session = await getCurrentSession()
@@ -19,6 +20,21 @@ export default async function PainelPage() {
   if (session.role === "event_user") {
     redirect("/painel/eventos")
   }
+
+  const subscriber = session.role === "subscriber_admin" && session.subscriberId
+    ? await getSubscriberRecord(session.subscriberId)
+    : null
+  const subscriberType = subscriber?.subscriber_type ?? "accounting_office"
+  const companiesTitle = subscriberType === "accounting_office"
+    ? "Carteira de clientes"
+    : subscriberType === "business_group"
+      ? "Empresas do grupo"
+      : "Minha empresa"
+  const companiesDescription = subscriberType === "accounting_office"
+    ? "Cadastre e mantenha as empresas atendidas por este escritório."
+    : subscriberType === "business_group"
+      ? "Cadastre e mantenha a matriz, as filiais e as demais empresas do grupo."
+      : "Mantenha os dados e o código Contmatic da sua empresa."
 
   const records =
     session.role === "palsys_admin"
@@ -57,11 +73,18 @@ export default async function PainelPage() {
       : session.role === "subscriber_admin"
         ? [
             {
-              titulo: "Carteira de clientes",
-              descricao: "Cadastre e mantenha as empresas atendidas por este escritório.",
+              titulo: companiesTitle,
+              descricao: companiesDescription,
               href: "/painel/clientes",
               icone: Building2,
-              acao: "Gerenciar clientes",
+              acao: subscriberType === "accounting_office" ? "Gerenciar clientes" : "Gerenciar empresas",
+            },
+            {
+              titulo: "Bases compartilhadas",
+              descricao: "Importe uma vez os cargos, horários, sindicatos e demais referências do sistema da folha.",
+              href: "/painel/referencias",
+              icone: Database,
+              acao: "Gerenciar bases",
             },
             {
               titulo: "Admissão de funcionários",
@@ -79,34 +102,35 @@ export default async function PainelPage() {
               icone: ClipboardList,
               acao: "Consultar",
             },
-            {
-              titulo: "Bases importadas",
-              descricao: "Mantenha cargos, horários e sindicatos da empresa alinhados ao cadastro.",
-              href: "/painel/referencias",
-              icone: Database,
-              acao: "Gerenciar bases",
-            },
           ]
 
   const badgeByRole =
     session.role === "palsys_admin"
       ? "Painel PalSys"
       : session.role === "subscriber_admin"
-        ? "Painel do assinante"
+        ? subscriberType === "accounting_office" ? "Painel do escritório" : "Painel da empresa"
         : "Painel do cliente"
 
   const titleByRole =
     session.role === "palsys_admin"
         ? "Operação administrativa da plataforma"
       : session.role === "subscriber_admin"
-        ? "Operação da carteira do escritório"
+        ? subscriberType === "accounting_office"
+          ? "Operação da carteira do escritório"
+          : subscriberType === "business_group"
+            ? "Operação das empresas do grupo"
+            : "Operação da empresa"
         : "Operação de cadastros da empresa"
 
   const descriptionByRole =
     session.role === "palsys_admin"
       ? "Este acesso administra a plataforma, os assinantes e os limites contratados."
       : session.role === "subscriber_admin"
-        ? "Este acesso administra clientes, acompanha a fila do Phoenix e opera a carteira do escritório."
+        ? subscriberType === "accounting_office"
+          ? "Este acesso administra clientes, bases compartilhadas e cadastros do escritório."
+          : subscriberType === "business_group"
+            ? "Este acesso administra as empresas do grupo, as bases compartilhadas e seus cadastros."
+            : "Este acesso administra a empresa, as bases compartilhadas e seus cadastros."
         : "Este acesso consulta os funcionários e os documentos enviados ao escritório."
 
   return (
@@ -239,11 +263,15 @@ export default async function PainelPage() {
             <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
               <div>
                 <h2 className="text-2xl font-bold text-slate-900">
-                  {session.role === "subscriber_admin" ? "Cadastros da carteira" : "Cadastros da empresa"}
+                  {session.role === "subscriber_admin"
+                    ? subscriberType === "accounting_office" ? "Cadastros da carteira" : "Cadastros das empresas"
+                    : "Cadastros da empresa"}
                 </h2>
                 <p className="mt-2 text-slate-600">
                   {session.role === "subscriber_admin"
-                    ? "Visão resumida dos registros vinculados aos clientes do assinante."
+                    ? subscriberType === "accounting_office"
+                      ? "Visão resumida dos registros vinculados aos clientes do escritório."
+                      : "Visão resumida dos registros vinculados às empresas do assinante."
                     : "Visão resumida dos registros vinculados à empresa conectada."}
                 </p>
               </div>

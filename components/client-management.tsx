@@ -4,6 +4,8 @@ import Link from "next/link"
 import { useEffect, useState } from "react"
 import { Building2, Pencil, Plus, Settings2, Trash2, Users } from "lucide-react"
 
+type SubscriberType = "accounting_office" | "company" | "business_group"
+
 type ClientRecord = {
   id: string
   name: string
@@ -41,11 +43,13 @@ const initialForm: FormState = {
   temporaryPassword: "",
 }
 
-export function ClientManagement() {
+export function ClientManagement({ subscriberType }: { subscriberType: SubscriberType }) {
+  const entitySingular = subscriberType === "accounting_office" ? "cliente" : "empresa"
+  const entityPlural = subscriberType === "accounting_office" ? "clientes" : "empresas"
   const [form, setForm] = useState<FormState>(initialForm)
   const [clients, setClients] = useState<ClientRecord[]>([])
   const [editingDefaults, setEditingDefaults] = useState<Record<string, string | boolean | number | null>>({})
-  const [statusMessage, setStatusMessage] = useState("Cadastre os clientes e depois configure os padrões contábeis de cada empresa em uma tela separada.")
+  const [statusMessage, setStatusMessage] = useState(`Cadastre ${subscriberType === "accounting_office" ? "os clientes" : "as empresas"} e depois configure os padrões contábeis de cada empresa em uma tela separada.`)
   const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
   const [isDeletingId, setIsDeletingId] = useState<string | null>(null)
@@ -74,7 +78,7 @@ export function ClientManagement() {
       }
 
       setClients(result.records ?? [])
-      setStatusMessage("Clientes carregados com sucesso.")
+      setStatusMessage(`${subscriberType === "company" ? "Empresa carregada" : `${entityPlural[0].toUpperCase()}${entityPlural.slice(1)} carregadas`} com sucesso.`)
     } catch (error) {
       setStatusMessage(error instanceof Error ? error.message : "Erro ao carregar clientes.")
     } finally {
@@ -102,7 +106,7 @@ export function ClientManagement() {
       accessEmail: client.access_email ?? "",
       temporaryPassword: "",
     })
-    setStatusMessage(`Editando o cliente ${client.name}.`)
+    setStatusMessage(`Editando ${entitySingular} ${client.name}.`)
   }
 
   function cancelEditing() {
@@ -113,7 +117,7 @@ export function ClientManagement() {
 
   async function handleDelete(client: ClientRecord) {
     const confirmed = window.confirm(
-      `Excluir o cliente ${client.name}? Isso também remove o login e os funcionários vinculados.`
+      `Excluir ${entitySingular} ${client.name}? Isso também remove o login e os funcionários vinculados.`
     )
 
     if (!confirmed) {
@@ -136,7 +140,7 @@ export function ClientManagement() {
       const result = (await response.json()) as { ok: boolean; error?: string }
 
       if (!response.ok || !result.ok) {
-        setStatusMessage(result.error ?? "Não foi possível excluir o cliente.")
+        setStatusMessage(result.error ?? `Não foi possível excluir ${entitySingular}.`)
         return
       }
 
@@ -146,7 +150,7 @@ export function ClientManagement() {
         setForm(initialForm)
       }
 
-      setStatusMessage("Cliente excluido com sucesso.")
+      setStatusMessage(`${entitySingular === "cliente" ? "Cliente excluído" : "Empresa excluída"} com sucesso.`)
     } catch (error) {
       setStatusMessage(error instanceof Error ? error.message : "Erro ao excluir cliente.")
     } finally {
@@ -194,10 +198,10 @@ export function ClientManagement() {
         setClients((previous) =>
           previous.map((item) => (item.id === result.record!.id ? result.record! : item))
         )
-        setStatusMessage("Cliente atualizado com sucesso.")
+        setStatusMessage(`${entitySingular === "cliente" ? "Cliente atualizado" : "Empresa atualizada"} com sucesso.`)
       } else {
         setClients((previous) => [result.record!, ...previous])
-        setStatusMessage("Cliente cadastrado com sucesso.")
+        setStatusMessage(`${entitySingular === "cliente" ? "Cliente cadastrado" : "Empresa cadastrada"} com sucesso.`)
       }
 
       setForm(initialForm)
@@ -217,22 +221,27 @@ export function ClientManagement() {
               <Building2 size={22} />
             </div>
             <div>
-              <h2 className="text-2xl font-bold text-slate-900">Cadastro de clientes</h2>
+              <h2 className="text-2xl font-bold text-slate-900">Cadastro de {subscriberType === "company" ? "empresa" : entityPlural}</h2>
               <p className="mt-2 leading-7 text-slate-600">
-                Cadastre a empresa, o acesso do cliente e o apelido usado no escritório. Os padrões contábeis ficam em uma tela separada, depois do cadastro básico.
+                Informe os dados da empresa e o apelido Contmatic usado para gerar o script no destino correto. O acesso separado é {subscriberType === "accounting_office" ? "obrigatório para clientes do escritório" : "opcional para empresas do grupo"}.
               </p>
             </div>
           </div>
 
+          {subscriberType === "company" && !form.id ? (
+            <div className="mt-6 rounded-2xl border border-blue-200 bg-blue-50 p-5 text-blue-900">
+              O perfil Empresa possui um único cadastro. Use o botão Editar abaixo para informar CNPJ, apelido Contmatic e demais dados.
+            </div>
+          ) : (
           <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
             <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-              <Field label="Nome do cliente" value={form.name} onChange={(value) => updateField("name", value)} placeholder="Ex.: Clínica Exemplo Ltda" />
+              <Field label={subscriberType === "accounting_office" ? "Nome do cliente" : "Nome da empresa"} value={form.name} onChange={(value) => updateField("name", value)} placeholder="Ex.: Clínica Exemplo Ltda" />
               <Field label="E-mail principal" type="email" value={form.email} onChange={(value) => updateField("email", value)} placeholder="contato@cliente.com.br" />
               <Field label="CNPJ" value={form.cnpj} onChange={(value) => updateField("cnpj", value)} placeholder="00.000.000/0001-00" />
               <Field label="Apelido Contmatic" value={form.contmaticNickname} onChange={(value) => updateField("contmaticNickname", value)} placeholder="Ex.: SOFTMATIC" />
-              <Field label="Responsável pelo cliente" value={form.contactName} onChange={(value) => updateField("contactName", value)} placeholder="Ex.: Maria Oliveira" />
-              <Field label="E-mail de acesso do cliente" type="email" value={form.accessEmail} onChange={(value) => updateField("accessEmail", value)} placeholder="login@cliente.com.br" />
-              <Field label={form.id ? "Nova senha do cliente (opcional)" : "Senha provisória"} type="password" value={form.temporaryPassword} onChange={(value) => updateField("temporaryPassword", value)} placeholder={form.id ? "Preencha apenas se quiser trocar" : "Defina uma senha inicial"} />
+              <Field label={`Responsável pelo ${entitySingular}${subscriberType === "accounting_office" ? " *" : " (opcional)"}`} value={form.contactName} onChange={(value) => updateField("contactName", value)} placeholder="Ex.: Maria Oliveira" />
+              <Field label={`E-mail de acesso separado${subscriberType === "accounting_office" ? " *" : " (opcional)"}`} type="email" value={form.accessEmail} onChange={(value) => updateField("accessEmail", value)} placeholder="login@empresa.com.br" />
+              <Field label={form.id || subscriberType !== "accounting_office" ? "Senha do acesso separado (opcional)" : "Senha provisória *"} type="password" value={form.temporaryPassword} onChange={(value) => updateField("temporaryPassword", value)} placeholder={form.id ? "Preencha apenas se quiser trocar" : "Defina uma senha inicial se criar um acesso"} />
               <Field label="Limite de funcionários" type="number" value={form.maxEmployees} onChange={(value) => updateField("maxEmployees", value)} placeholder="200" />
             </div>
 
@@ -243,7 +252,7 @@ export function ClientManagement() {
                 className="inline-flex items-center gap-2 rounded-xl bg-slate-900 px-5 py-3 font-semibold text-white hover:bg-slate-800"
               >
                 <Plus size={18} />
-                {isSaving ? "Salvando..." : form.id ? "Salvar alterações" : "Cadastrar cliente"}
+                {isSaving ? "Salvando..." : form.id ? "Salvar alterações" : `Cadastrar ${entitySingular}`}
               </button>
               {form.id ? (
                 <button
@@ -257,29 +266,30 @@ export function ClientManagement() {
               <p className="text-sm text-slate-600">{statusMessage}</p>
             </div>
           </form>
+          )}
       </section>
 
       <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
           <div className="flex items-end justify-between gap-4">
             <div>
-              <h2 className="text-2xl font-bold text-slate-900">Clientes cadastrados</h2>
+              <h2 className="text-2xl font-bold text-slate-900">{subscriberType === "company" ? "Empresa cadastrada" : `${entityPlural[0].toUpperCase()}${entityPlural.slice(1)} cadastradas`}</h2>
               <p className="mt-2 text-slate-600">
                 Depois do cadastro básico, abra a configuração de padrões contábeis para deixar a empresa com os campos internos pré-preenchidos.
               </p>
             </div>
             <div className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-4 py-2 text-sm font-semibold text-slate-700">
               <Users size={16} />
-              {clients.length} cliente(s)
+              {clients.length} {entitySingular}(s)
             </div>
           </div>
 
           {isLoading ? (
             <div className="mt-6 rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-6 text-slate-600">
-              Carregando clientes...
+              Carregando {entityPlural}...
             </div>
           ) : clients.length === 0 ? (
             <div className="mt-6 rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-6 text-slate-600">
-              Ainda não há clientes cadastrados para este assinante.
+              Ainda não há {entityPlural} cadastradas para este assinante.
             </div>
           ) : (
             <div className="mt-6 overflow-hidden rounded-2xl border border-slate-200">
@@ -287,9 +297,9 @@ export function ClientManagement() {
               <table className="min-w-[1100px] divide-y divide-slate-200">
                 <thead className="bg-slate-50">
                   <tr className="text-left text-sm font-semibold text-slate-700">
-                    <th className="px-4 py-3">Cliente</th>
+                    <th className="px-4 py-3">{subscriberType === "accounting_office" ? "Cliente" : "Empresa"}</th>
                     <th className="px-4 py-3">Apelido Contmatic</th>
-                    <th className="px-4 py-3">Login do cliente</th>
+                    <th className="px-4 py-3">Acesso separado</th>
                     <th className="px-4 py-3">CNPJ</th>
                     <th className="px-4 py-3">Limite</th>
                     <th className="px-4 py-3">Padrões</th>
@@ -327,7 +337,7 @@ export function ClientManagement() {
                             <Pencil size={16} />
                             Editar
                           </button>
-                          <button
+                          {subscriberType !== "company" ? <button
                             type="button"
                             onClick={() => void handleDelete(client)}
                             disabled={isDeletingId === client.id}
@@ -335,7 +345,7 @@ export function ClientManagement() {
                           >
                             <Trash2 size={16} />
                             {isDeletingId === client.id ? "Excluindo..." : "Excluir"}
-                          </button>
+                          </button> : null}
                         </div>
                       </td>
                     </tr>

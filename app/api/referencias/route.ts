@@ -30,13 +30,13 @@ export async function GET(request: Request) {
   try {
     const session = await getCurrentSession()
 
-    if (!session?.clientId) {
-      return Response.json({ ok: false, error: "Cliente não identificado." }, { status: 401 })
+    if (!session?.subscriberId) {
+      return Response.json({ ok: false, error: "Assinante não identificado." }, { status: 401 })
     }
 
-    if (session.role !== "client_user") {
+    if (session.role !== "subscriber_admin") {
       return Response.json(
-        { ok: false, error: "Somente o cliente pode visualizar as bases importadas." },
+        { ok: false, error: "Somente o responsável pelo assinante pode visualizar as bases compartilhadas." },
         { status: 403 }
       )
     }
@@ -46,12 +46,12 @@ export async function GET(request: Request) {
 
     if (typeParam) {
       const referenceType = referenceTypeSchema.parse(typeParam)
-      const records = await listReferenceCatalog(session.clientId, referenceType)
+      const records = await listReferenceCatalog(session.subscriberId, referenceType)
 
       return Response.json({ ok: true, records })
     }
 
-    const summary = await getReferenceCatalogSummary(session.clientId)
+    const summary = await getReferenceCatalogSummary(session.subscriberId)
 
     return Response.json({ ok: true, summary })
   } catch (error) {
@@ -71,13 +71,13 @@ export async function POST(request: Request) {
   try {
     const session = await getCurrentSession()
 
-    if (!session?.clientId) {
-      return Response.json({ ok: false, error: "Cliente não identificado." }, { status: 401 })
+    if (!session?.subscriberId) {
+      return Response.json({ ok: false, error: "Assinante não identificado." }, { status: 401 })
     }
 
-    if (session.role !== "client_user") {
+    if (session.role !== "subscriber_admin") {
       return Response.json(
-        { ok: false, error: "Somente o cliente pode importar as bases de referências da empresa." },
+        { ok: false, error: "Somente o responsável pelo assinante pode importar as bases compartilhadas." },
         { status: 403 }
       )
     }
@@ -92,7 +92,7 @@ export async function POST(request: Request) {
 
     const buffer = Buffer.from(await file.arrayBuffer())
     const items = await parseReferencePdf(buffer, referenceType)
-    const importedCount = await replaceReferenceCatalog(session.clientId, referenceType, items)
+    const importedCount = await replaceReferenceCatalog(session.subscriberId, referenceType, items)
 
     return Response.json({
       ok: true,

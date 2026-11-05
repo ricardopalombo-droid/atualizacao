@@ -13,9 +13,9 @@ export const clientPayloadSchema = z.object({
   cnpj: z.string().trim().optional().or(z.literal("")),
   contmaticNickname: z.string().trim().optional().or(z.literal("")),
   maxEmployees: z.coerce.number().int().positive().max(100000).optional(),
-  contactName: z.string().trim().min(2, "Informe o nome do responsável."),
-  accessEmail: z.string().trim().email("Informe um e-mail de acesso valido."),
-  temporaryPassword: z.string().min(6, "A senha provisória deve ter pelo menos 6 caracteres."),
+  contactName: z.string().trim().optional().or(z.literal("")),
+  accessEmail: z.string().trim().email("Informe um e-mail de acesso valido.").optional().or(z.literal("")),
+  temporaryPassword: z.string().optional().or(z.literal("")),
   employeeDefaults: clientEmployeeDefaultsSchema,
 })
 
@@ -68,7 +68,7 @@ async function getSubscriberOrThrow(subscriberId: string) {
   const supabase = getSupabaseServerClient()
   const { data, error } = await supabase
     .from("subscribers")
-    .select("id, max_clients, max_employees")
+    .select("id, subscriber_type, max_clients, max_employees")
     .eq("id", subscriberId)
     .maybeSingle()
 
@@ -87,6 +87,20 @@ export async function createClientRecord(subscriberId: string, payload: ClientPa
   const supabase = getSupabaseServerClient()
   const subscriber = await getSubscriberOrThrow(subscriberId)
 
+  if (subscriber.subscriber_type === "company") {
+    throw new Error("O perfil Empresa possui somente a própria empresa. Edite o cadastro existente em vez de criar outro.")
+  }
+
+  if (subscriber.subscriber_type === "accounting_office") {
+    if (!payload.contactName || !payload.accessEmail || !payload.temporaryPassword) {
+      throw new Error("Informe o responsável, o e-mail de acesso e a senha provisória do cliente.")
+    }
+
+    if (payload.temporaryPassword.length < 6) {
+      throw new Error("A senha provisória deve ter pelo menos 6 caracteres.")
+    }
+  }
+
   const { count, error: countError } = await supabase
     .from("clients")
     .select("id", { count: "exact", head: true })
@@ -100,18 +114,20 @@ export async function createClientRecord(subscriberId: string, payload: ClientPa
     throw new Error(`Limite de clientes atingido para este assinante (${subscriber.max_clients}).`)
   }
 
-  const { data: existingUser, error: existingUserError } = await supabase
-    .from("app_users")
-    .select("id")
-    .eq("email", payload.accessEmail)
-    .maybeSingle()
+  if (payload.accessEmail) {
+    const { data: existingUser, error: existingUserError } = await supabase
+      .from("app_users")
+      .select("id")
+      .eq("email", payload.accessEmail)
+      .maybeSingle()
 
-  if (existingUserError) {
-    throw existingUserError
-  }
+    if (existingUserError) {
+      throw existingUserError
+    }
 
-  if (existingUser) {
-    throw new Error("Já existe um usuário com esse e-mail de acesso.")
+    if (existingUser) {
+      throw new Error("Já existe um usuário com esse e-mail de acesso.")
+    }
   }
 
   const { data, error } = await supabase
@@ -132,20 +148,26 @@ export async function createClientRecord(subscriberId: string, payload: ClientPa
     throw error
   }
 
-  const password = hashPassword(payload.temporaryPassword)
-  const { error: userError } = await supabase.from("app_users").insert({
-    email: payload.accessEmail,
-    full_name: payload.contactName,
-    role: "client_user",
-    subscriber_id: subscriber.id,
-    client_id: data.id,
-    can_view_personal_data: true,
-    password_hash: password.hash,
-    password_salt: password.salt,
-  })
+  if (payload.accessEmail) {
+    if (!payload.contactName || !payload.temporaryPassword || payload.temporaryPassword.length < 6) {
+      throw new Error("Para criar o acesso da empresa, informe responsável e senha provisória com pelo menos 6 caracteres.")
+    }
 
-  if (userError) {
-    throw userError
+    const password = hashPassword(payload.temporaryPassword)
+    const { error: userError } = await supabase.from("app_users").insert({
+      email: payload.accessEmail,
+      full_name: payload.contactName,
+      role: "client_user",
+      subscriber_id: subscriber.id,
+      client_id: data.id,
+      can_view_personal_data: true,
+      password_hash: password.hash,
+      password_salt: password.salt,
+    })
+
+    if (userError) {
+      throw userError
+    }
   }
 
   return {
@@ -208,16 +230,12 @@ export async function updateClientRecord(
     throw appUserError
   }
 
-  if (!appUser) {
-    throw new Error("Usuário do cliente não encontrado.")
-  }
-
-  if (payload.accessEmail && payload.accessEmail !== appUser.email) {
+  if (payload.accessEmail && payload.accessEmail !== appUser?.email) {
     const { data: existingUser, error: existingUserError } = await supabase
       .from("app_users")
       .select("id")
       .eq("email", payload.accessEmail)
-      .neq("id", appUser.id)
+      .neq("id", appUser?.id ?? "00000000-0000-0000-0000-000000000000")
       .maybeSingle()
 
     if (existingUserError) {
@@ -226,6 +244,28 @@ export async function updateClientRecord(
 
     if (existingUser) {
       throw new Error("Já existe outro usuário com esse e-mail de acesso.")
+    }
+  }
+
+  if (!appUser && payload.accessEmail) {
+    if (!payload.contactName || !payload.temporaryPassword || payload.temporaryPassword.length < 6) {
+      throw new Error("Para criar o acesso da empresa, informe responsável e senha provisória com pelo menos 6 caracteres.")
+    }
+
+    const password = hashPassword(payload.temporaryPassword)
+    const { error: createUserError } = await supabase.from("app_users").insert({
+      email: payload.accessEmail,
+      full_name: payload.contactName,
+      role: "client_user",
+      subscriber_id: subscriberId,
+      client_id: id,
+      can_view_personal_data: true,
+      password_hash: password.hash,
+      password_salt: password.salt,
+    })
+
+    if (createUserError) {
+      throw createUserError
     }
   }
 
@@ -245,7 +285,7 @@ export async function updateClientRecord(
     userUpdates.password_salt = password.salt
   }
 
-  if (Object.keys(userUpdates).length > 0) {
+  if (appUser && Object.keys(userUpdates).length > 0) {
     const { error: updateUserError } = await supabase.from("app_users").update(userUpdates).eq("id", appUser.id)
 
     if (updateUserError) {
@@ -268,8 +308,8 @@ export async function updateClientRecord(
     employee_defaults: normalizeEmployeeDefaults(
       clientEmployeeDefaultsSchema.parse(data.employee_defaults ?? {})
     ),
-    access_email: payload.accessEmail ?? appUser.email,
-    contact_name: payload.contactName ?? appUser.full_name,
+    access_email: payload.accessEmail || appUser?.email || null,
+    contact_name: payload.contactName || appUser?.full_name || null,
   }
 }
 
@@ -428,7 +468,11 @@ export async function updateClientEmployeeDefaults(
 
 export async function deleteClientRecord(subscriberId: string, id: string) {
   const supabase = getSupabaseServerClient()
-  await getSubscriberOrThrow(subscriberId)
+  const subscriber = await getSubscriberOrThrow(subscriberId)
+
+  if (subscriber.subscriber_type === "company") {
+    throw new Error("A empresa principal deste assinante não pode ser excluída.")
+  }
 
   const { data: client, error: clientError } = await supabase
     .from("clients")
