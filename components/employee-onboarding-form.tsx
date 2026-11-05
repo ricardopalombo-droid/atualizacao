@@ -1319,7 +1319,7 @@ export function EmployeeOnboardingForm({
               }`}
             >
               <UserRound size={16} />
-              Visão do funcionário
+              Dados preenchidos pelo funcionário
             </button>
             <button
               type="button"
@@ -1331,7 +1331,7 @@ export function EmployeeOnboardingForm({
               }`}
             >
               <UsersRound size={16} />
-              Visão do DP
+              Dados preenchidos pelo DP
             </button>
           </div>
         ) : null}
