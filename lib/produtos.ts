@@ -24,6 +24,15 @@ export type ProdutoSite = {
 
 export const PRODUTOS: ProdutoSite[] = [
   {
+    nome: "Admissão digital de funcionários",
+    preco: null,
+    ref: "funcionarios-001",
+    descricao:
+      "Envie um link para o funcionário preencher seus dados e anexar documentos. O DP confere, complementa o cadastro e gera o pacote pronto para importação no Contmatic.",
+    icone: Users,
+    status: "disponivel",
+  },
+  {
     nome: "PalSys Auditor Integrado",
     preco: 5,
     ref: "auditor-integrado-credits",
@@ -103,15 +112,6 @@ export const PRODUTOS: ProdutoSite[] = [
       "Transforme informações de extratos em lançamentos com mais velocidade e menos retrabalho.",
     icone: Receipt,
     status: "em_breve",
-  },
-  {
-    nome: "Admissão digital de funcionários",
-    preco: null,
-    ref: "funcionarios-001",
-    descricao:
-      "Envie um link para o funcionário preencher seus dados e anexar documentos. O DP confere, complementa o cadastro e gera o pacote pronto para importação no Contmatic.",
-    icone: Users,
-    status: "disponivel",
   },
   {
     nome: "PalSys PDF Printer",
