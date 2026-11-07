@@ -8,7 +8,6 @@ const PRODUTOS_LIBERADOS = new Set([
   "email-001",
   "central-documentos-001",
   "buscador-xml-001",
-  "funcionarios-001",
   "pdf-monitor-001",
   "consolida-impostos-001",
   "consolidador-folhas-001",

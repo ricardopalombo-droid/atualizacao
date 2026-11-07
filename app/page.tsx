@@ -18,6 +18,14 @@ import { PRODUTOS } from "@/lib/produtos"
 const resumoPrivacidadeProduto =
   "Processamento local sempre que aplicável, sem armazenamento dos arquivos em servidores da PalSys."
 
+function getResumoPrivacidadeProduto(ref: string) {
+  if (ref === "funcionarios-001") {
+    return "Dados e documentos ficam protegidos em ambiente com acesso controlado durante o processo de admissão."
+  }
+
+  return resumoPrivacidadeProduto
+}
+
 const beneficios = [
   {
     titulo: "Mais produtividade",
@@ -39,17 +47,6 @@ const beneficios = [
   },
 ]
 
-// Para reativar os botões de demonstração no catálogo no futuro, volte este helper:
-// function getVideoUrl(ref: string) {
-//   if (ref === "whats-001") return "https://www.youtube.com/watch?v=lFXViQerYxQ"
-//   if (ref === "email-001") return "https://www.youtube.com/watch?v=dGGHX6In-vs"
-//   if (ref === "dre-001") return "https://www.youtube.com/watch?v=EJy_oIlakBw"
-//   if (ref === "fgts-001") return "https://www.youtube.com/watch?v=SuQao5qEEow"
-//   if (ref === "ecac-001") return "https://www.youtube.com/watch?v=lovnQ4FBrzw"
-//   if (ref === "funcionarios-001") return "https://www.youtube.com/watch?v=LW7mJt-iEFk"
-//   return null
-// }
-
 function getVideoUrl(ref: string) {
   if (ref === "auditor-integrado-credits") return "https://www.youtube.com/watch?v=5-bbDEbe1JQ"
   if (ref === "whats-001") return "https://www.youtube.com/watch?v=lFXViQerYxQ"
@@ -59,7 +56,7 @@ function getVideoUrl(ref: string) {
   if (ref === "dre-001") return "https://www.youtube.com/watch?v=EJy_oIlakBw"
   if (ref === "fgts-001") return "https://www.youtube.com/watch?v=SuQao5qEEow"
   if (ref === "dctfweb-integra-001") return "https://www.youtube.com/watch?v=IkpKPZHazCk"
-  if (ref === "funcionarios-001") return "https://www.youtube.com/watch?v=LW7mJt-iEFk"
+  if (ref === "funcionarios-001") return "https://www.youtube.com/watch?v=pS2A4BsltPA"
   if (ref === "pdf-monitor-001") return "https://www.youtube.com/watch?v=PwCItzETcg4"
   if (ref === "consolida-impostos-001") return "https://www.youtube.com/watch?v=fyY15r9nod0"
   if (ref === "consolidador-folhas-001") return "https://www.youtube.com/watch?v=y0h8iqL7kFo"
@@ -111,9 +108,9 @@ const productHighlights: Record<string, string[]> = {
     "Centraliza certificados A1, acervos e o controle de NSU.",
   ],
   "funcionarios-001": [
-    "O colaborador preenche os dados iniciais por um link.",
-    "A empresa revisa e completa as informações internas.",
-    "O escritório recebe os cadastros organizados para importar na folha.",
+    "O funcionário preenche os dados e envia os documentos pelo celular.",
+    "O DP confere e complementa as informações da admissão.",
+    "Gera um pacote com vários funcionários para importar no Contmatic.",
   ],
   "pdf-monitor-001": [
     "Captura relatórios impressos pelo Contmatic com a impressora PalSys.",
@@ -542,15 +539,25 @@ export default function HomePage() {
 
                     <div className="mt-6 flex items-start gap-3 rounded-2xl border border-blue-100 bg-blue-50 px-4 py-3 text-sm leading-6 text-blue-900">
                       <ShieldCheck className="mt-0.5 h-5 w-5 shrink-0" />
-                      <span>{resumoPrivacidadeProduto}</span>
+                      <span>{getResumoPrivacidadeProduto(produto.ref)}</span>
                     </div>
 
                     <div className="mt-6 flex flex-wrap gap-3">
                       <Link
-                        href={produto.ref === "auditor-integrado-credits" ? "/creditos-auditor" : "/assinar"}
+                        href={
+                          produto.ref === "auditor-integrado-credits"
+                            ? "/creditos-auditor"
+                            : produto.preco === null
+                              ? "#contato"
+                              : "/assinar"
+                        }
                         className="inline-flex items-center justify-center gap-2 rounded-xl bg-yellow-400 px-5 py-3 font-bold text-slate-900 hover:brightness-95"
                       >
-                        {produto.ref === "auditor-integrado-credits" ? "Comprar créditos" : "Conhecer planos"}
+                        {produto.ref === "auditor-integrado-credits"
+                          ? "Comprar créditos"
+                          : produto.preco === null
+                            ? "Solicitar informações"
+                            : "Conhecer planos"}
                         <ArrowRight size={17} />
                       </Link>
                       {produto.ref === "auditor-integrado-credits" ? (

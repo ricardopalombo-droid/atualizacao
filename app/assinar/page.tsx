@@ -3,7 +3,7 @@
 import { useState } from "react"
 import Link from "next/link"
 import Image from "next/image"
-import { PRODUTOS } from "@/lib/produtos"
+import { PRODUTOS, type ProdutoSite } from "@/lib/produtos"
 
 const resumoPrivacidadeProduto =
   "Processamento local sempre que aplicável, sem armazenamento dos arquivos em servidores da PalSys."
@@ -29,7 +29,6 @@ export default function PalSysAssinaturaPage() {
     if (ref === "dre-001") return "EJy_oIlakBw"
     if (ref === "fgts-001") return "SuQao5qEEow"
     if (ref === "dctfweb-integra-001") return "IkpKPZHazCk"
-    if (ref === "funcionarios-001") return "LW7mJt-iEFk"
     if (ref === "pdf-monitor-001") return "PwCItzETcg4"
     if (ref === "consolida-impostos-001") return "fyY15r9nod0"
     if (ref === "consolidador-folhas-001") return "y0h8iqL7kFo"
@@ -37,10 +36,12 @@ export default function PalSysAssinaturaPage() {
   }
 
   const produtosAssinatura = PRODUTOS.filter(
-    (produto) => !["dre-001", "extratos-001", "auditor-integrado-credits"].includes(produto.ref),
+    (produto): produto is ProdutoSite & { preco: number } =>
+      produto.preco !== null &&
+      !["dre-001", "extratos-001", "auditor-integrado-credits", "funcionarios-001"].includes(produto.ref),
   )
   // Para voltar a mostrar esses produtos em assinar, remova os refs acima:
-  // "dre-001", "extratos-001"
+  // "dre-001", "extratos-001", "auditor-integrado-credits", "funcionarios-001"
 
   async function assinarProduto(produto: ProdutoAssinavel) {
     try {

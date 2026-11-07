@@ -15,7 +15,7 @@ export type StatusProduto = "disponivel" | "em_breve"
 
 export type ProdutoSite = {
   nome: string
-  preco: number
+  preco: number | null
   ref: string
   descricao: string
   icone: React.ComponentType<{ size?: number }>
@@ -105,11 +105,11 @@ export const PRODUTOS: ProdutoSite[] = [
     status: "em_breve",
   },
   {
-    nome: "Cadastro automatizado de funcionários",
-    preco: 79.9,
+    nome: "Admissão digital de funcionários",
+    preco: null,
     ref: "funcionarios-001",
     descricao:
-      "O colaborador preenche o cadastro inicial por link, a empresa revisa e completa as informações internas, e o escritório recebe tudo pronto no painel para importar no sistema da folha com mais rapidez e organização.",
+      "Envie um link para o funcionário preencher seus dados e anexar documentos. O DP confere, complementa o cadastro e gera o pacote pronto para importação no Contmatic.",
     icone: Users,
     status: "disponivel",
   },
